@@ -28,7 +28,7 @@ The default 'Activate Altshell' checkbox is off, enable it if you would like an 
 
 ===Use M320/M321 Commands===
 
-Use M320/M321 to enable  / disable acceleration if checked.
+Use M320/M321 to enable / disable acceleration if checked.
 When unchecked, uses Open/Close Valve (M126/M127).
 For Makerbot and Sailfish firmwares, use M320/M321.  For the Jetty Firmware (v3.5 and earlier), do not use M320/M321.
 """
@@ -48,8 +48,8 @@ from fabmetheus_utilities import settings
 from skeinforge_application.skeinforge_utilities import skeinforge_craft
 import sys
 
-__author__ = "Len Trigg (lenbok@gmail.com)"
-__date__ = "$Date: 2010/11/20 $"
+__author__ = "Dan Newman (dan.newman@mtbaldy.us)"
+__date__ = "$Date: 2012/04/10 $"
 __license__ = "GPL 3.0"
 
 def getCraftedText( fileName, text='', repository=None ):

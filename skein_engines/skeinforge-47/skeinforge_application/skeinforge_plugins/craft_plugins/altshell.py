@@ -48,8 +48,8 @@ from fabmetheus_utilities import settings
 from skeinforge_application.skeinforge_utilities import skeinforge_craft
 import sys
 
-__author__ = "Len Trigg (lenbok@gmail.com)"
-__date__ = "$Date: 2010/11/20 $"
+__author__ = "Dan Newman (dan.newman@mtbaldy.us)"
+__date__ = "$Date: 2012/04/10 $"
 __license__ = "GPL 3.0"
 
 def getCraftedText( fileName, text='', repository=None ):
