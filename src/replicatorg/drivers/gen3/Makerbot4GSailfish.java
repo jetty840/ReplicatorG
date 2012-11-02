@@ -590,7 +590,7 @@ public class Makerbot4GSailfish extends Makerbot4GAlternateDriver
                 for( AxisId e: axes)
                         axesEnum.add(e);
 
-                disableAxes(axesEnum);
+		disableAxes(axesEnum);
                 curTool.disableMotor();
         }
 
