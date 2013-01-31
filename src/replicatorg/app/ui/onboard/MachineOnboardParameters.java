@@ -34,8 +34,13 @@
 	 private final JTabbedPane subTabs;
 	 private final MachineOnboardAccelerationParameters accelUI;
 
-	 private boolean isMightyBoard = false;
-	 private boolean isSailfish = false;
+	 enum DriverType {
+		 OTHER,           // G3Firmware most likely
+		 MIGHTYBOARD,     // Replicator running MBI firmware,
+		 MIGHTYSAILFISH,  // Replicator running Sailfish,
+		 SAILFISH,        // Gen 3 or Gen 4 board running Sailfish
+	 };
+	 private DriverType driverType = DriverType.OTHER;
 	 private JTextField machineNameField = new JTextField();
 	 private static final String[] toolCountChoices = {"unavailable","1", "2"};
 	 private JComboBox toolCountField = new JComboBox(toolCountChoices);
@@ -194,13 +199,13 @@
 			 target.eepromStoreToolDelta(1, ((Number)yToolheadOffsetField.getValue()).doubleValue());
 			 target.eepromStoreToolDelta(2, ((Number)zToolheadOffsetField.getValue()).doubleValue());
 		 }
-
+    
 		 // Set acceleration related parameters
 		 accelUI.setEEPROMFromUI();
 
 		 String extendedMessage = null;
 
-		 if (target.hasAcceleration() && isMightyBoard) {
+		 if (target.hasAcceleration() && (driverType == DriverType.MIGHTYBOARD)) {
 			 int feedrate = Base.preferences.getInt("replicatorg.skeinforge.printOMatic5D.desiredFeedrate", 40);
 			 int travelRate = Base.preferences.getInt("replicatorg.skeinforge.printOMatic5D.travelFeedrate", 55);
 
@@ -274,8 +279,7 @@
 			Base.logger.severe("reset to blank failed due to error" + e.toString());
 			Base.logger.severe("Please restart your machine for safety");
 		}
-	}
-	
+	}	
 
 	private void loadParameters() {
 		machineNameField.setText( this.target.getMachineName() );
@@ -346,13 +350,18 @@
 		this.parent = parent;
 
 		String driverName = target.getDriverName();  // can return null
-		isMightyBoard = (driverName != null) && driverName.equalsIgnoreCase("mightyboard");
-		if (!isMightyBoard)
-			isSailfish = (driverName != null) && driverName.equalsIgnoreCase("makerbot4gsailfish");
+		if (driverName == null)
+			driverType = DriverType.OTHER;
+		else if (driverName.equalsIgnoreCase("mightyboard"))
+			driverType = DriverType.MIGHTYBOARD;
+		else if (driverName.equalsIgnoreCase("mightysailfish"))
+			driverType = DriverType.MIGHTYSAILFISH;
+		else if (driverName.equalsIgnoreCase("makerbot4gsailfish"))
+			driverType = DriverType.SAILFISH;
 		else
-			isSailfish = false;
+			driverType = DriverType.OTHER;
 
-                setLayout(new MigLayout("fill", "[r][l][r]"));
+    setLayout(new MigLayout("fill", "[r][l][r]"));
 
 		add(new JLabel("Machine Name (max. "+Integer.toString(MAX_NAME_LENGTH)+" chars)"));
 		machineNameField.setColumns(MAX_NAME_LENGTH);
@@ -380,7 +389,7 @@
   			endstopsTab.add(toolCountField, "span 2, wrap");
   		}
 		if(target.hasHbp()){
-			endstopsTab.add(new JLabel("HBP on/off"));
+			endstopsTab.add(new JLabel("HBP present"));
 			endstopsTab.add(hbpToggleBox,"span 2, wrap");
 		}
 
@@ -481,13 +490,15 @@
 		}
 
 		if (target.hasAcceleration()) {
-			if (isMightyBoard) {
+			if (driverType == DriverType.MIGHTYBOARD) {
 				if (target.hasJettyAcceleration())
 					accelUI = new JettyMightyBoardMachineOnboardAccelerationParameters(target, driver, subTabs);
 				else
 					accelUI = new MightyBoardMachineOnboardAccelerationParameters(target, driver, subTabs);
 			}
-			else if (isSailfish)
+			else if (driverType == DriverType.MIGHTYSAILFISH)
+				accelUI = new MightySailfishMachineOnboardAccelerationParameters(target, driver, subTabs);
+			else if (driverType == DriverType.SAILFISH)
 				accelUI = new SailfishG3MachineOnboardAccelerationParameters(target, driver, subTabs);
 			else
 				accelUI = new G3FirmwareMachineOnboardAccelerationParameters(target, driver, subTabs);
@@ -534,7 +545,7 @@
 	}
 
 	public boolean leavePreheatRunning() {
-		return isMightyBoard;
+		return (driverType == DriverType.MIGHTYBOARD) || (driverType == DriverType.MIGHTYSAILFISH);
 	}
 
 	 // If a string is longer than 'width' characters then convert it to minimal, headless,
@@ -882,20 +893,14 @@
 		 // Accel Parameters of Tab 2
 		 class AccelParamsTab2 {
 			 boolean slowdownEnabled;
-			 boolean overrideGCodeTempEnabled;
-			 boolean preheatDuringPauseEnabled;
 			 int[] deprime;
 			 double[] JKNadvance;
 
 			 AccelParamsTab2(boolean slowdownEnabled,
-					 boolean overrideGCodeTempEnabled,
-					 boolean preheatDuringPauseEnabled,
 					 int[] deprime,
 					 double[] JKNadvance)
 			 {
 				 this.slowdownEnabled           = slowdownEnabled;
-				 this.overrideGCodeTempEnabled  = overrideGCodeTempEnabled;
-				 this.preheatDuringPauseEnabled = preheatDuringPauseEnabled;
 				 this.deprime                   = deprime;
 				 this.JKNadvance                = JKNadvance;
 			 }
@@ -1037,18 +1042,6 @@
            "or a travel-only move is encountered.  Set to a value of 0 to disable this feature for this extruder.  " +
            "Do not use with Skeinforge's Reversal plugin nor Skeinforge's Dimension plugin's \"Retraction Distance\".");
 
-		 private JCheckBox overrideGCodeTempBox = new JCheckBox();
-		 {
-			 overrideGCodeTempBox.setToolTipText(wrap2HTML(width,
-                    "When enabled, override the gcode temperature settings using the preheat " +
-		    "temperature settings for the extruders and build platform."));
-		 }
-           
-		 private JCheckBox preheatDuringPauseBox = new JCheckBox();
-		 {
-			 preheatDuringPauseBox.setToolTipText(wrap2HTML(width,
-                    "When enabled, leave the extruder and platform heaters enabled whilst paused."));
-		 }
            
 		 // Slowdown is a flag for the Replicator
 		 private JCheckBox slowdownFlagBox = new JCheckBox();
@@ -1099,8 +1092,516 @@
 									       ((Number)aAxisMaxSpeedChange.getValue()).intValue(),
 									       ((Number)bAxisMaxSpeedChange.getValue()).intValue()}),
 						new AccelParamsTab2(slowdownFlagBox.isSelected(),
+								    new int[] {((Number)extruderDeprimeA.getValue()).intValue(),
+									       ((Number)extruderDeprimeB.getValue()).intValue()},
+								    new double[] {((Number)JKNAdvance1.getValue()).doubleValue(),
+										  ((Number)JKNAdvance2.getValue()).doubleValue()}));
+		 }
+
+		 @Override
+		 public boolean isAccelerationEnabled() {
+			 return accelerationBox.isSelected();
+		 }
+
+		 private void setEEPROMFromUI(AccelParams params) {
+			 target.setAccelerationStatus(params.tab1.accelerationEnabled ? (byte)1 : (byte)0);
+			 target.setEEPROMParam(OnboardParameters.EEPROMParams.ACCEL_SLOWDOWN_FLAG, params.tab2.slowdownEnabled ? 1 : 0);
+
+			 target.setEEPROMParam(OnboardParameters.EEPROMParams.ACCEL_MAX_EXTRUDER_NORM,    params.tab1.accelerations[0]);
+			 target.setEEPROMParam(OnboardParameters.EEPROMParams.ACCEL_MAX_EXTRUDER_RETRACT, params.tab1.accelerations[1]);
+
+			 target.setEEPROMParam(OnboardParameters.EEPROMParams.ACCEL_MAX_ACCELERATION_X, params.tab1.maxAccelerations[0]);
+			 target.setEEPROMParam(OnboardParameters.EEPROMParams.ACCEL_MAX_ACCELERATION_Y, params.tab1.maxAccelerations[1]);
+			 target.setEEPROMParam(OnboardParameters.EEPROMParams.ACCEL_MAX_ACCELERATION_Z, params.tab1.maxAccelerations[2]);
+			 target.setEEPROMParam(OnboardParameters.EEPROMParams.ACCEL_MAX_ACCELERATION_A, params.tab1.maxAccelerations[3]);
+			 target.setEEPROMParam(OnboardParameters.EEPROMParams.ACCEL_MAX_ACCELERATION_B, params.tab1.maxAccelerations[4]);
+
+			 target.setEEPROMParam(OnboardParameters.EEPROMParams.ACCEL_MAX_SPEED_CHANGE_X, params.tab1.maxSpeedChanges[0]);
+			 target.setEEPROMParam(OnboardParameters.EEPROMParams.ACCEL_MAX_SPEED_CHANGE_Y, params.tab1.maxSpeedChanges[1]);
+			 target.setEEPROMParam(OnboardParameters.EEPROMParams.ACCEL_MAX_SPEED_CHANGE_Z, params.tab1.maxSpeedChanges[2]);
+			 target.setEEPROMParam(OnboardParameters.EEPROMParams.ACCEL_MAX_SPEED_CHANGE_A, params.tab1.maxSpeedChanges[3]);
+			 target.setEEPROMParam(OnboardParameters.EEPROMParams.ACCEL_MAX_SPEED_CHANGE_B, params.tab1.maxSpeedChanges[4]);
+
+			 target.setEEPROMParam(OnboardParameters.EEPROMParams.ACCEL_ADVANCE_K,  params.tab2.JKNadvance[0]);
+			 target.setEEPROMParam(OnboardParameters.EEPROMParams.ACCEL_ADVANCE_K2, params.tab2.JKNadvance[1]);
+
+			 target.setEEPROMParam(OnboardParameters.EEPROMParams.ACCEL_EXTRUDER_DEPRIME_A, params.tab2.deprime[0]);
+			 target.setEEPROMParam(OnboardParameters.EEPROMParams.ACCEL_EXTRUDER_DEPRIME_B, params.tab2.deprime[1]);
+		 }
+
+		 @Override
+		 public void setEEPROMFromUI() {
+			 setEEPROMFromUI(getAccelParamsFromUI());
+		 }
+
+		 private void setUIFields(AccelParamsTab1 params) {
+			 setUIFields(UI_TAB_1,
+				     params.accelerationEnabled,
+				     false,
+				     params.accelerations,
+				     params.maxAccelerations,
+				     params.maxSpeedChanges,
+				     null,
+				     null);
+		 }
+
+		 private void setUIFields(int tabs,
+					  boolean accelerationEnabled,
+					  boolean slowdownEnabled,
+					  int[] accelerations,
+					  int[] maxAccelerations,
+					  int[] maxSpeedChanges,
+					  double[] JKNadvance,
+					  int[] deprime) {
+
+			 if ((tabs & UI_TAB_1) != 0) {
+				 accelerationBox.setSelected(accelerationEnabled);
+
+				 if (accelerations != null) {
+					 normalMoveAcceleration.setValue(accelerations[0]);
+					 extruderMoveAcceleration.setValue(accelerations[1]);
+				 }
+
+				 if (maxAccelerations != null) {
+					 xAxisMaxAcceleration.setValue(maxAccelerations[0]);
+					 yAxisMaxAcceleration.setValue(maxAccelerations[1]);
+					 zAxisMaxAcceleration.setValue(maxAccelerations[2]);
+					 aAxisMaxAcceleration.setValue(maxAccelerations[3]);
+					 bAxisMaxAcceleration.setValue(maxAccelerations[4]);
+				 }
+
+				 if (maxSpeedChanges != null) {
+					 xAxisMaxSpeedChange.setValue(maxSpeedChanges[0]);
+					 yAxisMaxSpeedChange.setValue(maxSpeedChanges[1]);
+					 zAxisMaxSpeedChange.setValue(maxSpeedChanges[2]);
+					 aAxisMaxSpeedChange.setValue(maxSpeedChanges[3]);
+					 bAxisMaxSpeedChange.setValue(maxSpeedChanges[4]);
+				 }
+			 }
+
+			 if ((tabs & UI_TAB_2) != 0) {
+				 slowdownFlagBox.setSelected(slowdownEnabled);
+
+				 if (JKNadvance != null) {
+					 JKNAdvance1.setValue(JKNadvance[0]);
+					 JKNAdvance2.setValue(JKNadvance[1]);
+				 }
+
+				 if (deprime != null) {
+					 extruderDeprimeA.setValue(deprime[0]);
+					 extruderDeprimeB.setValue(deprime[1]);
+				 }
+			 }
+
+			 // Enable/disable the draft & quality buttons based upon the UI field values
+			 // propertyChange(null);
+		 }
+
+		 @Override
+		 public void setUIFromEEPROM() {
+			 boolean accelerationEnabled = target.getAccelerationStatus() != 0;
+			 boolean slowdownEnabled = target.getEEPROMParamInt(OnboardParameters.EEPROMParams.ACCEL_SLOWDOWN_FLAG) != 0;
+			 int[] maxAccelerations = new int[] {
+				 target.getEEPROMParamInt(OnboardParameters.EEPROMParams.ACCEL_MAX_ACCELERATION_X),
+				 target.getEEPROMParamInt(OnboardParameters.EEPROMParams.ACCEL_MAX_ACCELERATION_Y),
+				 target.getEEPROMParamInt(OnboardParameters.EEPROMParams.ACCEL_MAX_ACCELERATION_Z),
+				 target.getEEPROMParamInt(OnboardParameters.EEPROMParams.ACCEL_MAX_ACCELERATION_A),
+				 target.getEEPROMParamInt(OnboardParameters.EEPROMParams.ACCEL_MAX_ACCELERATION_B) };
+
+			 int[] maxSpeedChanges = new int[] {
+				 target.getEEPROMParamInt(OnboardParameters.EEPROMParams.ACCEL_MAX_SPEED_CHANGE_X),
+				 target.getEEPROMParamInt(OnboardParameters.EEPROMParams.ACCEL_MAX_SPEED_CHANGE_Y),
+				 target.getEEPROMParamInt(OnboardParameters.EEPROMParams.ACCEL_MAX_SPEED_CHANGE_Z),
+				 target.getEEPROMParamInt(OnboardParameters.EEPROMParams.ACCEL_MAX_SPEED_CHANGE_A),
+				 target.getEEPROMParamInt(OnboardParameters.EEPROMParams.ACCEL_MAX_SPEED_CHANGE_B) };
+
+			 int[] accelerations = new int[] {
+				 target.getEEPROMParamInt(OnboardParameters.EEPROMParams.ACCEL_MAX_EXTRUDER_NORM),
+				 target.getEEPROMParamInt(OnboardParameters.EEPROMParams.ACCEL_MAX_EXTRUDER_RETRACT) };
+
+			 double[] JKNadvance = new double[] {
+				 target.getEEPROMParamFloat(OnboardParameters.EEPROMParams.ACCEL_ADVANCE_K),
+				 target.getEEPROMParamFloat(OnboardParameters.EEPROMParams.ACCEL_ADVANCE_K2) };
+
+			 int[] deprime = new int[] {
+				 target.getEEPROMParamInt(OnboardParameters.EEPROMParams.ACCEL_EXTRUDER_DEPRIME_A),
+				 target.getEEPROMParamInt(OnboardParameters.EEPROMParams.ACCEL_EXTRUDER_DEPRIME_B) };
+		 
+			 setUIFields(UI_TAB_1 | UI_TAB_2, accelerationEnabled, slowdownEnabled, 
+				     accelerations, maxAccelerations, maxSpeedChanges,
+				     JKNadvance, deprime);
+		 }
+
+		 @Override
+		 public void buildUI() {
+			 JPanel accelerationTab = new JPanel(new MigLayout("fill", "[r][l][r][l]"));
+			 subTabs.addTab("Acceleration", accelerationTab);
+
+			 JPanel accelerationMiscTab = new JPanel(new MigLayout("fill", "[r][l]"));
+			 subTabs.addTab("Acceleration (Misc)", accelerationMiscTab);
+
+			 normalMoveAcceleration.setColumns(8);
+			 extruderMoveAcceleration.setColumns(8);
+
+			 xAxisMaxAcceleration.setColumns(8);
+			 xAxisMaxSpeedChange.setColumns(4);
+
+			 yAxisMaxAcceleration.setColumns(8);
+			 yAxisMaxSpeedChange.setColumns(4);
+
+			 zAxisMaxAcceleration.setColumns(8);
+			 zAxisMaxSpeedChange.setColumns(4);
+
+			 aAxisMaxAcceleration.setColumns(8);
+			 aAxisMaxSpeedChange.setColumns(4);
+
+			 bAxisMaxAcceleration.setColumns(8);
+			 bAxisMaxSpeedChange.setColumns(4);
+
+			 addWithSharedToolTips(accelerationTab, "Acceleration enabled", accelerationBox, "wrap");
+
+			 addWithSharedToolTips(accelerationTab,
+					       "Max acceleration (magnitude of acceleration vector; mm/s\u00B2)", "span 2, gapleft push",
+					       normalMoveAcceleration, "wrap, gapright push ");
+
+			 addWithSharedToolTips(accelerationTab,
+					       "Max acceleration for extruder-only moves (mm/s\u00B2)", "span 2, gapleft push", //"split 2, span 3",
+					       extruderMoveAcceleration, "wrap, gapright push");
+
+			 addWithSharedToolTips(accelerationTab, "X max acceleration (mm/s\u00B2)",
+					       xAxisMaxAcceleration);
+			 addWithSharedToolTips(accelerationTab, "X max speed change (mm/s)",
+					       xAxisMaxSpeedChange, "wrap");
+ 
+			 addWithSharedToolTips(accelerationTab, "Y max acceleration (mm/s\u00B2)",
+					       yAxisMaxAcceleration);
+			 addWithSharedToolTips(accelerationTab, "Y max speed change (mm/s)",
+					       yAxisMaxSpeedChange, "wrap");
+
+			 addWithSharedToolTips(accelerationTab, "Z max acceleration (mm/s\u00B2)",
+					       zAxisMaxAcceleration);
+			 addWithSharedToolTips(accelerationTab, "Z max speed change (mm/s)",
+					       zAxisMaxSpeedChange, "wrap");
+
+			 addWithSharedToolTips(accelerationTab, "Right extruder max acceleration (mm/s\u00B2)",
+					       aAxisMaxAcceleration);
+			 addWithSharedToolTips(accelerationTab, "Right extruder max speed change (mm/s)",
+					       aAxisMaxSpeedChange, "wrap");
+ 
+			 addWithSharedToolTips(accelerationTab, "Left extruder acceleration (mm/s\u00B2)",
+					       bAxisMaxAcceleration);
+			 addWithSharedToolTips(accelerationTab, "Left extruder max speed change (mm/s)",
+					       bAxisMaxSpeedChange, "wrap");
+
+			 accelerationTab.add(qualityButton, "span 2, gapleft push");
+			 accelerationTab.add(draftButton, "span 2, gapright push");
+
+			 // Acceleration - Misc
+
+			 JKNAdvance1.setColumns(8);
+			 JKNAdvance2.setColumns(8);
+
+			 extruderDeprimeA.setColumns(8);
+			 extruderDeprimeB.setColumns(8);
+
+			 addWithSharedToolTips(accelerationMiscTab, "Slow printing when acceleration planing falls behind", slowdownFlagBox, "wrap");
+			 addWithSharedToolTips(accelerationMiscTab, "JKN Advance K", JKNAdvance1, "wrap");
+			 addWithSharedToolTips(accelerationMiscTab, "JKN Advance K2", JKNAdvance2, "wrap");
+			 addWithSharedToolTips(accelerationMiscTab, "Right extruder deprime (steps)", extruderDeprimeA, "wrap");
+			 addWithSharedToolTips(accelerationMiscTab, "Left extruder deprime (steps)", extruderDeprimeB, "wrap");
+		 }
+	 }
+
+	 // Replicator MightyBoard with Sailfish firmware
+
+	 private class MightySailfishMachineOnboardAccelerationParameters extends MachineOnboardAccelerationParameters {
+
+		 // Replicator Jetty Firmware specific acceleration parameters
+
+		 // Bitmask bits indicating which tabs to set
+		 // We worry about this aspect as part of supporting the "draft" and "quality" buttons
+		 final int UI_TAB_1 = 0x01;
+		 final int UI_TAB_2 = 0x02;
+
+		 // Accel Parameters of Tab 1
+		 class AccelParamsTab1 {
+			 boolean accelerationEnabled;
+			 int[] accelerations;
+			 int[] maxAccelerations;
+			 int[] maxSpeedChanges;
+
+			 AccelParamsTab1(boolean accelerationEnabled,
+				     int[] accelerations,
+				     int[] maxAccelerations,
+				     int[] maxSpeedChanges)
+			 {
+				 this.accelerationEnabled = accelerationEnabled;
+				 this.accelerations       = accelerations;
+				 this.maxAccelerations    = maxAccelerations;
+				 this.maxSpeedChanges     = maxSpeedChanges;
+			 }
+
+			 boolean isEqual(AccelParamsTab1 params)
+			 {
+				 if (this == params)
+					 return true;
+
+				 return (accelerationEnabled == params.accelerationEnabled) &&
+					 Arrays.equals(accelerations, params.accelerations) &&
+					 Arrays.equals(maxAccelerations, params.maxAccelerations) &&
+					 Arrays.equals(maxSpeedChanges, params.maxSpeedChanges);
+			 }
+		 }
+
+		 // Accel Parameters of Tab 2
+		 class AccelParamsTab2 {
+			 boolean slowdownEnabled;
+			 boolean overrideGCodeTempEnabled;
+			 boolean preheatDuringPauseEnabled;
+			 boolean extruderHold;
+			 boolean newToolheadOffsetSystem;
+			 int[] deprime;
+			 double[] JKNadvance;
+
+			 AccelParamsTab2(boolean slowdownEnabled,
+					 boolean overrideGCodeTempEnabled,
+					 boolean preheatDuringPauseEnabled,
+					 boolean extruderHold,
+					 boolean newToolheadOffsetSystem,
+					 int[] deprime,
+					 double[] JKNadvance)
+			 {
+				 this.slowdownEnabled           = slowdownEnabled;
+				 this.overrideGCodeTempEnabled  = overrideGCodeTempEnabled;
+				 this.preheatDuringPauseEnabled = preheatDuringPauseEnabled;
+				 this.extruderHold              = extruderHold;
+				 this.newToolheadOffsetSystem   = newToolheadOffsetSystem;
+				 this.deprime                   = deprime;
+				 this.JKNadvance                = JKNadvance;
+			 }
+		 }
+
+		 private class AccelParams {
+			 public AccelParamsTab1 tab1;
+			 public AccelParamsTab2 tab2;
+
+			 AccelParams(AccelParamsTab1 params1, AccelParamsTab2 params2) {
+				 this.tab1 = params1;
+				 this.tab2 = params2;
+			 }
+		 }
+
+		 AccelParamsTab1 draftParams = new AccelParamsTab1(true,                                   // acceleration enabled
+								   new int[] {2000, 2000},                 // p_accel, p_retract_accel
+								   new int[] {1000, 1000, 150, 2000, 2000}, // max accelerations x,y,z,a,b
+								   new int[] {40, 40, 10, 40, 40});        // max speed changes x,y,z,a,b
+
+		 AccelParamsTab1 qualityParams = new AccelParamsTab1(true,                                 // acceleration enabled
+								     new int[] {2000, 2000},               // p_accel, p_retract_accel
+								     new int[] {1000, 1000, 150, 2000, 2000}, // max accelerations x,y,z,a,b
+								     new int[] {15, 15, 10, 20, 20});      // max speed changes x,y,z,a,b
+
+		 // Column width for formatting tool tip text
+		 final int width = defaultToolTipWidth;
+
+		 // Many of the values stored in EEPROM for the replicator are uint16_t
+		 //   So, we want 0 < val < 0xffff
+
+		 private NumberFormat repNF = NumberFormat.getIntegerInstance();
+
+		 private JCheckBox accelerationBox = new JCheckBox();
+		 {
+			 accelerationBox.setToolTipText(wrap2HTML(width, "Enable or disable printing with acceleration"));
+		 }
+
+		 private JCheckBox extruderHoldBox = new JCheckBox();
+		 {
+			 extruderHoldBox.setToolTipText(wrap2HTML(width,
+            "Check this box if using a 3mm filament extruder.  Using extruder hold causes the extruder stepper motors " +
+            "to remain engaged throughout the entire build regardless of whether or not the gcode requests that they " +
+            "be disabled via M103 commands.  When 3mm filament extruder stepper motors are disabled, the filament has " +
+            "a tendency to back out a tiny amount owing to the high pressure within the melt chamber of a 3mm extruder."));
+		 } 
+
+		 private JCheckBox newToolheadOffsetSystemBox = new JCheckBox();
+		 {
+			 newToolheadOffsetSystemBox.setToolTipText(wrap2HTML(width,
+            "Check this box if you wish to use the \"new\" Dualstrusion toolhead offset system used in dualstrustion GCode " +
+            "generated by MakerWare and ReplicatorG 40 and later.  Do not check this box if you wish to use the older style " +
+            "dualstrusion GCode generated by ReplicatorG 39 and earlier.  You do not need to adjust your toolhead offsets: " +
+            "Sailfish will automatically adjust them for you.  However, the values stored in the bot's EEPROM will be left " +
+            "unchanged."));
+		 } 
+
+		 private JButton draftButton = new JButton("Quick Draft");
+		 {
+			 draftButton.setToolTipText(wrap2HTML(width,
+           "By clicking this button, the on-screen acceleration parameters will be changed to suggested values for " +
+	   "rapid draft-quality builds.  The values will not be committed to your Replicator until you click the " +
+	   "Commit button.  You may adjust the settings before committing them to your Replicator."));
+		 }
+
+		 private JButton qualityButton = new JButton("Fine Quality");
+		 {
+			 qualityButton.setToolTipText(wrap2HTML(width,
+           "By clicking this button, the on-screen acceleration parameters will be changed to suggested values for " +
+	   "fine-quality builds.  The values will not be committed to your Replicator until you click the " +
+	   "Commit button.  You may adjust the settings before committing them to your Replicator."));
+		 }
+
+		 private JFormattedTextField xAxisMaxAcceleration = PositiveTextFieldInt(repNF, 10000,
+	   "The maximum acceleration and deceleration along the X axis in units of mm/s\u00B2.  " +
+	   "I.e., the maximum magnitude of the component of the acceleration vector along the X axis.");
+
+		 private JFormattedTextField yAxisMaxAcceleration = PositiveTextFieldInt(repNF, 10000,
+	   "The maximum acceleration and deceleration along the Y axis in units of mm/s\u00B2.  " +
+	   "I.e., the maximum magnitude of the component of the acceleration vector along the Y axis.");
+
+		 private JFormattedTextField zAxisMaxAcceleration = PositiveTextFieldInt(repNF, 2600,
+	   "The maximum acceleration and deceleration along the Z axis in units of mm/s\u00B2.  " +
+	   "I.e., the maximum magnitude of the component of the acceleration vector along the Z axis.");
+
+		 private JFormattedTextField aAxisMaxAcceleration = PositiveTextFieldInt(repNF, 10000,
+	   "The maximum acceleration and deceleration experienced by the right extruder in units of mm/s\u00B2.  " +
+	   "I.e., the maximum magnitude of the component of the acceleration vector along the right extruder's filament axis.");
+
+		 private JFormattedTextField bAxisMaxAcceleration = PositiveTextFieldInt(repNF, 10000,
+	   "The maximum acceleration and deceleration experienced by the left extruder in units of mm/s\u00B2.  " +
+	   "I.e., the maximum magnitude of the component of the acceleration vector along the left extruder's filament axis.");
+
+		 private JFormattedTextField xAxisMaxSpeedChange = PositiveTextFieldInt(repNF, 300,
+           "Yet Another Jerk (YAJ) algorithm's maximum change in feedrate along the X axis when " +
+           "transitioning from one printed segment to another, measured in units of mm/s.  I.e., the " +
+           "maximum magnitude of the component of the velocity change along the X axis.");
+
+		 private JFormattedTextField yAxisMaxSpeedChange = PositiveTextFieldInt(repNF, 300,
+           "Yet Another Jerk (YAJ) algorithm's maximum change in feedrate along the Y axis when " +
+           "transitioning from one printed segment to another, measured in units of mm/s.  I.e., the " +
+           "maximum magnitude of the component of the velocity change along the Y axis.");
+
+		 private JFormattedTextField zAxisMaxSpeedChange = PositiveTextFieldInt(repNF, 300,
+           "Yet Another Jerk (YAJ) algorithm's maximum change in feedrate along the Z axis when " +
+           "transitioning from one printed segment to another, measured in units of mm/s.  I.e., the " +
+           "maximum magnitude of the component of the velocity change along the Z axis.");
+
+		 private JFormattedTextField aAxisMaxSpeedChange = PositiveTextFieldInt(repNF, 300,
+           "Yet Another Jerk (YAJ) algorithm's maximum change in feedrate for the right extruder when " +
+           "transitioning from one printed segment to another, measured in units of mm/s.  I.e., the " +
+           "maximum magnitude of the component of the velocity change for the right extruder.");
+
+		 private JFormattedTextField bAxisMaxSpeedChange = PositiveTextFieldInt(repNF, 300,
+           "Yet Another Jerk (YAJ) algorithm's maximum change in feedrate for the left extruder when " +
+           "transitioning from one printed segment to another, measured in units of mm/s.  I.e., the " +
+           "maximum magnitude of the component of the velocity change for the left extruder.");
+
+		 private JFormattedTextField normalMoveAcceleration = PositiveTextFieldInt(repNF, 10000,
+           "The maximum rate of acceleration for normal printing moves in which filament is extruded and " +
+           "there is motion along any or all of the X, Y, or Z axes.  I.e., the maximum magnitude of the " +
+	   "acceleration vector in units of millimeters per second squared, mm/s\u00B2.");
+
+		 private JFormattedTextField extruderMoveAcceleration = PositiveTextFieldInt(repNF, 10000,
+            "The maximum acceleration or deceleration in mm/s\u00B2 to use in an extruder-only move.  An extruder-only " +
+            "move is a move in which there is no motion along the X, Y, or Z axes: the only motion is the extruder " +
+            "extruding or retracting filament.  Typically this value should be at least as large as the A and B axis max " +
+	    "accelerations.");
+
+		 // Advance K1 & K2: nn.nnnnn
+		 private NumberFormat kNF = NumberFormat.getNumberInstance();
+		 {
+			 kNF.setMaximumFractionDigits(5);
+			 kNF.setMaximumIntegerDigits(2);   // Even 1 may be excessive
+		 }
+
+		 private JFormattedTextField JKNAdvance1 = PositiveTextFieldDouble(kNF,
+           "The value of the empirically fit Jetty-Kubicek-Newman Advance parameter K which helps control " +
+           "the amount of additional plastic that should be extruded during the acceleration phase and not " +
+           "extruded during the deceleration phase of each move.  It can be used to remove blobbing and " +
+           "splaying on the corners of cubes or at the junctions between line segments.  Typical values " +
+           "for this parameter range from around 0.0001 to 0.01.  Set to a value of 0 to disable use of " +
+           "this compensation.");
+
+		 private JFormattedTextField JKNAdvance2 = PositiveTextFieldDouble(kNF,
+           "The value of the empirically fit Jetty-Kubicek-Newman Advance parameter K2, which helps during the " +
+           "deceleration phase of moves to reduce built up pressure in the extruder nozzle.  Typical values for " +
+           "this parameter range from around 0.001 to 0.1.  Set to a value of 0 to disable use of this " +
+           "compensation.");
+
+		 private JFormattedTextField extruderDeprimeA = PositiveTextFieldInt(repNF, 10000,
+           "The number of steps to retract the right extruder's filament when the pipeline of buffered moves empties " +
+           "or a travel-only move is encountered.  Set to a value of 0 to disable this feature for this extruder.  " +
+           "Do not use with Skeinforge's Reversal plugin nor Skeinforge's Dimension plugin's \"Retraction Distance\".");
+
+		 private JFormattedTextField extruderDeprimeB = PositiveTextFieldInt(repNF, 10000,
+           "The number of steps to retract the left extruder's filament when the pipeline of buffered moves empties " +
+           "or a travel-only move is encountered.  Set to a value of 0 to disable this feature for this extruder.  " +
+           "Do not use with Skeinforge's Reversal plugin nor Skeinforge's Dimension plugin's \"Retraction Distance\".");
+
+		 private JCheckBox overrideGCodeTempBox = new JCheckBox();
+		 {
+			 overrideGCodeTempBox.setToolTipText(wrap2HTML(width,
+                    "When enabled, override the gcode temperature settings using the preheat " +
+		    "temperature settings for the extruders and build platform."));
+		 }
+           
+		 private JCheckBox preheatDuringPauseBox = new JCheckBox();
+		 {
+			 preheatDuringPauseBox.setToolTipText(wrap2HTML(width,
+                    "When enabled, leave the extruder and platform heaters enabled whilst paused."));
+		 }
+                      
+		 // Slowdown is a flag for the Replicator
+		 private JCheckBox slowdownFlagBox = new JCheckBox();
+		 {
+			 slowdownFlagBox.setToolTipText(wrap2HTML(width,
+            "If you are printing an object with fine details or at very fast speeds, it is possible " +
+            "that the planner will be unable to keep up with printing.  This may be evidenced by frequent " +
+            "pauses accompanied by unwanted plastic blobs or zits.  You may be able to mitigate this by " +
+            "enabling \"slowdown\".  When slowdown is enabled and the planner is having difficulty keeping " +
+            "up, the printing feed rate is reduced so as to cause each segment to take more time to print.  " +
+	    "The reduction in printing speed then gives the planner a chance to catch up."));
+		 }
+
+		 private MightySailfishMachineOnboardAccelerationParameters(OnboardParameters target,
+			 						    Driver driver,
+									    JTabbedPane subtabs) {
+			 super(target, driver, subtabs);
+
+			 int dismissDelay = ToolTipManager.sharedInstance().getDismissDelay();
+			 if (dismissDelay < 10*1000)
+				 ToolTipManager.sharedInstance().setDismissDelay(10*1000);
+
+			 draftButton.addActionListener(new ActionListener() {
+					 public void actionPerformed(ActionEvent arg0) {
+						 MightySailfishMachineOnboardAccelerationParameters.this.setUIFields(draftParams);
+					 }
+			  });
+
+			 qualityButton.addActionListener(new ActionListener() {
+					 public void actionPerformed(ActionEvent arg0) {
+						 MightySailfishMachineOnboardAccelerationParameters.this.setUIFields(qualityParams);
+					 }
+			 });
+		 }
+
+		 AccelParams getAccelParamsFromUI() {
+			 return new AccelParams(new AccelParamsTab1(accelerationBox.isSelected(),
+								    new int[] {((Number)normalMoveAcceleration.getValue()).intValue(),
+									       ((Number)extruderMoveAcceleration.getValue()).intValue()},
+								    new int[] {((Number)xAxisMaxAcceleration.getValue()).intValue(),
+									       ((Number)yAxisMaxAcceleration.getValue()).intValue(),
+									       ((Number)zAxisMaxAcceleration.getValue()).intValue(),
+									       ((Number)aAxisMaxAcceleration.getValue()).intValue(),
+									       ((Number)bAxisMaxAcceleration.getValue()).intValue()},
+								    new int[] {((Number)xAxisMaxSpeedChange.getValue()).intValue(),
+									       ((Number)yAxisMaxSpeedChange.getValue()).intValue(),
+									       ((Number)zAxisMaxSpeedChange.getValue()).intValue(),
+									       ((Number)aAxisMaxSpeedChange.getValue()).intValue(),
+									       ((Number)bAxisMaxSpeedChange.getValue()).intValue()}),
+						new AccelParamsTab2(slowdownFlagBox.isSelected(),
 								    overrideGCodeTempBox.isSelected(),
 								    preheatDuringPauseBox.isSelected(),
+								    extruderHoldBox.isSelected(),
+								    newToolheadOffsetSystemBox.isSelected(),
 								    new int[] {((Number)extruderDeprimeA.getValue()).intValue(),
 									       ((Number)extruderDeprimeB.getValue()).intValue()},
 								    new double[] {((Number)JKNAdvance1.getValue()).doubleValue(),
@@ -1117,6 +1618,8 @@
 			 target.setEEPROMParam(OnboardParameters.EEPROMParams.OVERRIDE_GCODE_TEMP, params.tab2.overrideGCodeTempEnabled ? 1 : 0);
 			 target.setEEPROMParam(OnboardParameters.EEPROMParams.PREHEAT_DURING_PAUSE, params.tab2.preheatDuringPauseEnabled ? 1 : 0);
 			 target.setEEPROMParam(OnboardParameters.EEPROMParams.ACCEL_SLOWDOWN_FLAG, params.tab2.slowdownEnabled ? 1 : 0);
+			 target.setEEPROMParam(OnboardParameters.EEPROMParams.EXTRUDER_HOLD, params.tab2.extruderHold ? 1 : 0);
+			 target.setEEPROMParam(OnboardParameters.EEPROMParams.TOOLHEAD_OFFSET_SYSTEM, params.tab2.newToolheadOffsetSystem ? 1 : 0);
 
 			 target.setEEPROMParam(OnboardParameters.EEPROMParams.ACCEL_MAX_EXTRUDER_NORM,    params.tab1.accelerations[0]);
 			 target.setEEPROMParam(OnboardParameters.EEPROMParams.ACCEL_MAX_EXTRUDER_RETRACT, params.tab1.accelerations[1]);
@@ -1151,6 +1654,8 @@
 				     false,
 				     false,
 				     false,
+				     false,
+				     false,
 				     params.accelerations,
 				     params.maxAccelerations,
 				     params.maxSpeedChanges,
@@ -1163,6 +1668,8 @@
 					  boolean slowdownEnabled,
 					  boolean overrideGCodeTempEnabled,
 					  boolean preheatDuringPauseEnabled,
+					  boolean extruderHoldEnabled,
+					  boolean newToolheadOffsetSystem,
 					  int[] accelerations,
 					  int[] maxAccelerations,
 					  int[] maxSpeedChanges,
@@ -1198,6 +1705,8 @@
 				 slowdownFlagBox.setSelected(slowdownEnabled);
 				 overrideGCodeTempBox.setSelected(overrideGCodeTempEnabled);
 				 preheatDuringPauseBox.setSelected(preheatDuringPauseEnabled);
+				 extruderHoldBox.setSelected(extruderHoldEnabled);
+				 newToolheadOffsetSystemBox.setSelected(newToolheadOffsetSystem);
 
 				 if (JKNadvance != null) {
 					 JKNAdvance1.setValue(JKNadvance[0]);
@@ -1220,6 +1729,8 @@
 			 boolean slowdownEnabled = target.getEEPROMParamInt(OnboardParameters.EEPROMParams.ACCEL_SLOWDOWN_FLAG) != 0;
 			 boolean overrideGCodeTempEnabled = target.getEEPROMParamInt(OnboardParameters.EEPROMParams.OVERRIDE_GCODE_TEMP) != 0;
 			 boolean preheatDuringPauseEnabled = target.getEEPROMParamInt(OnboardParameters.EEPROMParams.PREHEAT_DURING_PAUSE) != 0;
+			 boolean extruderHoldEnabled = target.getEEPROMParamInt(OnboardParameters.EEPROMParams.EXTRUDER_HOLD) != 0;
+			 boolean newToolheadOffsetSystem = target.getEEPROMParamInt(OnboardParameters.EEPROMParams.TOOLHEAD_OFFSET_SYSTEM) != 0;
 			 int[] maxAccelerations = new int[] {
 				 target.getEEPROMParamInt(OnboardParameters.EEPROMParams.ACCEL_MAX_ACCELERATION_X),
 				 target.getEEPROMParamInt(OnboardParameters.EEPROMParams.ACCEL_MAX_ACCELERATION_Y),
@@ -1245,10 +1756,10 @@
 			 int[] deprime = new int[] {
 				 target.getEEPROMParamInt(OnboardParameters.EEPROMParams.ACCEL_EXTRUDER_DEPRIME_A),
 				 target.getEEPROMParamInt(OnboardParameters.EEPROMParams.ACCEL_EXTRUDER_DEPRIME_B) };
-		 
+
 			 setUIFields(UI_TAB_1 | UI_TAB_2, accelerationEnabled, slowdownEnabled, overrideGCodeTempEnabled,
-				     preheatDuringPauseEnabled, accelerations, maxAccelerations, maxSpeedChanges,
-				     JKNadvance, deprime);
+				     preheatDuringPauseEnabled, extruderHoldEnabled, newToolheadOffsetSystem, accelerations,
+				     maxAccelerations, maxSpeedChanges, JKNadvance, deprime);
 		 }
 
 		 @Override
@@ -1326,6 +1837,8 @@
 			 addWithSharedToolTips(accelerationMiscTab, "Override the target temperatures in the gcode", overrideGCodeTempBox, "wrap");
 			 addWithSharedToolTips(accelerationMiscTab, "Preheat during paused operations", preheatDuringPauseBox, "wrap");
 			 addWithSharedToolTips(accelerationMiscTab, "Slow printing when acceleration planing falls behind", slowdownFlagBox, "wrap");
+			 addWithSharedToolTips(accelerationMiscTab, "Extruder hold enabled", extruderHoldBox, "wrap");
+			 addWithSharedToolTips(accelerationMiscTab, "Use the new dualstrustion toolhead offset system", newToolheadOffsetSystemBox, "wrap");
 			 addWithSharedToolTips(accelerationMiscTab, "JKN Advance K", JKNAdvance1, "wrap");
 			 addWithSharedToolTips(accelerationMiscTab, "JKN Advance K2", JKNAdvance2, "wrap");
 			 addWithSharedToolTips(accelerationMiscTab, "Right extruder deprime (steps)", extruderDeprimeA, "wrap");
@@ -2076,6 +2589,7 @@
 			 boolean overrideGCodeTempEnabled;
 			 boolean dittoEnabled;
 			 boolean extruderHold;
+			 boolean newToolheadOffsetSystem;
 			 int buzzerRepeats;
 			 int lcdType;
 			 int scriptId;
@@ -2085,6 +2599,7 @@
 			 AccelParamsTab3(boolean overrideGCodeTempEnabled,
 					 boolean dittoEnabled,
 					 boolean extruderHold,
+					 boolean newToolheadOffsetSystem,
 					 int buzzerRepeats,
 					 int lcdType,
 					 int scriptId,
@@ -2094,6 +2609,7 @@
 				 this.overrideGCodeTempEnabled = overrideGCodeTempEnabled;
 				 this.dittoEnabled             = dittoEnabled;
 				 this.extruderHold             = extruderHold;
+				 this.newToolheadOffsetSystem  = newToolheadOffsetSystem;
 				 this.buzzerRepeats            = buzzerRepeats;
 				 this.lcdType                  = lcdType;
 				 this.scriptId                 = scriptId;
@@ -2205,11 +2721,21 @@
 		 private JCheckBox extruderHoldBox = new JCheckBox();
 		 {
 			 extruderHoldBox.setToolTipText(wrap2HTML(width,
-           "Check this box if using a 3mm filament extruder.  Using extruder hold causes the extruder stepper motors " +
-           "to remain engaged throughout the entire build regardless of whether or not the gcode requests that they " +
-           "be disabled via M103 commands.  When 3mm filament extruder stepper motors are disabled, the filament has " +
-	   "a tendency to back out a tiny amount owing to the high pressure within the melt chamber of a 3mm extruder."));
-		 }
+            "Check this box if using a 3mm filament extruder.  Using extruder hold causes the extruder stepper motors " +
+            "to remain engaged throughout the entire build regardless of whether or not the gcode requests that they " +
+            "be disabled via M103 commands.  When 3mm filament extruder stepper motors are disabled, the filament has " +
+            "a tendency to back out a tiny amount owing to the high pressure within the melt chamber of a 3mm extruder."));
+		 } 
+
+		 private JCheckBox newToolheadOffsetSystemBox = new JCheckBox();
+		 {
+			 newToolheadOffsetSystemBox.setToolTipText(wrap2HTML(width,
+            "Check this box if you wish to use the \"new\" Dualstrusion toolhead offset system used in dualstrustion GCode " +
+            "generated by MakerWare and ReplicatorG 40 and later.  Do not check this box if you wish to use the older style " +
+            "dualstrusion GCode generated by ReplicatorG 39 and earlier.  You do not need to adjust your toolhead offsets: " +
+            "Sailfish will automatically adjust them for you.  However, the values stored in the bot's EEPROM will be left " +
+            "unchanged."));
+		 } 
 
 		 private JButton draftButton = new JButton("Quick Draft");
 		 {
@@ -2433,6 +2959,7 @@
 						new AccelParamsTab3(overrideGCodeTempBox.isSelected(),
 								    dittoBox.isSelected(),
 								    extruderHoldBox.isSelected(),
+								    newToolheadOffsetSystemBox.isSelected(),
 								    ((Number)buzzerRepeats.getValue()).intValue(),
 								    lcdType,
 								    scriptId,
@@ -2452,6 +2979,7 @@
 			 target.setAccelerationStatus(params.tab1.accelerationEnabled ? (byte)1 : (byte)0);
 			 target.setEEPROMParam(OnboardParameters.EEPROMParams.DITTO_PRINT_ENABLED, params.tab3.dittoEnabled ? 1 : 0);
 			 target.setEEPROMParam(OnboardParameters.EEPROMParams.EXTRUDER_HOLD, params.tab3.extruderHold ? 1 : 0);
+			 target.setEEPROMParam(OnboardParameters.EEPROMParams.TOOLHEAD_OFFSET_SYSTEM, params.tab3.newToolheadOffsetSystem ? 1 : 0);
 			 target.setEEPROMParam(OnboardParameters.EEPROMParams.OVERRIDE_GCODE_TEMP, params.tab3.overrideGCodeTempEnabled ? 1 : 0);
 
 			 int lv = params.tab2.slowdownEnabled ? 1 : 0;
@@ -2548,6 +3076,7 @@
 				 overrideGCodeTempBox.setSelected(tab3.overrideGCodeTempEnabled);
 				 dittoBox.setSelected(tab3.dittoEnabled);
 				 extruderHoldBox.setSelected(tab3.extruderHold);
+				 newToolheadOffsetSystemBox.setSelected(tab3.newToolheadOffsetSystem);
 				 buzzerRepeats.setValue(tab3.buzzerRepeats);
 				 int lcdIndex;
 				 if (tab3.lcdType == 50)
@@ -2582,6 +3111,7 @@
 			 boolean overrideGCodeTempEnabled = target.getEEPROMParamInt(OnboardParameters.EEPROMParams.OVERRIDE_GCODE_TEMP) != 0;
 			 boolean dittoEnabled = target.getEEPROMParamInt(OnboardParameters.EEPROMParams.DITTO_PRINT_ENABLED) != 0;
 			 boolean extruderHold = target.getEEPROMParamInt(OnboardParameters.EEPROMParams.EXTRUDER_HOLD) != 0;
+			 boolean newToolheadOffsetSystem = target.getEEPROMParamInt(OnboardParameters.EEPROMParams.TOOLHEAD_OFFSET_SYSTEM) != 0;
 			 int buzzerRepeats = target.getEEPROMParamInt(OnboardParameters.EEPROMParams.BUZZER_REPEATS);
 			 int scriptId = target.getEEPROMParamInt(OnboardParameters.EEPROMParams.MOOD_LIGHT_SCRIPT);
 			 int lcdType = target.getEEPROMParamInt(OnboardParameters.EEPROMParams.LCD_TYPE);
@@ -2632,6 +3162,7 @@
 				     new AccelParamsTab3(overrideGCodeTempEnabled,
 							 dittoEnabled,
 							 extruderHold,
+							 newToolheadOffsetSystem,
 							 buzzerRepeats,
 							 lcdType,
 							 scriptId,
@@ -2733,13 +3264,13 @@
 			 addWithSharedToolTips(miscTab, "Buzzer repeats", buzzerRepeats, "wrap");
 
 			 addWithSharedToolTips(miscTab, "Left extruder (tool 1) preheat & override temperature (C)", tool1Temp);
-			 addWithSharedToolTips(miscTab, "Ditto (duplicate) printing enabled", dittoBox, "wrap");
-
-			 addWithSharedToolTips(miscTab, "Platform preheat & override temperature (C)",
-					       platformTemp);
-			 addWithSharedToolTips(miscTab, "Extruder hold enabled", extruderHoldBox, "wrap");
-
 			 addWithSharedToolTips(miscTab, "Mood light script", moodLightScript, "wrap");
+
+			 addWithSharedToolTips(miscTab, "Platform preheat & override temperature (C)",platformTemp);
+			 addWithSharedToolTips(miscTab, "Ditto (duplicate) printing enabled", dittoBox, "wrap");
+			 addWithSharedToolTips(miscTab, "Extruder hold enabled", extruderHoldBox, "wrap");
+			 addWithSharedToolTips(miscTab, "Use the new dualstrustion toolhead offset system",
+					       newToolheadOffsetSystemBox, "wrap");
 
 			 addWithSharedToolTips(miscTab, "Mood light color",
 					       moodLightCustomColor, "span 4, wrap, gapbottom push, gapright push");

@@ -244,19 +244,17 @@ public class DriverBaseImplementation implements Driver, DriverQueryInterface{
 		return preferredVersion;
 	}
 
-	//// Returns the version of the s3g/s4g file, i.e. 3 or 4
-	//// Set when build to file is called
-	//// If return value = 0, no version has been set (we're not saving to file)
-        public int getBuildToFileVersion() {
+	//Return s3g/x3g version (3 or 4)
+	//Set when build is called, if value = 0
+	//No version has been set(not saving to file)
+	public int getBuildToFileVersion() {
 		return buildToFileVersion;
-        }
+	}
 
-	//// Sets the version of the s3g/s4g file, i.e. 3 or 4
-	//// When build to file is called
-	//// If v = 0, no version has been set (we're not saving to file)
-        public void setBuildToFileVersion(int v) {
-		buildToFileVersion = v;
-        }
+	//Sets verision s3g/x3g (3 or 4)
+	public void setBuildToFileVersion(int version){
+		buildToFileVersion = version;
+	}
 
 	/***************************************************************************
 	 * Machine positioning functions

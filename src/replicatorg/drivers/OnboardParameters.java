@@ -58,8 +58,8 @@ public interface OnboardParameters {
 		ENDSTOP_INVERSION,          //
 		ESTOP_CONFIGURATION,        //
 		EXTRUDE_DURATION,           //
+		EXTRUDER_HOLD,		    //
 		EXTRUDE_MMS,                //
-		EXTRUDER_HOLD,              //
 		FILAMENT_USED,              // Lifetime filament used (steps)
 		FILAMENT_USED_TRIP,         // Filament used since trip counter last reset (steps)
 		HOMING_FEED_RATE_X,         //
@@ -86,6 +86,7 @@ public interface OnboardParameters {
 		STEPS_PER_MM_Z,             // Z axis steps per millimeter (steps/mm)
 		TOOL0_TEMP,                 // Preheat & Override tool 0 temperature (C)
 		TOOL1_TEMP,                 // Preheat & Override tool 1 temperature (C)
+		TOOLHEAD_OFFSET_SYSTEM,     //
 		VERSION_HIGH,               //
 		VERSION_LOW,                //
 	};

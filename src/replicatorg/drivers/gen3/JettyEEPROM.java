@@ -78,6 +78,7 @@ class SailfishEEPROM extends JettyG3EEPROM {
 	final public static int DITTO_PRINT_ENABLED             = 0x01DC;
 	final public static int VID_PID_INFO		        = 0x01E5;
 	final public static int EXTRUDER_HOLD                   = 0x01E9;
+	final public static int TOOLHEAD_OFFSET_SYSTEM          = 0X01EA;
 }
 
 
@@ -101,6 +102,9 @@ class JettyMBEEPROM extends Sanguino3GEEPRPOM {
 	final public static int DEFAULTS_FLAG                  = 0x0265;
 	final public static int FUTURE_USE                     = 0x0266;
 	final public static int AXIS_MAX_FEEDRATES             = 0x027A;
+	final public static int EXTRUDER_HOLD                  = 0x0F92;
+	final public static int TOOLHEAD_OFFSET_SYSTEM         = 0x0F93;
 	final public static int OVERRIDE_GCODE_TEMP            = 0x0FFD;
 	final public static int HEAT_DURING_PAUSE              = 0x0FFE;
+	final public static int DITTO_PRINT_ENABLED            = 0x0FFF;
 }

@@ -95,6 +95,8 @@ public class DriverFactory {
 			return loadClass("replicatorg.drivers.gen3.Replicator2", xml);
 		else if (driverName.equals("mightyboard"))
 			return loadClass("replicatorg.drivers.gen3.MightyBoard", xml);
+		else if (driverName.equals("mightysailfish"))
+			return loadClass("replicatorg.drivers.gen3.MightySailfish", xml);
 		else if (driverName.equals("serialpassthrough"))
 			return loadClass("replicatorg.drivers.SerialPassthroughDriver", xml);
 		else if (driverName.equals("sanguino3g"))
