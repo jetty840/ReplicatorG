@@ -1,6 +1,7 @@
 (**** The Replicator Utility ****)
 (* Change the Filament in Toolhead T0, Right Toolhead *)
-
+M103 (disable RPM)
+M73 P0 (enable build progress 'Change Filament')
 M01  (Time to change the filament in the RIGHT extruder.  Press OK when you have removed the black feeding hose so we can begin (to remove, just push down on the grey ring and pull up on the black hose).)
 M01  (I am going to start heating up the extruder head so we can remove the filament currently in the extruder!  Press OK to start heating.)
 M70 P5 (Heating for            filament release)
@@ -8,8 +9,6 @@ G21 (set units to mm)
 G90 (set positioning to absolute)
 M108 R3.0 T0 (set extruder speed left)
 M103 T0 (Make sure extruder is off)
-
-M73 P0 (enable build progress 'Change Filament')
 
 M104 S225 T0 (set extruder temperature)
 

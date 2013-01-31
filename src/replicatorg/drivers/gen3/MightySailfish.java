@@ -1,7 +1,8 @@
 /*
- MightyBoard.java
+ MightySailfish.java
 
- This is a driver to control a machine that uses the MightyBoard electronics.
+ This is a driver to control a machine that uses the MightyBoard electronics
+ with the Sailfish firmware.
 
  Part of the ReplicatorG project - http://www.replicat.org
  Copyright (c) 2008 Zach Smith
@@ -42,15 +43,15 @@ import replicatorg.machine.model.ToolModel;
 import replicatorg.util.Point5d;
 
 /// EEPROM offsets for PID electronics control
-final class ExtruderPIDTermOffsets implements EEPROMClass {
-	final static int P_TERM_OFFSET = ToolheadEEPROM.EXTRUDER_PID_BASE + 0x0000;
-	final static int I_TERM_OFFSET = ToolheadEEPROM.EXTRUDER_PID_BASE + 0x0002;
-	final static int D_TERM_OFFSET = ToolheadEEPROM.EXTRUDER_PID_BASE + 0x0004;
+final class SailfishExtruderPIDTermOffsets implements EEPROMClass {
+	final static int P_TERM_OFFSET = SailfishToolheadEEPROM.EXTRUDER_PID_BASE + 0x0000;
+	final static int I_TERM_OFFSET = SailfishToolheadEEPROM.EXTRUDER_PID_BASE + 0x0002;
+	final static int D_TERM_OFFSET = SailfishToolheadEEPROM.EXTRUDER_PID_BASE + 0x0004;
 };
 
 
 /// EEPROM offset class for toolhead info/data
-class ToolheadEEPROM implements EEPROMClass
+class SailfishToolheadEEPROM implements EEPROMClass
 {
 	////Feature map: 2 bytes
 	public static final int FEATURES				= 0x0000;
@@ -79,7 +80,7 @@ class ToolheadEEPROM implements EEPROMClass
 }
 
 
-class MightyBoard5XEEPROM implements EEPROMClass
+class MightySailfish5XEEPROM implements EEPROMClass
 {
 	/// EEPROM for Mightyboard in the 4.x and 5.x firmware version
 	/// NOTE: this file needs to match the data in EepromMap.hh for all 
@@ -189,12 +190,12 @@ class MightyBoard5XEEPROM implements EEPROMClass
   /// Estimated lifetime print hours, 3bytes
   final public static int TOTAL_BUILD_TIME			= 0x01A0;
   /// start of free space
-  final public static int FREE_EEPROM_STARTS = 0x01A4;
+  final public static int FREE_EEPROM_STARTS = 0x0210;
 }
 
 
 
-class MightyBoard6X2EEPROM extends MightyBoard5XEEPROM
+class MightySailfish6X2EEPROM extends MightySailfish5XEEPROM
 {
 	/// EEPROM for Mightyboard in the 6.1+ firmware version with Jetty Acceleration
 	/// NOTE: this file needs to match the data in EepromMap.hh for all 
@@ -214,16 +215,12 @@ class MightyBoard6X2EEPROM extends MightyBoard5XEEPROM
 	final public static int DEFAULTS_FLAG                  = 0x016E+0x1A;
 	final public static int FUTURE_USE                     = 0x01D8+0x0E;
 	final public static int AXIS_MAX_FEEDRATES             = 0x01F4;
-  /// Hardware configuration settings 
-  final public static int BOTSTEP_TYPE      			= 0x0208;
-  /// Heater calibration byte
-  final public static int HEATER_CALIBRATION      = 0x020A;
-  final public static int AXIS_LENGTHS_MM         = 0x0210;
-  final public static int AXIS_HOME_POSITIONS_MM   = 0x0224;
-      
-  /// start of free space
-  final public static int FREE_EEPROM_STARTS			= 0x0238;
-
+	/// Hardware configuration settings 
+	final public static int BOTSTEP_TYPE      	       = 0x0208;
+	/// Heater calibration byte
+	final public static int HEATER_CALIBRATION             = 0x020A;
+	/// start of free space
+	final public static int FREE_EEPROM_STARTS	       = 0x020B;
 }
 
 
@@ -232,7 +229,7 @@ class MightyBoard6X2EEPROM extends MightyBoard5XEEPROM
  * Object for managing the connection to the MightyBoard hardware.
  * @author FarMcKon
  */
-public class MightyBoard extends Makerbot4GAlternateDriver
+public class MightySailfish extends Makerbot4GAlternateDriver
 	implements InteractiveDisplay
 	//implements OnboardParameters, SDCardCapture
 {
@@ -272,11 +269,11 @@ public class MightyBoard extends Makerbot4GAlternateDriver
 	/** 
 	 * Standard Constructor
 	 */
-	public MightyBoard() {
+	public MightySailfish() {
 		super();
 		ledColorByEffect = new Hashtable();
 		ledColorByEffect.put(0, Color.BLACK);
-		Base.logger.info("Created a MightyBoard");
+		Base.logger.info("Created a MightySailfish");
 
 		stepperValues= new Hashtable();
 		
@@ -286,11 +283,11 @@ public class MightyBoard extends Makerbot4GAlternateDriver
 		preferredVersion = new Version(6,2);
 		minimumAccelerationVersion = new Version(5,3);
 		minAdvancedFeatureVersion = new Version(6,0);
-		minimumJettyAccelerationVersion = new Version(7,0);
+		minimumJettyAccelerationVersion = new Version(6,2);
 	}
 
 	public String getDriverName() {
-		return "MightyBoard";
+		return "MightySailfish";
 	}
 	
 	/**
@@ -361,10 +358,167 @@ public class MightyBoard extends Makerbot4GAlternateDriver
 		return true;
 	}
 	
-        
+	/**
+	 * Gets the 'Advanced Version field, containing extended
+	 * build version info
+	 *  (_Adv functions are advanced, tied to minAdvancedVersionNumber 
+	 * @return
+	 */
+	public boolean getVersion_Adv()
+	{
+		/*TODO:
+		  payload = struct.pack(
+	      '<BH',
+	      host_query_command_dict['GET_ADVANCED_VERSION'],
+	      s3g_version,
+	    )
+
+	    response = self.writer.send_query_payload(payload)
+	    [response_code, version, internal_version, 
+	    reserved_a, reserved_b] = makerbot_driver.Encoder.unpack_response('<BHHHH', response)
+
+	    version_info = {
+	    'Version' : version,
+	    'InternalVersion' : internal_version,
+	    'ReservedA'  : reserved_a,
+	    'ReservedB'  : reserved_b,
+	    }
+	   */
+		return false;
+	}
+
+	public boolean getBuildStatistics_Adv()
+	{
+		/*
+		payload = struct.pack(
+		  '<B',
+		  host_query_command_dict['GET_BUILD_STATS'],
+		)		
+		response = self.writer.send_query_payload(payload)
+		
+		[response_code, build_state,
+		 build_hours, build_minutes,
+		 line_number, reserved] = makerbot_driver.Encoder.unpack_response('<BBBBLL', response)
+		
+		info = {
+		'BuildState' : build_state,
+		'BuildHours' : build_hours,
+		'BuildMinutes' : build_minutes,
+		'LineNumber' : line_number,
+		'Reserved' : reserved
+		}
+		return info
+		 */
+		return false;
+	}
+       
+	public boolean getMotheboardModStats_Adv() 
+	{/* """
+		Retrieve bits of information about the motherboard
+		POWER_ERRPR : An error was detected with the system power.
+		HEAT_SHUTDOWN : The heaters were shutdown because the bot was inactive for over 20 minutes
+		@return: A python dictionary of various flags and whether theywere set or not at reset
+		"""
+		payload = struct.pack(
+		  '<B',
+		  host_query_command_dict['GET_MOTHERBOARD_STATUS'],
+		)
+		
+		response = self.writer.send_query_payload(payload)
+		
+		
+		[response_code, bitfield] = makerbot_driver.Encoder.unpack_response('<BB', response)
+		
+		bitfield = makerbot_driver.Encoder.decode_bitfield(bitfield)
+		flags = {
+		'POWER_ERROR'   : bitfield[7],
+		'HEAT_SHUTDOWN' : bitfield[6],
+		}
+		return flags
+		
+		 */
+		return false;
+	}
+
+	public boolean getToolheadStats_Adv()
+	{
+		/*
+		 *  def get_tool_status(self, tool_index):
+	    """
+	    Retrieve some information about the tool, as a status dictionary
+	    statusDict = {
+	      ExtruderReady : The extruder has reached target temp
+	      ExtruderNotPluggedIn : The extruder thermocouple is not detected by the bot
+	      ExturderOverMaxTemp : The temperature measured at the extruder is greater than max allowed
+	      ExtruderNotHeating : In the first 40 seconds after target temp was set, the extruder is not heating up as expected
+	      ExtruderDroppingTemp : After reaching and maintaining temperature, the extruder temp has dropped 30 degrees below target
+	      PlatformError: an error was detected with the platform heater (if the tool supports one).  
+	        The platform heater will fail if an error is detected with the sensor (thermocouple) 
+	        or if the temperature reading appears to be unreasonable.
+	      ExtruderError: An error was detected with the extruder heater (if the tool supports one).  
+	        The extruder heater will fail if an error is detected with the sensor (thermocouple) or 
+	        if the temperature reading appears to be unreasonable
+	      }
+	     @param int tool_index: The tool we would like to query for information
+	     @return A dictionary containing status information specified above 
+	   """
+	    response = self.tool_query(tool_index, slave_query_command_dict['GET_TOOL_STATUS'])
+	
+	    [resonse_code, bitfield] = makerbot_driver.Encoder.unpack_response('<BB', response)
+	
+	    bitfield = makerbot_driver.Encoder.decode_bitfield(bitfield)
+	
+	    returnDict = {
+	      "ExtruderReady"        : bitfield[0],
+	      "ExtruderNotPluggedIn" : bitfield[1],
+	      "ExtruderOverMaxTemp"  : bitfield[2],
+	      "ExtruderNotHeating"   : bitfield[3],
+	      "ExtruderDroppingTemp" : bitfield[4],
+	      "PlatformError"        : bitfield[6],
+	      "ExtruderError"        : bitfield[7],
+	    }
+	    return returnDict
+		 */
+		return false;
+	}
+
+	public boolean getCommunicationStats()
+	{
+		/*
+	  def get_communication_stats(self):
+	    """
+	    Get some communication statistics about traffic on the tool network from the Host.
+	    @return a dictionary of communication stats, keyed by stat name
+	    """
+	    payload = struct.pack(
+	      '<B',
+	      host_query_command_dict['GET_COMMUNICATION_STATS'],
+	    )
+	
+	    response = self.writer.send_query_payload(payload)
+	
+	    [response_code,
+	     packetsReceived,
+	     packetsSent,
+	     nonResponsivePacketsSent,
+	     packetRetries,
+	     noiseBytes] = makerbot_driver.Encoder.unpack_response('<BLLLLL', response)
+	
+	    info = {
+	    'PacketsReceived' : packetsReceived,
+	    'PacketsSent' : packetsSent,
+	    'NonResponsivePacketsSent' : nonResponsivePacketsSent,
+	    'PacketRetries' : packetRetries,
+	    'NoiseBytes' : noiseBytes,
+	    }
+	    return info
+	
+		 */
+		return false;
+	}
+
 	/// Read acceleration OFF/ON status from Bot
 	private void getAccelerationState(){
-	    
 	    Base.logger.fine("Geting Acceleration Status from Bot");
 	    acceleratedFirmware = getAccelerationStatus() != 0;
 	    if(acceleratedFirmware)
@@ -377,7 +531,7 @@ public class MightyBoard extends Makerbot4GAlternateDriver
 	private void getStepperValues() {
 		
 		int stepperCountMightyBoard = 5;
-		Base.logger.fine("MightyBoard initial Sync");
+		Base.logger.fine("MightySailfish initial Sync");
 		for(int i = 0; i < stepperCountMightyBoard; i++)
 		{
 			int vRef = getStoredStepperVoltage(i); 
@@ -444,7 +598,7 @@ public class MightyBoard extends Makerbot4GAlternateDriver
 		boolean needsReset = false;
 		int stepperCountMightyBoard = 5;
 		for(int i = 0; i < stepperCountMightyBoard; i++) {
-			double firmwareAxisStepsPerMM = read32FromEEPROM(MightyBoard6X2EEPROM.AXIS_STEPS_PER_MM + i*4);
+			double firmwareAxisStepsPerMM = read32FromEEPROM(MightySailfish6X2EEPROM.AXIS_STEPS_PER_MM + i*4);
 
 			double val = 0.0;
 
@@ -472,7 +626,7 @@ public class MightyBoard extends Makerbot4GAlternateDriver
 			if ( firmwareAxisStepsPerMM != val ) {
 				Base.logger.info("Bot StepsPerMM Axis " + i + ": " + firmwareAxisStepsPerMM / 1000000.0 + 
 						 " machine xml has: " + val / 1000000.0+ ", updating bot");
-				write32ToEEPROM32(MightyBoard6X2EEPROM.AXIS_STEPS_PER_MM + i*4, (int)val);
+				write32ToEEPROM32(MightySailfish6X2EEPROM.AXIS_STEPS_PER_MM + i*4, (int)val);
 				needsReset = true;
 			}
 		}
@@ -494,7 +648,7 @@ public class MightyBoard extends Makerbot4GAlternateDriver
 		boolean needsReset = false;
 		int stepperCountMightyBoard = 5;
 		for(int i = 0; i < stepperCountMightyBoard; i++) {
-			double firmwareAxisMaximumFeedRate = read32FromEEPROM(MightyBoard6X2EEPROM.AXIS_MAX_FEEDRATES + i*4);
+			double firmwareAxisMaximumFeedRate = read32FromEEPROM(MightySailfish6X2EEPROM.AXIS_MAX_FEEDRATES + i*4);
 
 			double val = 0.0;
 
@@ -520,7 +674,7 @@ public class MightyBoard extends Makerbot4GAlternateDriver
 			if ( firmwareAxisMaximumFeedRate != val ) {
 				Base.logger.info("Bot Maximum Feed Rate Axis " + i + ": " + firmwareAxisMaximumFeedRate + 
 						 " machine xml has: " + val + ", updating bot");
-				write32ToEEPROM32(MightyBoard6X2EEPROM.AXIS_MAX_FEEDRATES + i*4, (int)val);
+				write32ToEEPROM32(MightySailfish6X2EEPROM.AXIS_MAX_FEEDRATES + i*4, (int)val);
 				needsReset = true;
 			}
 		}
@@ -542,7 +696,7 @@ public class MightyBoard extends Makerbot4GAlternateDriver
 		boolean needsReset = false;
 		int stepperCountMightyBoard = 5;
 		for(int i = 0; i < stepperCountMightyBoard; i++) {
-			int firmwareAxisLength = read32FromEEPROM(MightyBoard6X2EEPROM.AXIS_LENGTHS + i*4);
+			int firmwareAxisLength = read32FromEEPROM(MightySailfish6X2EEPROM.AXIS_LENGTHS + i*4);
 			int val = 0;
 
 			switch (i) {
@@ -567,7 +721,7 @@ public class MightyBoard extends Makerbot4GAlternateDriver
 			if ( firmwareAxisLength != val ) {
 				Base.logger.info("Bot Length Axis " + i + ": " + firmwareAxisLength + 
 						 " machine xml has: " + val + ", updating bot");
-				write32ToEEPROM32(MightyBoard6X2EEPROM.AXIS_LENGTHS + i*4, val);
+				write32ToEEPROM32(MightySailfish6X2EEPROM.AXIS_LENGTHS + i*4, val);
 				needsReset = true;
 			}
 		}
@@ -587,7 +741,7 @@ public class MightyBoard extends Makerbot4GAlternateDriver
 	public int getStoredStepperVoltage(int stepperId) 
 	{
 		Base.logger.fine("Getting stored stepperVoltage: " + stepperId );
-		int vRefForPotLocation = MightyBoard5XEEPROM.DIGI_POT_SETTINGS + stepperId;
+		int vRefForPotLocation = MightySailfish5XEEPROM.DIGI_POT_SETTINGS + stepperId;
 		
 		Base.logger.finer("Getting stored stepperVoltage from eeprom addr: " + vRefForPotLocation  );
 
@@ -738,7 +892,7 @@ public class MightyBoard extends Makerbot4GAlternateDriver
 	
 	@Override
 	public void setStoredStepperVoltage(int stepperId, int referenceValue) {
-		Base.logger.finer("MightyBoard sending storeStepperVoltage");
+		Base.logger.finer("MightySailfish sending storeStepperVoltage");
 
 		if(stepperId > 5) {
 			Base.logger.severe("store invalid stepper Id" + Integer.toString(stepperId) );
@@ -747,7 +901,7 @@ public class MightyBoard extends Makerbot4GAlternateDriver
 		if (referenceValue > 127)		referenceValue= 127; 
 		else if (referenceValue < 0)	referenceValue= 0; 
 
-		int vRefForPotLocation = MightyBoard5XEEPROM.DIGI_POT_SETTINGS + stepperId;
+		int vRefForPotLocation = MightySailfish5XEEPROM.DIGI_POT_SETTINGS + stepperId;
 		byte b[] = new byte[1];
 		b[0] =  (byte)referenceValue;
 		checkEEPROM();
@@ -780,7 +934,7 @@ public class MightyBoard extends Makerbot4GAlternateDriver
 	 */
 	@Override
 	public void setLedStrip(Color color, int effectId) throws RetryException {
-		Base.logger.fine("MightyBoard sending setLedStrip");
+		Base.logger.fine("MightySailfish sending setLedStrip");
 
 	/*	PacketBuilder pb1 = new PacketBuilder(MotherboardCommandCode.SET_LED_STRIP_COLOR.getCode());
 		pb1.add8(3);//color.getRed());
@@ -809,7 +963,7 @@ public class MightyBoard extends Makerbot4GAlternateDriver
 
 		PacketResponse resp =  runCommand(pb.getPacket());
 		if(resp.isOK()) {
-			Base.logger.fine("MightyBoard setLedStrip went OK");
+			Base.logger.fine("MightySailfish setLedStrip went OK");
 			ledColorByEffect.put(effectId, color);	
 		}
 	}
@@ -824,7 +978,7 @@ public class MightyBoard extends Makerbot4GAlternateDriver
 	 * @throws RetryException
 	 */
 	public void sendBeep(int frequencyHz, int durationMs, int effectId) throws RetryException {
-		Base.logger.fine("MightyBoard sending setBeep" + frequencyHz + durationMs + " effect" + effectId);
+		Base.logger.fine("MightySailfish sending setBeep" + frequencyHz + durationMs + " effect" + effectId);
 		Base.logger.fine("max " + Integer.MAX_VALUE);
 		PacketBuilder pb = new PacketBuilder(MotherboardCommandCode.SET_BEEP.getCode());
 		pb.add16(frequencyHz);
@@ -832,7 +986,7 @@ public class MightyBoard extends Makerbot4GAlternateDriver
 		pb.add8(effectId);		
 		PacketResponse resp =  runCommand(pb.getPacket());
 		if(resp.isOK()) {
-			Base.logger.fine("MightyBoard sendBeep went OK");
+			Base.logger.fine("MightySailfish sendBeep went OK");
 			//beepByEffect.put(effectId, color);	
 		}
 
@@ -843,18 +997,18 @@ public class MightyBoard extends Makerbot4GAlternateDriver
 			// Versions 2 and up have onboard eeprom defaults and rely on 0xff values
 			eepromChecked = true;
 			if (version.getMajor() < 2) {
-				byte versionBytes[] = readFromEEPROM(MightyBoard5XEEPROM.VERSION_LOW,2);
+				byte versionBytes[] = readFromEEPROM(MightySailfish5XEEPROM.VERSION_LOW,2);
 				if (versionBytes == null || versionBytes.length < 2) 
 					return;
-				if ((versionBytes[0] != MightyBoard5XEEPROM.EEPROM_CHECK_LOW) || 
-					(versionBytes[1] != MightyBoard5XEEPROM.EEPROM_CHECK_HIGH)) 
+				if ((versionBytes[0] != MightySailfish5XEEPROM.EEPROM_CHECK_LOW) || 
+					(versionBytes[1] != MightySailfish5XEEPROM.EEPROM_CHECK_HIGH)) 
 				{
 					Base.logger.severe("Cleaning EEPROM to v1.X state");
 					// Wipe EEPROM
 					byte eepromWipe[] = new byte[16];
 					Arrays.fill(eepromWipe,(byte)0x00);
-					eepromWipe[0] = MightyBoard5XEEPROM.EEPROM_CHECK_LOW;
-					eepromWipe[1] = MightyBoard5XEEPROM.EEPROM_CHECK_HIGH;
+					eepromWipe[0] = MightySailfish5XEEPROM.EEPROM_CHECK_LOW;
+					eepromWipe[1] = MightySailfish5XEEPROM.EEPROM_CHECK_HIGH;
 					writeToEEPROM(0,eepromWipe);
 					Arrays.fill(eepromWipe,(byte)0x00);
 					for (int i = 16; i < 256; i+=16) {
@@ -869,7 +1023,7 @@ public class MightyBoard extends Makerbot4GAlternateDriver
 	@Override
 	public EnumSet<AxisId> getInvertedAxes() {
 		checkEEPROM();
-		byte[] b = readFromEEPROM(MightyBoard5XEEPROM.AXIS_INVERSION,1);
+		byte[] b = readFromEEPROM(MightySailfish5XEEPROM.AXIS_INVERSION,1);
 		EnumSet<AxisId> r = EnumSet.noneOf(AxisId.class);
 		if(b != null) {
 			if ( (b[0] & (0x01 << 0)) != 0 ) r.add(AxisId.X);
@@ -893,7 +1047,7 @@ public class MightyBoard extends Makerbot4GAlternateDriver
 		if (axes.contains(AxisId.A)) b[0] = (byte)(b[0] | (0x01 << 3));
 		if (axes.contains(AxisId.B)) b[0] = (byte)(b[0] | (0x01 << 4));
 		if (axes.contains(AxisId.V)) b[0] = (byte)(b[0] | (0x01 << 7));
-		writeToEEPROM(MightyBoard5XEEPROM.AXIS_INVERSION,b);
+		writeToEEPROM(MightySailfish5XEEPROM.AXIS_INVERSION,b);
 	}
 
 	@Override
@@ -904,14 +1058,14 @@ public class MightyBoard extends Makerbot4GAlternateDriver
 		
 		checkEEPROM();
 		
-		byte[] data = readFromEEPROM(MightyBoard5XEEPROM.MACHINE_NAME,
-				MightyBoard5XEEPROM.MAX_MACHINE_NAME_LEN);
+		byte[] data = readFromEEPROM(MightySailfish5XEEPROM.MACHINE_NAME,
+				MightySailfish5XEEPROM.MAX_MACHINE_NAME_LEN);
 
 		if (data == null)
 			{ return "no name"; }
 		try {
 			int len = 0;
-			while (len < MightyBoard5XEEPROM.MAX_MACHINE_NAME_LEN && data[len] != 0) len++;
+			while (len < MightySailfish5XEEPROM.MAX_MACHINE_NAME_LEN && data[len] != 0) len++;
 			String name = new String(data,0,len,"ISO-8859-1");
 			this.botName = name;
 		} catch (UnsupportedEncodingException e) {
@@ -922,7 +1076,7 @@ public class MightyBoard extends Makerbot4GAlternateDriver
 
 
 	public void setMachineName(String machineName) {
-		int maxLen = MightyBoard5XEEPROM.MAX_MACHINE_NAME_LEN;
+		int maxLen = MightySailfish5XEEPROM.MAX_MACHINE_NAME_LEN;
 		machineName = new String(machineName);
 		if (machineName.length() > maxLen) { 
 			machineName = machineName.substring(0,maxLen);
@@ -934,7 +1088,7 @@ public class MightyBoard extends Makerbot4GAlternateDriver
 			if (idx == maxLen) break;
 		}
 		if (idx < maxLen) b[idx] = 0;
-		writeToEEPROM(MightyBoard5XEEPROM.MACHINE_NAME,b);
+		writeToEEPROM(MightySailfish5XEEPROM.MACHINE_NAME,b);
 	}
 	
 
@@ -952,9 +1106,7 @@ public class MightyBoard extends Makerbot4GAlternateDriver
   
     double val;
 
-    if(true || hasJettyAcceleration()){
-      
-		  val = read32FromEEPROM(MightyBoard5XEEPROM.AXIS_HOME_POSITIONS + axis*4);
+      val = read32FromEEPROM(MightySailfish5XEEPROM.AXIS_HOME_POSITIONS + axis*4);
       Point5d stepsPerMM = getMachine().getStepsPerMM();
       switch(axis) {
         case 0:
@@ -972,13 +1124,8 @@ public class MightyBoard extends Makerbot4GAlternateDriver
         case 4:
           val = val/stepsPerMM.b();
           break;
-		  }
-    }else{
-      val = read32FromEEPROM(MightyBoard6X2EEPROM.AXIS_HOME_POSITIONS_MM + axis*4);
-    }      
-		
-		
-		return val;
+      }
+      return val;
 	}
 
 	
@@ -991,8 +1138,7 @@ public class MightyBoard extends Makerbot4GAlternateDriver
 		
 		int offsetSteps = (int)offset;
 
-    if(true || hasJettyAcceleration()){
-      Point5d stepsPerMM = getMachine().getStepsPerMM();
+       Point5d stepsPerMM = getMachine().getStepsPerMM();
       switch(axis) {
         case 0:
           offsetSteps = (int)(offset*stepsPerMM.x());
@@ -1010,11 +1156,8 @@ public class MightyBoard extends Makerbot4GAlternateDriver
           offsetSteps = (int)(offset*stepsPerMM.b());
           break;
       }
-      write32ToEEPROM32(MightyBoard5XEEPROM.AXIS_HOME_POSITIONS + axis*4,offsetSteps);
-    }else{
-      write32ToEEPROM32(MightyBoard6X2EEPROM.AXIS_HOME_POSITIONS_MM + axis*4,offsetSteps);
-    }
-	}
+      write32ToEEPROM32(MightySailfish5XEEPROM.AXIS_HOME_POSITIONS + axis*4,offsetSteps);
+ 	}
 
 	@Override
 	public boolean hasToolheadsOffset() {
@@ -1025,7 +1168,7 @@ public class MightyBoard extends Makerbot4GAlternateDriver
 	@Override
 	public double getToolheadsOffset(int axis) {
 
-		Base.logger.finest("MightyBoard getToolheadsOffset" + axis);
+		Base.logger.finest("MightySailfish getToolheadsOffset" + axis);
 		if ((axis < 0) || (axis > 2)) {
 			// TODO: handle this
 			Base.logger.severe("axis out of range" + axis);
@@ -1034,11 +1177,7 @@ public class MightyBoard extends Makerbot4GAlternateDriver
 		
 		checkEEPROM();
 
-		double val = read32FromEEPROM(MightyBoard5XEEPROM.TOOLHEAD_OFFSET_SETTINGS + axis*4);
-
-    if(false && hasJettyAcceleration()){
-      val = val / 1000.0;
-    }else if (hasJettyAcceleration() || hasAdvancedFeatures()){
+		double val = read32FromEEPROM(MightySailfish5XEEPROM.TOOLHEAD_OFFSET_SETTINGS + axis*4);
 
       Point5d stepsPerMM = getMachine().getStepsPerMM();
       switch(axis) {
@@ -1052,23 +1191,6 @@ public class MightyBoard extends Makerbot4GAlternateDriver
           val = (val)/stepsPerMM.z()/10.0;
           break;
       }
-      
-    }else {
-      ToolheadsOffset toolheadsOffset = getMachine().getToolheadsOffsets();
-      Point5d stepsPerMM = getMachine().getStepsPerMM();
-      switch(axis) {
-        case 0:
-          val = (val)/stepsPerMM.x()/10.0 + toolheadsOffset.x();
-          break;
-        case 1:
-          val = (val)/stepsPerMM.y()/10.0 + toolheadsOffset.y();
-          break;
-        case 2:
-          val = (val)/stepsPerMM.z()/10.0 + toolheadsOffset.z();
-          break;
-      }
-    }
-				
 		return val;
 	}
 
@@ -1078,15 +1200,15 @@ public class MightyBoard extends Makerbot4GAlternateDriver
 	@Override 
 	public String getConfigValue(String key, String baseline)
 	{
-		//Base.logger.severe("MightyBoard fetching from getConfig");
+		//Base.logger.severe("MightySailfish fetching from getConfig");
 		if( this.getAccelerationStatus() != 0 ) {
-			//Base.logger.severe("MightyBoard is accel");
+			//Base.logger.severe("MightySailfish is accel");
 			if ( key.equals("desiredFeedrate")  )  return "80";
 			if ( key.equals("travelFeedrate") )    return "150";
 			if ( key.equals("printTemp") )    		return "240";
 			
 		} else  {
-			//Base.logger.severe("MightyBoard is not accel");
+			//Base.logger.severe("MightySailfish is not accel");
 			if ( key.equals("desiredFeedrate")  )  return "40";
 			if ( key.equals("travelFeedrate") )    return "55";
 			if ( key.equals("printTemp") )    		return "220";
@@ -1110,10 +1232,6 @@ public class MightyBoard extends Makerbot4GAlternateDriver
 		
 		int offsetSteps = 0;
 
-	  if(false && hasJettyAcceleration()){
-      offsetSteps = (int)(distanceMm * 1000.0);
-	  }else if(hasJettyAcceleration() || hasAdvancedFeatures()){
-
       Point5d stepsPerMM = getMachine().getStepsPerMM();
       switch(axis) {
         case 0:
@@ -1126,23 +1244,7 @@ public class MightyBoard extends Makerbot4GAlternateDriver
           offsetSteps = (int)(distanceMm*stepsPerMM.z()*10.0);
           break;
       }
-    }else{
-      Point5d stepsPerMM = getMachine().getStepsPerMM();
-      ToolheadsOffset toolheadsOffset = getMachine().getToolheadsOffsets();
-      
-      switch(axis) {
-        case 0:
-          offsetSteps = (int)((distanceMm-toolheadsOffset.x())*stepsPerMM.x()*10.0);
-          break;
-        case 1:
-          offsetSteps = (int)((distanceMm-toolheadsOffset.y())*stepsPerMM.y()*10.0);
-          break;
-        case 2:
-          offsetSteps = (int)((distanceMm-toolheadsOffset.z())*stepsPerMM.z()*10.0);
-          break;
-      }
-    }
-		write32ToEEPROM32(MightyBoard5XEEPROM.TOOLHEAD_OFFSET_SETTINGS + axis*4,offsetSteps);
+		write32ToEEPROM32(MightySailfish5XEEPROM.TOOLHEAD_OFFSET_SETTINGS + axis*4,offsetSteps);
 	}
         
         @Override
@@ -1151,12 +1253,12 @@ public class MightyBoard extends Makerbot4GAlternateDriver
         /// acceleration rate is applied to all moves when acceleration is active in firmware
         public int getAccelerationRate(){
                 
-                Base.logger.finest("MightyBoard getAccelerationRate" );
+                Base.logger.finest("MightySailfish getAccelerationRate" );
 		
 		checkEEPROM();
 
-		int val = read16FromEEPROM(MightyBoard5XEEPROM.ACCELERATION_SETTINGS + 
-                        MightyBoard5XEEPROM.AccelerationOffsets.Rate);
+		int val = read16FromEEPROM(MightySailfish5XEEPROM.ACCELERATION_SETTINGS + 
+                        MightySailfish5XEEPROM.AccelerationOffsets.Rate);
 				
 		return val;
         }
@@ -1167,7 +1269,7 @@ public class MightyBoard extends Makerbot4GAlternateDriver
         /// acceleration rate is applied to all moves when acceleration is active in firmware
         public void setAccelerationRate(int rate){
             
-            Base.logger.finest("MightyBoard setAccelerationRate" );
+            Base.logger.finest("MightySailfish setAccelerationRate" );
 
             // limit rate to 16 bit integer max
             if(rate  > 32767)
@@ -1175,8 +1277,8 @@ public class MightyBoard extends Makerbot4GAlternateDriver
             if(rate < -32768)
                 rate = -32768;
                 
-            write16ToEEPROM(MightyBoard5XEEPROM.ACCELERATION_SETTINGS + 
-                    MightyBoard5XEEPROM.AccelerationOffsets.Rate, rate);
+            write16ToEEPROM(MightySailfish5XEEPROM.ACCELERATION_SETTINGS + 
+                    MightySailfish5XEEPROM.AccelerationOffsets.Rate, rate);
         }
         
         /**
@@ -1187,8 +1289,8 @@ public class MightyBoard extends Makerbot4GAlternateDriver
 	@Override
 	public int getAxisAccelerationRate(int axis) {
 		checkEEPROM();
-                int val = read16FromEEPROM(MightyBoard5XEEPROM.ACCELERATION_SETTINGS +
-                        MightyBoard5XEEPROM.AccelerationOffsets.AxisRate + (axis * 2));
+                int val = read16FromEEPROM(MightySailfish5XEEPROM.ACCELERATION_SETTINGS +
+                        MightySailfish5XEEPROM.AccelerationOffsets.AxisRate + (axis * 2));
 
 		return val;
 	}
@@ -1201,8 +1303,8 @@ public class MightyBoard extends Makerbot4GAlternateDriver
 	@Override
 	public void setAxisAccelerationRate(int axis, int rate) {
 
-		write16ToEEPROM(MightyBoard5XEEPROM.ACCELERATION_SETTINGS + 
-                        MightyBoard5XEEPROM.AccelerationOffsets.AxisRate + (axis * 2), rate);
+		write16ToEEPROM(MightySailfish5XEEPROM.ACCELERATION_SETTINGS + 
+                        MightySailfish5XEEPROM.AccelerationOffsets.AxisRate + (axis * 2), rate);
 	}
         
         /**
@@ -1213,8 +1315,8 @@ public class MightyBoard extends Makerbot4GAlternateDriver
 	@Override
 	public int getAccelerationMinimumSpeed() {
 		checkEEPROM();
-                int val = read16FromEEPROM(MightyBoard5XEEPROM.ACCELERATION_SETTINGS + 
-                        MightyBoard5XEEPROM.AccelerationOffsets.MinimumSpeed);
+                int val = read16FromEEPROM(MightySailfish5XEEPROM.ACCELERATION_SETTINGS + 
+                        MightySailfish5XEEPROM.AccelerationOffsets.MinimumSpeed);
 
 		return val;
 	}
@@ -1227,8 +1329,8 @@ public class MightyBoard extends Makerbot4GAlternateDriver
 	@Override
 	public void setAccelerationMinimumSpeed(int speed) {
 
-		write16ToEEPROM(MightyBoard5XEEPROM.ACCELERATION_SETTINGS + 
-                        MightyBoard5XEEPROM.AccelerationOffsets.MinimumSpeed, speed);
+		write16ToEEPROM(MightySailfish5XEEPROM.ACCELERATION_SETTINGS + 
+                        MightySailfish5XEEPROM.AccelerationOffsets.MinimumSpeed, speed);
 	}
         
         /**
@@ -1239,8 +1341,8 @@ public class MightyBoard extends Makerbot4GAlternateDriver
 	@Override
 	public double getAxisJerk(int axis) {
 		checkEEPROM();
-                byte[] stored = readFromEEPROM(MightyBoard5XEEPROM.ACCELERATION_SETTINGS + 
-                        MightyBoard5XEEPROM.AccelerationOffsets.AxisJerk + (axis * 2),2);
+                byte[] stored = readFromEEPROM(MightySailfish5XEEPROM.ACCELERATION_SETTINGS + 
+                        MightySailfish5XEEPROM.AccelerationOffsets.AxisJerk + (axis * 2),2);
                 
                 double val = byte16LEToFloat(stored);
 		return val;
@@ -1254,8 +1356,8 @@ public class MightyBoard extends Makerbot4GAlternateDriver
 	@Override
 	public void setAxisJerk(int axis, double jerk) {
 
-		writeToEEPROM(MightyBoard5XEEPROM.ACCELERATION_SETTINGS + 
-                        MightyBoard5XEEPROM.AccelerationOffsets.AxisJerk + (axis * 2), floatToLE((float)jerk));
+		writeToEEPROM(MightySailfish5XEEPROM.ACCELERATION_SETTINGS + 
+                        MightySailfish5XEEPROM.AccelerationOffsets.AxisJerk + (axis * 2), floatToLE((float)jerk));
 	}
 
         
@@ -1264,16 +1366,16 @@ public class MightyBoard extends Makerbot4GAlternateDriver
 //    bit 0:  OFF (0) or ON (1)
   public byte getAccelerationStatus(){
           
-    Base.logger.finest("MightyBoard getAccelerationStatus");
+    Base.logger.finest("MightySailfish getAccelerationStatus");
 
     checkEEPROM();
 
 		byte[] val;
 
 		if (hasJettyAcceleration())
-			val = readFromEEPROM(MightyBoard6X2EEPROM.ACCELERATION_STATE, 1);
+			val = readFromEEPROM(MightySailfish6X2EEPROM.ACCELERATION_STATE, 1);
 		else
-			val = readFromEEPROM(MightyBoard5XEEPROM.ACCELERATION_SETTINGS,1);
+			val = readFromEEPROM(MightySailfish5XEEPROM.ACCELERATION_SETTINGS,1);
 
 		return val[0];
   }
@@ -1282,15 +1384,15 @@ public class MightyBoard extends Makerbot4GAlternateDriver
   // set stored acceleration status: either ON of OFF
   // acceleration is applied to all moves, except homing when ON
   public void setAccelerationStatus(byte status){
-      Base.logger.info("MightyBoard setAccelerationStatus");
+      Base.logger.info("MightySailfish setAccelerationStatus");
       
       byte b[] = new byte[1];
       b[0] = status;
 
 	    if (hasJettyAcceleration())
-		    writeToEEPROM(MightyBoard6X2EEPROM.ACCELERATION_STATE, b);
+		    writeToEEPROM(MightySailfish6X2EEPROM.ACCELERATION_STATE, b);
 	    else
-		    writeToEEPROM(MightyBoard5XEEPROM.ACCELERATION_SETTINGS, b);
+		    writeToEEPROM(MightySailfish5XEEPROM.ACCELERATION_SETTINGS, b);
    }
         
 	public void createThermistorTable(int which, double r0, double t0, double beta) {
@@ -1332,14 +1434,14 @@ public class MightyBoard extends Makerbot4GAlternateDriver
 		}
 		// Add indicators
 		byte eepromIndicator[] = new byte[2];
-		eepromIndicator[0] = MightyBoard5XEEPROM.EEPROM_CHECK_LOW;
-		eepromIndicator[1] = MightyBoard5XEEPROM.EEPROM_CHECK_HIGH;
+		eepromIndicator[0] = MightySailfish5XEEPROM.EEPROM_CHECK_LOW;
+		eepromIndicator[1] = MightySailfish5XEEPROM.EEPROM_CHECK_HIGH;
 		writeToToolEEPROM(0,eepromIndicator);
 
-		writeToEEPROM(MightyBoard5XEEPROM.ECThermistorOffsets.beta(which),intToLE((int)beta));
-		writeToEEPROM(MightyBoard5XEEPROM.ECThermistorOffsets.r0(which),intToLE((int)r0));
-		writeToEEPROM(MightyBoard5XEEPROM.ECThermistorOffsets.t0(which),intToLE((int)t0));
-		writeToEEPROM(MightyBoard5XEEPROM.ECThermistorOffsets.data(which),table);
+		writeToEEPROM(MightySailfish5XEEPROM.ECThermistorOffsets.beta(which),intToLE((int)beta));
+		writeToEEPROM(MightySailfish5XEEPROM.ECThermistorOffsets.r0(which),intToLE((int)r0));
+		writeToEEPROM(MightySailfish5XEEPROM.ECThermistorOffsets.t0(which),intToLE((int)t0));
+		writeToEEPROM(MightySailfish5XEEPROM.ECThermistorOffsets.data(which),table);
 	}
 	
 	/**
@@ -1349,7 +1451,7 @@ public class MightyBoard extends Makerbot4GAlternateDriver
 	@Override
 	public int getBeta(int which, int toolIndex) {
 		Base.logger.severe("beta for " + Integer.toString(toolIndex));
-		byte r[] = readFromEEPROM(MightyBoard5XEEPROM.ECThermistorOffsets.beta(which),4);
+		byte r[] = readFromEEPROM(MightySailfish5XEEPROM.ECThermistorOffsets.beta(which),4);
 		int val = 0;
 		for (int i = 0; i < 4; i++) {
 			val = val + (((int)r[i] & 0xff) << 8*i);
@@ -1360,7 +1462,7 @@ public class MightyBoard extends Makerbot4GAlternateDriver
 	@Override
 	public EndstopType getInvertedEndstops() {
 		checkEEPROM();
-		byte[] b =  readFromEEPROM(MightyBoard5XEEPROM.ENDSTOP_INVERSION,1);
+		byte[] b =  readFromEEPROM(MightySailfish5XEEPROM.ENDSTOP_INVERSION,1);
 		return EndstopType.endstopTypeForValue(b[0]);
 	}
 
@@ -1368,14 +1470,14 @@ public class MightyBoard extends Makerbot4GAlternateDriver
 	public void setInvertedEndstops(EndstopType endstops) {
 		byte b[] = new byte[1];
 		b[0] = endstops.getValue();
-		writeToEEPROM(MightyBoard5XEEPROM.ENDSTOP_INVERSION,b);
+		writeToEEPROM(MightySailfish5XEEPROM.ENDSTOP_INVERSION,b);
 	}
 
 	@Override
-  @Deprecated
+	@Deprecated
 	public ExtraFeatures getExtraFeatures(int toolIndex) {
 		Base.logger.severe("extra Feat: " + Integer.toString(toolIndex));
-		int efdat = read16FromToolEEPROM(ToolheadEEPROM.FEATURES ,0x4084, toolIndex);
+		int efdat = read16FromToolEEPROM(SailfishToolheadEEPROM.FEATURES ,0x4084, toolIndex);
 		ExtraFeatures ef = new ExtraFeatures();
 		ef.swapMotorController = (efdat & 0x0001) != 0;
 		ef.heaterChannel = (efdat >> 2) & 0x0003;
@@ -1395,13 +1497,13 @@ public class MightyBoard extends Makerbot4GAlternateDriver
 		efdat |= features.hbpChannel << 4;
 		efdat |= features.abpChannel << 6;
 		//System.err.println("Writing to EF: "+Integer.toHexString(efdat));
-		writeToToolEEPROM(ToolheadEEPROM.FEATURES, intToLE(efdat,2));
+		writeToToolEEPROM(SailfishToolheadEEPROM.FEATURES, intToLE(efdat,2));
 	}
 
 	@Override
 	public EstopType getEstopConfig() {
 		checkEEPROM();
-		byte[] b = readFromEEPROM(MightyBoard5XEEPROM.ENDSTOP_INVERSION,1);
+		byte[] b = readFromEEPROM(MightySailfish5XEEPROM.ENDSTOP_INVERSION,1);
 		return EstopType.estopTypeForValue(b[0]);
 	}
 
@@ -1409,14 +1511,14 @@ public class MightyBoard extends Makerbot4GAlternateDriver
 	public void setEstopConfig(EstopType estop) {
 		byte b[] = new byte[1];
 		b[0] = estop.getValue();
-		writeToEEPROM(MightyBoard5XEEPROM.ENDSTOP_INVERSION,b);
+		writeToEEPROM(MightySailfish5XEEPROM.ENDSTOP_INVERSION,b);
 	}
 	
 	
 		/// Check the EEPROM to see what PID/VID the machine believes it has
 	public void readMachineVidPid() {
 		checkEEPROM();
-		byte[] b = readFromEEPROM(MightyBoard5XEEPROM.VID_PID_INFO,4);
+		byte[] b = readFromEEPROM(MightySailfish5XEEPROM.VID_PID_INFO,4);
 		this.machineId = VidPid.getPidVid(b);
 	}
 	
@@ -1448,12 +1550,7 @@ public class MightyBoard extends Makerbot4GAlternateDriver
 		if ( this.machineId == VidPid.UNKNOWN ) {
 			readMachineVidPid();
 		}
-		if(this.machineId.equals(VidPid.MIGHTY_BOARD)) {
-			Base.logger.severe("You are running an unverified MightyBoard,");
-			Base.logger.severe("your machine is not a verified MakerBot Replicator");			
-			return true;
-		}
-		return this.machineId.equals(VidPid.THE_REPLICATOR);
+		return this.machineId.equals(VidPid.THE_REPLICATOR) || this.machineId.equals(VidPid.REPLICATOR_2);
 	}
 
 	@Override
@@ -1466,13 +1563,13 @@ public class MightyBoard extends Makerbot4GAlternateDriver
 	public boolean setConnectedToolIndex(int index) {
 		byte[] data = new byte[1];
 		data[0] = (byte) index;
-		Base.logger.severe("setConnectedToolIndex not supported in MightyBoard");
+		Base.logger.severe("setConnectedToolIndex not supported in MightySailfish");
 		
-		//throw new UnsupportedOperationException("setConnectedToolIndex not supported in MightyBoard");
+		//throw new UnsupportedOperationException("setConnectedToolIndex not supported in MightySailfish");
 		
 		// The broadcast address has changed. The safest solution is to try both.
-		//writeToToolEEPROM(MightyBoard5XEEPROM.EC_EEPROM_SLAVE_ID, data, 255); //old firmware used 255, new fw ignores this
-		//writeToToolEEPROM(MightyBoard5XEEPROM.EC_EEPROM_SLAVE_ID, data, 127); //new firmware used 127, old fw ignores this
+		//writeToToolEEPROM(MightySailfish5XEEPROM.EC_EEPROM_SLAVE_ID, data, 255); //old firmware used 255, new fw ignores this
+		//writeToToolEEPROM(MightySailfish5XEEPROM.EC_EEPROM_SLAVE_ID, data, 127); //new firmware used 127, old fw ignores this
 		return false;
 	}
 
@@ -1522,8 +1619,8 @@ public class MightyBoard extends Makerbot4GAlternateDriver
 	{
 
 		int toolInfoOffset = 0;
-		if (toolIndex == 0)	toolInfoOffset = MightyBoard5XEEPROM.T0_DATA_BASE;
-		else if (toolIndex == 1)toolInfoOffset = MightyBoard5XEEPROM.T1_DATA_BASE;
+		if (toolIndex == 0)	toolInfoOffset = MightySailfish5XEEPROM.T0_DATA_BASE;
+		else if (toolIndex == 1)toolInfoOffset = MightySailfish5XEEPROM.T1_DATA_BASE;
 
 		offset = toolInfoOffset + offset;
 		Base.logger.finest("readFromToolEEPROM null" + offset +" " + len + " " + toolIndex);
@@ -1606,7 +1703,7 @@ public class MightyBoard extends Makerbot4GAlternateDriver
 	@Override
 	public boolean getCoolingFanEnabled(int toolIndex) {
 		Base.logger.severe("getCoolingFanEnable: " + Integer.toString(toolIndex));
-		byte[]  a = readFromToolEEPROM(ToolheadEEPROM.COOLING_FAN_SETTINGS, 1, toolIndex);
+		byte[]  a = readFromToolEEPROM(SailfishToolheadEEPROM.COOLING_FAN_SETTINGS, 1, toolIndex);
 		return (a[0] == 1);
 	}
 
@@ -1617,7 +1714,7 @@ public class MightyBoard extends Makerbot4GAlternateDriver
 	@Override
 	public int getR0(int which, int toolIndex) {
 		Base.logger.severe("getR0: " + Integer.toString(toolIndex));
-		byte r[] = readFromEEPROM(MightyBoard5XEEPROM.ECThermistorOffsets.r0(which),4);
+		byte r[] = readFromEEPROM(MightySailfish5XEEPROM.ECThermistorOffsets.r0(which),4);
 		int val = 0;
 		for (int i = 0; i < 4; i++) {
 			val = val + (((int)r[i] & 0xff) << 8*i);
@@ -1632,7 +1729,7 @@ public class MightyBoard extends Makerbot4GAlternateDriver
 	@Override
 	public int getT0(int which, int toolIndex) {
 		Base.logger.severe("getT0: " + Integer.toString(toolIndex));
-		byte r[] = readFromEEPROM(MightyBoard5XEEPROM.ECThermistorOffsets.t0(which),4);
+		byte r[] = readFromEEPROM(MightySailfish5XEEPROM.ECThermistorOffsets.t0(which),4);
 		int val = 0;
 		for (int i = 0; i < 4; i++) {
 			val = val + (((int)r[i] & 0xff) << 8*i);
@@ -1666,23 +1763,23 @@ public class MightyBoard extends Makerbot4GAlternateDriver
 	public BackoffParameters getBackoffParameters(int toolIndex) {
 		BackoffParameters bp = new BackoffParameters();
 		Base.logger.severe("backoff Forward: " + Integer.toString(toolIndex));
-		bp.forwardMs = read16FromToolEEPROM( ToolheadEEPROM.BACKOFF_FORWARD_TIME, 300, toolIndex);
+		bp.forwardMs = read16FromToolEEPROM( SailfishToolheadEEPROM.BACKOFF_FORWARD_TIME, 300, toolIndex);
 		Base.logger.severe("backoff sop: " + Integer.toString(toolIndex));
-		bp.stopMs = read16FromToolEEPROM( ToolheadEEPROM.BACKOFF_STOP_TIME, 5, toolIndex);
+		bp.stopMs = read16FromToolEEPROM( SailfishToolheadEEPROM.BACKOFF_STOP_TIME, 5, toolIndex);
 		Base.logger.severe("backoff reverse: " + Integer.toString(toolIndex));
-		bp.reverseMs = read16FromToolEEPROM(ToolheadEEPROM.BACKOFF_REVERSE_TIME, 500, toolIndex);
+		bp.reverseMs = read16FromToolEEPROM(SailfishToolheadEEPROM.BACKOFF_REVERSE_TIME, 500, toolIndex);
 		Base.logger.severe("backoff trigger: " + Integer.toString(toolIndex));
-		bp.triggerMs = read16FromToolEEPROM(ToolheadEEPROM.BACKOFF_TRIGGER_TIME, 300, toolIndex);
+		bp.triggerMs = read16FromToolEEPROM(SailfishToolheadEEPROM.BACKOFF_TRIGGER_TIME, 300, toolIndex);
 		return bp;
 	}
 	
 	@Override
   @Deprecated
 	public void setBackoffParameters(BackoffParameters bp, int toolIndex) {
-		writeToToolEEPROM(ToolheadEEPROM.BACKOFF_FORWARD_TIME,intToLE(bp.forwardMs,2), toolIndex);
-		writeToToolEEPROM(ToolheadEEPROM.BACKOFF_STOP_TIME,intToLE(bp.stopMs,2), toolIndex);
-		writeToToolEEPROM(ToolheadEEPROM.BACKOFF_REVERSE_TIME,intToLE(bp.reverseMs,2), toolIndex);
-		writeToToolEEPROM(ToolheadEEPROM.BACKOFF_TRIGGER_TIME,intToLE(bp.triggerMs,2), toolIndex);
+		writeToToolEEPROM(SailfishToolheadEEPROM.BACKOFF_FORWARD_TIME,intToLE(bp.forwardMs,2), toolIndex);
+		writeToToolEEPROM(SailfishToolheadEEPROM.BACKOFF_STOP_TIME,intToLE(bp.stopMs,2), toolIndex);
+		writeToToolEEPROM(SailfishToolheadEEPROM.BACKOFF_REVERSE_TIME,intToLE(bp.reverseMs,2), toolIndex);
+		writeToToolEEPROM(SailfishToolheadEEPROM.BACKOFF_TRIGGER_TIME,intToLE(bp.triggerMs,2), toolIndex);
 	}
 
 
@@ -1693,31 +1790,31 @@ public class MightyBoard extends Makerbot4GAlternateDriver
 	public PIDParameters getPIDParameters(int which, int toolIndex) {
 		PIDParameters pp = new PIDParameters();
 
-    int offset = MightyBoard5XEEPROM.T0_DATA_BASE;
+    int offset = MightySailfish5XEEPROM.T0_DATA_BASE;
     if (toolIndex == 1)
-      offset = MightyBoard5XEEPROM.T1_DATA_BASE;
+      offset = MightySailfish5XEEPROM.T1_DATA_BASE;
 
 		Base.logger.finest("pid p: " + Integer.toString(toolIndex));
 
-		byte stored [] = readFromEEPROM(offset + ExtruderPIDTermOffsets.P_TERM_OFFSET, 2);
+		byte stored [] = readFromEEPROM(offset + SailfishExtruderPIDTermOffsets.P_TERM_OFFSET, 2);
     pp.p  = byte16LEToFloat(stored);
 		Base.logger.finest("pid i: " + Integer.toString(toolIndex));
-		stored = readFromEEPROM(offset + ExtruderPIDTermOffsets.I_TERM_OFFSET, 2);
+		stored = readFromEEPROM(offset + SailfishExtruderPIDTermOffsets.I_TERM_OFFSET, 2);
     pp.i  = byte16LEToFloat(stored);
 		Base.logger.finest("pid d: " + Integer.toString(toolIndex));
-		stored = readFromEEPROM(offset + ExtruderPIDTermOffsets.D_TERM_OFFSET, 2);
+		stored = readFromEEPROM(offset + SailfishExtruderPIDTermOffsets.D_TERM_OFFSET, 2);
     pp.d  = byte16LEToFloat(stored);
 		return pp;
 	}
 	
 	@Override
 	public void setPIDParameters(int which, PIDParameters pp, int toolIndex) {
-    int offset = MightyBoard5XEEPROM.T0_DATA_BASE;
+    int offset = MightySailfish5XEEPROM.T0_DATA_BASE;
     if (toolIndex == 1)
-      offset = MightyBoard5XEEPROM.T1_DATA_BASE;
-    writeToEEPROM(offset+ExtruderPIDTermOffsets.P_TERM_OFFSET,floatToLE(pp.p));
-    writeToEEPROM(offset+ExtruderPIDTermOffsets.I_TERM_OFFSET,floatToLE(pp.i));
-    writeToEEPROM(offset+ExtruderPIDTermOffsets.D_TERM_OFFSET,floatToLE(pp.d));
+      offset = MightySailfish5XEEPROM.T1_DATA_BASE;
+    writeToEEPROM(offset+SailfishExtruderPIDTermOffsets.P_TERM_OFFSET,floatToLE(pp.p));
+    writeToEEPROM(offset+SailfishExtruderPIDTermOffsets.I_TERM_OFFSET,floatToLE(pp.i));
+    writeToEEPROM(offset+SailfishExtruderPIDTermOffsets.D_TERM_OFFSET,floatToLE(pp.d));
 	}
 	
 	
@@ -1844,7 +1941,7 @@ public class MightyBoard extends Makerbot4GAlternateDriver
 		efdat |= features.abpChannel << 6;
 
 		//System.err.println("Writing to EF: "+Integer.toHexString(efdat));
-		writeToToolEEPROM(ToolheadEEPROM.EXTRA_FEATURES, intToLE(efdat,2), toolIndex);
+		writeToToolEEPROM(SailfishToolheadEEPROM.EXTRA_FEATURES, intToLE(efdat,2), toolIndex);
 	}
 	
 
@@ -2022,6 +2119,8 @@ public class MightyBoard extends Makerbot4GAlternateDriver
 			return "MightyBoard"; 
 		else if (this.machineId.equals(VidPid.THE_REPLICATOR))
 			return "The Replicator"; 
+		else if (this.machineId.equals(VidPid.REPLICATOR_2))
+			return "Replicator 2";
 		return "MightyBoard(unverified)"; 			
 	} 
 	
@@ -2030,7 +2129,7 @@ public class MightyBoard extends Makerbot4GAlternateDriver
 	//@Override 
 	public void readToolheadCount() { 
 
-		byte[] toolCountByte = readFromEEPROM(MightyBoard5XEEPROM.TOOL_COUNT, 1) ;
+		byte[] toolCountByte = readFromEEPROM(MightySailfish5XEEPROM.TOOL_COUNT, 1) ;
 		if (toolCountByte != null && toolCountByte.length > 0 ) {
 			toolCountOnboard = toolCountByte[0];
 		}
@@ -2054,7 +2153,7 @@ public class MightyBoard extends Makerbot4GAlternateDriver
 		byte b[] = {(byte)-1};
 		if (i == 1 ||  i == 2)		
 			b[0] = (byte)i;
-		writeToEEPROM(MightyBoard5XEEPROM.TOOL_COUNT,b);
+		writeToEEPROM(MightySailfish5XEEPROM.TOOL_COUNT,b);
 		
 	}; 
 
@@ -2097,7 +2196,7 @@ public class MightyBoard extends Makerbot4GAlternateDriver
 
 
 	public boolean hasHbp(){
-		byte[] eeprom_hbp_present = readFromEEPROM(MightyBoard6X2EEPROM.HBP_PRESENT, 1);
+		byte[] eeprom_hbp_present = readFromEEPROM(MightySailfish6X2EEPROM.HBP_PRESENT, 1);
 		byte hbp_on_off = eeprom_hbp_present[0];
 		if(hbp_on_off >= 0)
 			return true;
@@ -2106,16 +2205,16 @@ public class MightyBoard extends Makerbot4GAlternateDriver
 	}
 	
 	public byte currentHbpSetting(){
-		byte[] eeprom_hbp_present = readFromEEPROM(MightyBoard6X2EEPROM.HBP_PRESENT, 1);
+		byte[] eeprom_hbp_present = readFromEEPROM(MightySailfish6X2EEPROM.HBP_PRESENT, 1);
 		byte hbp_on_off = eeprom_hbp_present[0];
 		return hbp_on_off;
 	}
 	
 	public void setHbpSetting(boolean on_off){
 		if(on_off)		
-			writeToEEPROM(MightyBoard6X2EEPROM.HBP_PRESENT, intToLE(1));
+			writeToEEPROM(MightySailfish6X2EEPROM.HBP_PRESENT, intToLE(1));
 		else
-			writeToEEPROM(MightyBoard6X2EEPROM.HBP_PRESENT, intToLE(0));
+			writeToEEPROM(MightySailfish6X2EEPROM.HBP_PRESENT, intToLE(0));
 	}
 
 	/// read a 32 bit unsigned int from EEPROM at location 'offset'
@@ -2184,23 +2283,25 @@ public class MightyBoard extends Makerbot4GAlternateDriver
 	@Override
 	public int getEEPROMParamInt(EEPROMParams param) {
 		switch (param) {
-		case ACCEL_EXTRUDER_DEPRIME_A   : return read16FromEEPROM(MightyBoard6X2EEPROM.EXTRUDER_DEPRIME_STEPS + 0*2);
-		case ACCEL_EXTRUDER_DEPRIME_B   : return read16FromEEPROM(MightyBoard6X2EEPROM.EXTRUDER_DEPRIME_STEPS + 1*2);
-		case ACCEL_MAX_ACCELERATION_A   : return read16FromEEPROM(MightyBoard6X2EEPROM.MAX_ACCELERATION_AXIS + 3*2);
-		case ACCEL_MAX_ACCELERATION_B   : return read16FromEEPROM(MightyBoard6X2EEPROM.MAX_ACCELERATION_AXIS + 4*2);
-		case ACCEL_MAX_ACCELERATION_X   : return read16FromEEPROM(MightyBoard6X2EEPROM.MAX_ACCELERATION_AXIS + 0*2);
-		case ACCEL_MAX_ACCELERATION_Y   : return read16FromEEPROM(MightyBoard6X2EEPROM.MAX_ACCELERATION_AXIS + 1*2);
-		case ACCEL_MAX_ACCELERATION_Z   : return read16FromEEPROM(MightyBoard6X2EEPROM.MAX_ACCELERATION_AXIS + 2*2);
-		case ACCEL_MAX_EXTRUDER_NORM    : return read16FromEEPROM(MightyBoard6X2EEPROM.MAX_ACCELERATION_NORMAL_MOVE);
-		case ACCEL_MAX_EXTRUDER_RETRACT : return read16FromEEPROM(MightyBoard6X2EEPROM.MAX_ACCELERATION_EXTRUDER_MOVE);
-		case ACCEL_MAX_SPEED_CHANGE_A   : return read16FromEEPROM(MightyBoard6X2EEPROM.MAX_SPEED_CHANGE + 3*2);
-		case ACCEL_MAX_SPEED_CHANGE_B   : return read16FromEEPROM(MightyBoard6X2EEPROM.MAX_SPEED_CHANGE + 4*2);
-		case ACCEL_MAX_SPEED_CHANGE_X   : return read16FromEEPROM(MightyBoard6X2EEPROM.MAX_SPEED_CHANGE + 0*2);
-		case ACCEL_MAX_SPEED_CHANGE_Y   : return read16FromEEPROM(MightyBoard6X2EEPROM.MAX_SPEED_CHANGE + 1*2);
-		case ACCEL_MAX_SPEED_CHANGE_Z   : return read16FromEEPROM(MightyBoard6X2EEPROM.MAX_SPEED_CHANGE + 2*2);
-		case ACCEL_SLOWDOWN_FLAG        : return getUInt8EEPROM(MightyBoard6X2EEPROM.SLOWDOWN_FLAG);
+		case ACCEL_EXTRUDER_DEPRIME_A   : return read16FromEEPROM(MightySailfish6X2EEPROM.EXTRUDER_DEPRIME_STEPS + 0*2);
+		case ACCEL_EXTRUDER_DEPRIME_B   : return read16FromEEPROM(MightySailfish6X2EEPROM.EXTRUDER_DEPRIME_STEPS + 1*2);
+		case ACCEL_MAX_ACCELERATION_A   : return read16FromEEPROM(MightySailfish6X2EEPROM.MAX_ACCELERATION_AXIS + 3*2);
+		case ACCEL_MAX_ACCELERATION_B   : return read16FromEEPROM(MightySailfish6X2EEPROM.MAX_ACCELERATION_AXIS + 4*2);
+		case ACCEL_MAX_ACCELERATION_X   : return read16FromEEPROM(MightySailfish6X2EEPROM.MAX_ACCELERATION_AXIS + 0*2);
+		case ACCEL_MAX_ACCELERATION_Y   : return read16FromEEPROM(MightySailfish6X2EEPROM.MAX_ACCELERATION_AXIS + 1*2);
+		case ACCEL_MAX_ACCELERATION_Z   : return read16FromEEPROM(MightySailfish6X2EEPROM.MAX_ACCELERATION_AXIS + 2*2);
+		case ACCEL_MAX_EXTRUDER_NORM    : return read16FromEEPROM(MightySailfish6X2EEPROM.MAX_ACCELERATION_NORMAL_MOVE);
+		case ACCEL_MAX_EXTRUDER_RETRACT : return read16FromEEPROM(MightySailfish6X2EEPROM.MAX_ACCELERATION_EXTRUDER_MOVE);
+		case ACCEL_MAX_SPEED_CHANGE_A   : return read16FromEEPROM(MightySailfish6X2EEPROM.MAX_SPEED_CHANGE + 3*2);
+		case ACCEL_MAX_SPEED_CHANGE_B   : return read16FromEEPROM(MightySailfish6X2EEPROM.MAX_SPEED_CHANGE + 4*2);
+		case ACCEL_MAX_SPEED_CHANGE_X   : return read16FromEEPROM(MightySailfish6X2EEPROM.MAX_SPEED_CHANGE + 0*2);
+		case ACCEL_MAX_SPEED_CHANGE_Y   : return read16FromEEPROM(MightySailfish6X2EEPROM.MAX_SPEED_CHANGE + 1*2);
+		case ACCEL_MAX_SPEED_CHANGE_Z   : return read16FromEEPROM(MightySailfish6X2EEPROM.MAX_SPEED_CHANGE + 2*2);
+		case ACCEL_SLOWDOWN_FLAG        : return getUInt8EEPROM(MightySailfish6X2EEPROM.SLOWDOWN_FLAG);
 		case PREHEAT_DURING_PAUSE       : return getUInt8EEPROM(JettyMBEEPROM.HEAT_DURING_PAUSE);
 		case OVERRIDE_GCODE_TEMP        : return getUInt8EEPROM(JettyMBEEPROM.OVERRIDE_GCODE_TEMP);
+		case EXTRUDER_HOLD              : return getUInt8EEPROM(JettyMBEEPROM.EXTRUDER_HOLD);
+		case TOOLHEAD_OFFSET_SYSTEM     : return getUInt8EEPROM(JettyMBEEPROM.TOOLHEAD_OFFSET_SYSTEM);
 		default :
 			Base.logger.log(Level.WARNING, "getEEPROMParamInt(" + param + ") call failed");
 			return 0;
@@ -2219,8 +2320,8 @@ public class MightyBoard extends Makerbot4GAlternateDriver
 	@Override
 	public double getEEPROMParamFloat(EEPROMParams param) {
 		switch (param) {
-		case ACCEL_ADVANCE_K            : return (double)getUInt32EEPROM(MightyBoard6X2EEPROM.JKN_ADVANCE_K) / 100000.0d;
-		case ACCEL_ADVANCE_K2           : return (double)getUInt32EEPROM(MightyBoard6X2EEPROM.JKN_ADVANCE_K2) / 100000.0d;
+		case ACCEL_ADVANCE_K            : return (double)getUInt32EEPROM(MightySailfish6X2EEPROM.JKN_ADVANCE_K) / 100000.0d;
+		case ACCEL_ADVANCE_K2           : return (double)getUInt32EEPROM(MightySailfish6X2EEPROM.JKN_ADVANCE_K2) / 100000.0d;
 		default :
 			Base.logger.log(Level.WARNING, "getEEPROMParamFloat(" + param + ") call failed");
 			return 0d;
@@ -2232,23 +2333,25 @@ public class MightyBoard extends Makerbot4GAlternateDriver
 		if (val < 0)
 			val = 0;
 		switch (param) {
-		case ACCEL_EXTRUDER_DEPRIME_A   : write16ToEEPROM(MightyBoard6X2EEPROM.EXTRUDER_DEPRIME_STEPS + 0*2, val); break;
-		case ACCEL_EXTRUDER_DEPRIME_B   : write16ToEEPROM(MightyBoard6X2EEPROM.EXTRUDER_DEPRIME_STEPS + 1*2, val); break;
-		case ACCEL_MAX_ACCELERATION_A   : write16ToEEPROM(MightyBoard6X2EEPROM.MAX_ACCELERATION_AXIS + 3*2, val); break;
-		case ACCEL_MAX_ACCELERATION_B   : write16ToEEPROM(MightyBoard6X2EEPROM.MAX_ACCELERATION_AXIS + 4*2, val); break;
-		case ACCEL_MAX_ACCELERATION_X   : write16ToEEPROM(MightyBoard6X2EEPROM.MAX_ACCELERATION_AXIS + 0*2, val); break;
-		case ACCEL_MAX_ACCELERATION_Y   : write16ToEEPROM(MightyBoard6X2EEPROM.MAX_ACCELERATION_AXIS + 1*2, val); break;
-		case ACCEL_MAX_ACCELERATION_Z   : write16ToEEPROM(MightyBoard6X2EEPROM.MAX_ACCELERATION_AXIS + 2*2, val); break;
-		case ACCEL_MAX_EXTRUDER_NORM    : write16ToEEPROM(MightyBoard6X2EEPROM.MAX_ACCELERATION_NORMAL_MOVE, val); break;
-		case ACCEL_MAX_EXTRUDER_RETRACT : write16ToEEPROM(MightyBoard6X2EEPROM.MAX_ACCELERATION_EXTRUDER_MOVE, val); break;
-		case ACCEL_MAX_SPEED_CHANGE_A   : write16ToEEPROM(MightyBoard6X2EEPROM.MAX_SPEED_CHANGE + 3*2, val); break;
-		case ACCEL_MAX_SPEED_CHANGE_B   : write16ToEEPROM(MightyBoard6X2EEPROM.MAX_SPEED_CHANGE + 4*2, val); break;
-		case ACCEL_MAX_SPEED_CHANGE_X   : write16ToEEPROM(MightyBoard6X2EEPROM.MAX_SPEED_CHANGE + 0*2, val); break;
-		case ACCEL_MAX_SPEED_CHANGE_Y   : write16ToEEPROM(MightyBoard6X2EEPROM.MAX_SPEED_CHANGE + 1*2, val); break;
-		case ACCEL_MAX_SPEED_CHANGE_Z   : write16ToEEPROM(MightyBoard6X2EEPROM.MAX_SPEED_CHANGE + 2*2, val); break;
-		case ACCEL_SLOWDOWN_FLAG        : setUInt8EEPROM(MightyBoard6X2EEPROM.SLOWDOWN_FLAG, (val != 0) ? 1 : 0); break;
+		case ACCEL_EXTRUDER_DEPRIME_A   : write16ToEEPROM(MightySailfish6X2EEPROM.EXTRUDER_DEPRIME_STEPS + 0*2, val); break;
+		case ACCEL_EXTRUDER_DEPRIME_B   : write16ToEEPROM(MightySailfish6X2EEPROM.EXTRUDER_DEPRIME_STEPS + 1*2, val); break;
+		case ACCEL_MAX_ACCELERATION_A   : write16ToEEPROM(MightySailfish6X2EEPROM.MAX_ACCELERATION_AXIS + 3*2, val); break;
+		case ACCEL_MAX_ACCELERATION_B   : write16ToEEPROM(MightySailfish6X2EEPROM.MAX_ACCELERATION_AXIS + 4*2, val); break;
+		case ACCEL_MAX_ACCELERATION_X   : write16ToEEPROM(MightySailfish6X2EEPROM.MAX_ACCELERATION_AXIS + 0*2, val); break;
+		case ACCEL_MAX_ACCELERATION_Y   : write16ToEEPROM(MightySailfish6X2EEPROM.MAX_ACCELERATION_AXIS + 1*2, val); break;
+		case ACCEL_MAX_ACCELERATION_Z   : write16ToEEPROM(MightySailfish6X2EEPROM.MAX_ACCELERATION_AXIS + 2*2, val); break;
+		case ACCEL_MAX_EXTRUDER_NORM    : write16ToEEPROM(MightySailfish6X2EEPROM.MAX_ACCELERATION_NORMAL_MOVE, val); break;
+		case ACCEL_MAX_EXTRUDER_RETRACT : write16ToEEPROM(MightySailfish6X2EEPROM.MAX_ACCELERATION_EXTRUDER_MOVE, val); break;
+		case ACCEL_MAX_SPEED_CHANGE_A   : write16ToEEPROM(MightySailfish6X2EEPROM.MAX_SPEED_CHANGE + 3*2, val); break;
+		case ACCEL_MAX_SPEED_CHANGE_B   : write16ToEEPROM(MightySailfish6X2EEPROM.MAX_SPEED_CHANGE + 4*2, val); break;
+		case ACCEL_MAX_SPEED_CHANGE_X   : write16ToEEPROM(MightySailfish6X2EEPROM.MAX_SPEED_CHANGE + 0*2, val); break;
+		case ACCEL_MAX_SPEED_CHANGE_Y   : write16ToEEPROM(MightySailfish6X2EEPROM.MAX_SPEED_CHANGE + 1*2, val); break;
+		case ACCEL_MAX_SPEED_CHANGE_Z   : write16ToEEPROM(MightySailfish6X2EEPROM.MAX_SPEED_CHANGE + 2*2, val); break;
+		case ACCEL_SLOWDOWN_FLAG        : setUInt8EEPROM(MightySailfish6X2EEPROM.SLOWDOWN_FLAG, (val != 0) ? 1 : 0); break;
 		case PREHEAT_DURING_PAUSE       : setUInt8EEPROM(JettyMBEEPROM.HEAT_DURING_PAUSE, (val != 0) ? 1 : 0); break;
 		case OVERRIDE_GCODE_TEMP        : setUInt8EEPROM(JettyMBEEPROM.OVERRIDE_GCODE_TEMP, (val != 0) ? 1 : 0); break;
+		case EXTRUDER_HOLD              : setUInt8EEPROM(JettyMBEEPROM.EXTRUDER_HOLD, (val != 0) ? 1 : 0); break;
+		case TOOLHEAD_OFFSET_SYSTEM     : setUInt8EEPROM(JettyMBEEPROM.TOOLHEAD_OFFSET_SYSTEM, (val != 0) ? 1 : 0); break;
 		default : Base.logger.log(Level.WARNING, "setEEPROMParam(" + param + ", " + val + ") call failed"); break;
 		}
 	}
@@ -2267,8 +2370,8 @@ public class MightyBoard extends Makerbot4GAlternateDriver
 		if (val < 0.0d)
 			val = 0.0d;
 		switch (param) {
-		case ACCEL_ADVANCE_K            : setUInt32EEPROM(MightyBoard6X2EEPROM.JKN_ADVANCE_K, (long)(val * 100000.0d)); break;
-		case ACCEL_ADVANCE_K2           : setUInt32EEPROM(MightyBoard6X2EEPROM.JKN_ADVANCE_K2, (long)(val * 100000.0d)); break;
+		case ACCEL_ADVANCE_K            : setUInt32EEPROM(MightySailfish6X2EEPROM.JKN_ADVANCE_K, (long)(val * 100000.0d)); break;
+		case ACCEL_ADVANCE_K2           : setUInt32EEPROM(MightySailfish6X2EEPROM.JKN_ADVANCE_K2, (long)(val * 100000.0d)); break;
 		default : Base.logger.log(Level.WARNING, "setEEPROMParam(" + param + ", " + val + ") call failed"); break;
 		}
 	}

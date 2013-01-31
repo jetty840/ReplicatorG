@@ -15,10 +15,10 @@ public class Replicator2 extends MightyBoard
 	public Replicator2() {
 		super();
 		minimumVersion = new Version(6,0);
-		preferredVersion = new Version(6,0);
+		preferredVersion = new Version(6,2);
 		minimumAccelerationVersion = new Version(6,0);
 		minAdvancedFeatureVersion = new Version(6,0);
-		minimumJettyAccelerationVersion = new Version(6,1);
+		minimumJettyAccelerationVersion = new Version(7,0);
 	}
 	
 	
@@ -33,8 +33,17 @@ public class Replicator2 extends MightyBoard
 		if ( this.machineId == VidPid.UNKNOWN ) {
 			readMachineVidPid();
 		}
-		return this.machineId.equals(VidPid.THE_REPLICATOR_2);
+		return this.machineId.equals(VidPid.REPLICATOR_2);
 	}
+
+	@Override 
+	public String getMachineType(){
+		if (this.machineId.equals(VidPid.MIGHTY_BOARD))
+			return "MightyBoard"; 
+		else if (this.machineId.equals(VidPid.REPLICATOR_2))
+			return "Replicator 2"; 
+		return "MightyBoard(unverified)"; 			
+	} 
 	
 	/**
 	 * This function is called just after a connection is made, to do initial

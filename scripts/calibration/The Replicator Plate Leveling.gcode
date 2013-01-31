@@ -1,5 +1,7 @@
 (**** This is a build-platform calibration script for a Dual-Head MakerBot Replicator ****)
 (**** Do not run this code on any other kind of machine! ****)
+M103 (disable RPM)
+M73 P0 (enable build progress)
 G21
 G90
 M70 (Tighten down all    thumbnuts, please!)
@@ -48,4 +50,4 @@ M70 (Check All Thumbnuts)
 M01 (Check all the thumbnuts!  Ensure a sheet of paper can slide between the nozzles and the platform.  Press OK to Continue)
 M70 P5(Calibration Complete Press To Continue)
 M01 (Plate calibration complete!  Press OK to Continue)
-M73 P100
+M73 P100 ( End build progress )

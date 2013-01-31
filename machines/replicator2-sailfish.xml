@@ -1,7 +1,7 @@
 <?xml version="1.1" encoding="utf-8"?>
 <machines>
 <machine experimental="0">
-		<name>Replicator 2</name>
+		<name>Replicator 2 (Sailfish)</name>
 		<geometry type="cartesian">
 			<!-- different pulleys on X and Y axii -->
 			<axis id="x" length="285" maxfeedrate="18000" homingfeedrate="2500" stepspermm="88.573186" endstops="max"/>  <!-- Pulley dia: 10.82mm / 1/16 step = 1/(10.82 * pi / 3200) -->
@@ -20,7 +20,7 @@
 			<offset xNozzle="33.0" yNozzle="0.0" zNozzle="0.0" />
 		</offsets>
 		<clamps></clamps>
-		<driver name="replicator2">
+		<driver name="mightysailfish">
 			<!-- optional: <portname>COM1</portname> -->
 			<rate>115200</rate>
 		</driver>
@@ -32,7 +32,7 @@ M18 (Turn off steppers after a build.)
 		<bookend start="machines/replicator2/Single_Head_start.gcode"  end="machines/replicator2/Single_Head_end.gcode"/>
 	</machine>
 <machine experimental="0">
-		<name>Replicator 2X</name>
+		<name>Replicator 2X (Sailfish)</name>
 		<geometry type="cartesian">
 			<!-- different pulleys on X and Y axii -->
 			<axis id="x" length="250" maxfeedrate="18000" homingfeedrate="2500" stepspermm="88.573186" endstops="max"/>  <!-- Pulley dia: 10.82mm / 1/16 step = 1/(10.82 * pi / 3200) -->
@@ -53,7 +53,7 @@ M18 (Turn off steppers after a build.)
 			<offset xNozzle="33.0" yNozzle="0.0" zNozzle="0.0" />
 		</offsets>
 		<clamps></clamps>
-		<driver name="replicator2">
+		<driver name="mightysailfish">
 			<!-- optional: <portname>COM1</portname> -->
 			<rate>115200</rate>
 		</driver>

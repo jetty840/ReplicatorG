@@ -1,7 +1,7 @@
 <?xml version="1.1" encoding="utf-8"?>
 <machines>
 <machine experimental="0">
-		<name>The Replicator Dual</name>
+		<name>The Replicator Dual (Sailfish)</name>
 		<geometry type="cartesian">
 			<!-- different pulleys on X and Y axii -->
 			<axis id="x" length="227" maxfeedrate="18000" homingfeedrate="2500" stepspermm="94.139704" endstops="max"/>  <!-- Pulley dia: 10.82mm / 1/8 step = 1/(10.82 * pi / 1600) -->
@@ -22,7 +22,7 @@
 			<offset xNozzle="33.0" yNozzle="0.0" zNozzle="0.0" />
 		</offsets>
 		<clamps></clamps>
-		<driver name="mightyboard">
+		<driver name="mightysailfish">
 			<!-- optional: <portname>COM1</portname> -->
 			<rate>115200</rate>
 		</driver>
@@ -34,7 +34,7 @@ M18 (Turn off steppers after a build.)
 		<bookend dualstart="machines/replicator/Dualstrusion_start.gcode" start="machines/replicator/Dual_Head_start.gcode" end="machines/replicator/Dual_Head_end.gcode"/>
 	</machine>
 <machine experimental="0">
-		<name>The Replicator Single</name>
+		<name>The Replicator Single (Sailfish)</name>
 		<geometry type="cartesian">
 			<!-- different pulleys on X and Y axii -->
 			<axis id="x" length="227" maxfeedrate="12450" homingfeedrate="2500" stepspermm="94.139704" endstops="max"/>  <!-- Pulley dia: 10.82mm / 1/8 step = 1/(10.82 * pi / 1600) -->
@@ -50,7 +50,7 @@ M18 (Turn off steppers after a build.)
 			<wipe index="1" X1="-135.0" Y1="55.0" X2="-135.0" Y2="45.0" wait="1000.0" purge_duration="1000" reverse_duration="15" purge_rpm="5.0" reverse_rpm="35.0"/>
 		</wipes>
 		<clamps></clamps>
-		<driver name="mightyboard">
+		<driver name="mightysailfish">
 			<!-- optional: <portname>COM1</portname> -->
 			<rate>115200</rate>
 		</driver>
