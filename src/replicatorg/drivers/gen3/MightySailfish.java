@@ -1179,17 +1179,18 @@ public class MightySailfish extends Makerbot4GAlternateDriver
 		checkEEPROM();
 
 		double val = read32FromEEPROM(MightySailfish5XEEPROM.TOOLHEAD_OFFSET_SETTINGS + axis*4);
+		Base.logger.fine("Reading tool " + axis + " offset of " + val + " steps");
 
       Point5d stepsPerMM = getMachine().getStepsPerMM();
       switch(axis) {
         case 0:
-          val = (val)/stepsPerMM.x()/10.0;
+		val = (val)/stepsPerMM.x();
           break;
         case 1:
-          val = (val)/stepsPerMM.y()/10.0;
+		val = (val)/stepsPerMM.y();
           break;
         case 2:
-          val = (val)/stepsPerMM.z()/10.0;
+		val = (val)/stepsPerMM.z();
           break;
       }
 		return val;
@@ -1236,15 +1237,16 @@ public class MightySailfish extends Makerbot4GAlternateDriver
       Point5d stepsPerMM = getMachine().getStepsPerMM();
       switch(axis) {
         case 0:
-          offsetSteps = (int)(distanceMm*stepsPerMM.x()*10.0);
+          offsetSteps = (int)(distanceMm*stepsPerMM.x());
           break;
         case 1:
-          offsetSteps = (int)(distanceMm*stepsPerMM.y()*10.0);
+          offsetSteps = (int)(distanceMm*stepsPerMM.y());
           break;
         case 2:
-          offsetSteps = (int)(distanceMm*stepsPerMM.z()*10.0);
+          offsetSteps = (int)(distanceMm*stepsPerMM.z());
           break;
       }
+                Base.logger.fine("Sending tool " + axis + " offset of " + offsetSteps + "steps");
 		write32ToEEPROM32(MightySailfish5XEEPROM.TOOLHEAD_OFFSET_SETTINGS + axis*4,offsetSteps);
 	}
         

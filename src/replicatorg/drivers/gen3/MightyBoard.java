@@ -1043,13 +1043,13 @@ public class MightyBoard extends Makerbot4GAlternateDriver
       Point5d stepsPerMM = getMachine().getStepsPerMM();
       switch(axis) {
         case 0:
-          val = (val)/stepsPerMM.x()/10.0;
+          val = (val)/stepsPerMM.x();
           break;
         case 1:
-          val = (val)/stepsPerMM.y()/10.0;
+          val = (val)/stepsPerMM.y();
           break;
         case 2:
-          val = (val)/stepsPerMM.z()/10.0;
+          val = (val)/stepsPerMM.z();
           break;
       }
       
@@ -1117,13 +1117,13 @@ public class MightyBoard extends Makerbot4GAlternateDriver
       Point5d stepsPerMM = getMachine().getStepsPerMM();
       switch(axis) {
         case 0:
-          offsetSteps = (int)(distanceMm*stepsPerMM.x()*10.0);
+          offsetSteps = (int)(distanceMm*stepsPerMM.x());
           break;
         case 1:
-          offsetSteps = (int)(distanceMm*stepsPerMM.y()*10.0);
+          offsetSteps = (int)(distanceMm*stepsPerMM.y());
           break;
         case 2:
-          offsetSteps = (int)(distanceMm*stepsPerMM.z()*10.0);
+          offsetSteps = (int)(distanceMm*stepsPerMM.z());
           break;
       }
     }else{
