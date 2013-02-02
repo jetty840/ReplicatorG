@@ -2129,8 +2129,8 @@ public class Sanguino3GDriver extends SerialDriver implements
 
 	public void setMachineName(String machineName) {
 		machineName = new String(machineName);
-		if (machineName.length() > 16) {
-			machineName = machineName.substring(0, 16);
+		if (machineName.length() >= 16) {
+			machineName = machineName.substring(0, 15);
 		}
 		byte b[] = new byte[16];
 		int idx = 0;
@@ -2141,6 +2141,8 @@ public class Sanguino3GDriver extends SerialDriver implements
 		}
 		if (idx < 16)
 			b[idx] = 0;
+		else
+			b[15] = 0;
 		writeToEEPROM(Sanguino3GEEPRPOM.EEPROM_MACHINE_NAME_OFFSET, b);
 	}
 

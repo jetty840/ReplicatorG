@@ -92,7 +92,7 @@ class MightySailfish5XEEPROM implements EEPROMClass
 	public static final int EEPROM_CHECK_LOW = 0x5A;
 	public static final int EEPROM_CHECK_HIGH = 0x78;
 	
-	public static final int MAX_MACHINE_NAME_LEN = 16; // set to 32 in firmware
+	public static final int MAX_MACHINE_NAME_LEN = 16;
 	
 	final static class ECThermistorOffsets {
 	
@@ -1078,8 +1078,8 @@ public class MightySailfish extends Makerbot4GAlternateDriver
 	public void setMachineName(String machineName) {
 		int maxLen = MightySailfish5XEEPROM.MAX_MACHINE_NAME_LEN;
 		machineName = new String(machineName);
-		if (machineName.length() > maxLen) { 
-			machineName = machineName.substring(0,maxLen);
+		if (machineName.length() >= maxLen) { 
+			machineName = machineName.substring(0, maxLen - 1);
 		}
 		byte b[] = new byte[maxLen];
 		int idx = 0;
@@ -1088,6 +1088,7 @@ public class MightySailfish extends Makerbot4GAlternateDriver
 			if (idx == maxLen) break;
 		}
 		if (idx < maxLen) b[idx] = 0;
+		else b[maxLen - 1] = 0;
 		writeToEEPROM(MightySailfish5XEEPROM.MACHINE_NAME,b);
 	}
 	
