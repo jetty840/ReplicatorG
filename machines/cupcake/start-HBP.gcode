@@ -3,7 +3,7 @@
 M104 S220 T0 (Temperature to 220 celsius)
 G21 (Metric FTW)
 G90 (Absolute Positioning)
-G92 X0 Y0 Z0 (You are now at 0,0,0)
+G92 X0 Y0 Z0 E0 (You are now at 0,0,0)
 (You have failed me for the last time, MakerBot)
 G0 Z15 (Move up for test extrusion)
 M108 S255 (Extruder speed = max)
