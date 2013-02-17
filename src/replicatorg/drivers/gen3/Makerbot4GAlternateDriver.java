@@ -73,6 +73,7 @@ public class Makerbot4GAlternateDriver extends Makerbot4GDriver {
 			Point5d excess = new Point5d(stepExcess);
 			queueAbsolutePoint(machine.mmToSteps(filteredPoint, excess), longestDDA);
 			// Only update excess if no retry was thrown.
+			pastExcess = stepExcess;
 			stepExcess = excess;
 			// Finally, recored the position, and mark it as valid.
 			setInternalPosition(filteredPoint);
@@ -100,7 +101,7 @@ public class Makerbot4GAlternateDriver extends Makerbot4GDriver {
 				Point5d axesmovement = calcHijackedAxesMovement(delta);
 				delta.add(axesmovement);
 				filteredpoint.add(axesmovement);
-				
+
 				Point5d excess = new Point5d(stepExcess);
 				// Calculate time for move in usec
 				Point5d steps = machine.mmToSteps(filteredpoint,excess);		
@@ -112,6 +113,7 @@ public class Makerbot4GAlternateDriver extends Makerbot4GDriver {
 				queueNewPoint(steps, (long) (60 * 1000 * 1000 * minutes), relative);
 
 				// Only update excess if no retry was thrown.
+				pastExcess = stepExcess;
 				stepExcess = excess;
 
 				setInternalPosition(filteredpoint);

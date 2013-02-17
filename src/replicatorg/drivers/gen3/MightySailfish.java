@@ -879,6 +879,7 @@ public class MightySailfish extends Makerbot4GAlternateDriver
       queueNewPoint(steps, (long)usec, relativeAxes);
     }
 			// Only update excess if no retry was thrown.
+			pastExcess = stepExcess;
 			stepExcess = excess;
 
 			// because of the hinky stuff we've been doing with A & B axes, just pretend we've
