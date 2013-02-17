@@ -132,7 +132,8 @@ public class Makerbot4GDriver extends Sanguino3GDriver {
 	public void setCurrentPosition(Point5d p) throws RetryException {
 		PacketBuilder pb = new PacketBuilder(MotherboardCommandCode.SET_POSITION_EXT.getCode());
 
-		Point5d steps = machine.mmToSteps(p);
+		Point5d excess = pastExcess;
+		Point5d steps = machine.mmToSteps(p, excess);
 		pb.add32((long) steps.x());
 		pb.add32((long) steps.y());
 		pb.add32((long) steps.z());
