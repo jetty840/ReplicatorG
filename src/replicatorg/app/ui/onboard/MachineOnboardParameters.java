@@ -1360,6 +1360,7 @@
 			 boolean preheatDuringPauseEnabled;
 			 boolean extruderHold;
 			 boolean newToolheadOffsetSystem;
+		         boolean checkCRC;
 			 int[] deprime;
 			 double[] JKNadvance;
 
@@ -1368,6 +1369,7 @@
 					 boolean preheatDuringPauseEnabled,
 					 boolean extruderHold,
 					 boolean newToolheadOffsetSystem,
+					 boolean checkCRC,
 					 int[] deprime,
 					 double[] JKNadvance)
 			 {
@@ -1376,6 +1378,7 @@
 				 this.preheatDuringPauseEnabled = preheatDuringPauseEnabled;
 				 this.extruderHold              = extruderHold;
 				 this.newToolheadOffsetSystem   = newToolheadOffsetSystem;
+				 this.checkCRC                  = checkCRC;
 				 this.deprime                   = deprime;
 				 this.JKNadvance                = JKNadvance;
 			 }
@@ -1432,6 +1435,22 @@
             "indicated the ideal toolhead offsets.  Regardless of which selection you make, you do not need to adjust your " +
             "toolhead offsets stored in the EEPROM: Sailfish will automatically adjust them for you.  However, the values " +
             "stored in the bot's EEPROM will be left unchanged."));
+		 } 
+
+		 private JCheckBox checkCRCBox = new JCheckBox();
+		 {
+			 checkCRCBox.setToolTipText(wrap2HTML(width,
+            "Your SD cards contain a tiny computer which talks with the computer within your bot.  Electrical noise within " +
+            "your bot can introduce errors in these conversations which, in turn, can cause defects in your print or " +
+            "even cause the print to fail.  These errors normally go undetected: the bot and SD card do not normally " +
+            "check to see whether the file data sent from the SD card to the bot arrives without errors and the bot assumes " +
+            "that the data is correct with no errors.  By enabling this feature, the SD card's computer is told to add extra " +
+            "information to the end of each data transfer.  This extra information, a 16bit CRC, is used to confirm that the " +
+            "file data was transferred without the introduction of errors.  If your bot then sees that an error occurred, it " +
+            "will ask the SD card to retransmit the data.  This maximizes the likelihood of successful prints by catching and " +
+            "repairing data transfer errors.  If the same file data fails to transfer correctly after five attempts, then the " +
+            "print is gracefully cancelled and an error message displayed.  NOTE THAT Replicator 1's are particularly " +
+            "susceptible to data transfer errors owing to their electronics design."));
 		 } 
 
 		 private JButton draftButton = new JButton("Quick Draft");
@@ -1603,6 +1622,7 @@
 								    preheatDuringPauseBox.isSelected(),
 								    extruderHoldBox.isSelected(),
 								    newToolheadOffsetSystemBox.isSelected(),
+								    checkCRCBox.isSelected(),
 								    new int[] {((Number)extruderDeprimeA.getValue()).intValue(),
 									       ((Number)extruderDeprimeB.getValue()).intValue()},
 								    new double[] {((Number)JKNAdvance1.getValue()).doubleValue(),
@@ -1621,6 +1641,7 @@
 			 target.setEEPROMParam(OnboardParameters.EEPROMParams.ACCEL_SLOWDOWN_FLAG, params.tab2.slowdownEnabled ? 1 : 0);
 			 target.setEEPROMParam(OnboardParameters.EEPROMParams.EXTRUDER_HOLD, params.tab2.extruderHold ? 1 : 0);
 			 target.setEEPROMParam(OnboardParameters.EEPROMParams.TOOLHEAD_OFFSET_SYSTEM, params.tab2.newToolheadOffsetSystem ? 1 : 0);
+			 target.setEEPROMParam(OnboardParameters.EEPROMParams.SD_USE_CRC, params.tab2.checkCRC ? 1 : 0);
 
 			 target.setEEPROMParam(OnboardParameters.EEPROMParams.ACCEL_MAX_EXTRUDER_NORM,    params.tab1.accelerations[0]);
 			 target.setEEPROMParam(OnboardParameters.EEPROMParams.ACCEL_MAX_EXTRUDER_RETRACT, params.tab1.accelerations[1]);
@@ -1657,6 +1678,7 @@
 				     false,
 				     false,
 				     false,
+				     false,
 				     params.accelerations,
 				     params.maxAccelerations,
 				     params.maxSpeedChanges,
@@ -1671,6 +1693,7 @@
 					  boolean preheatDuringPauseEnabled,
 					  boolean extruderHoldEnabled,
 					  boolean newToolheadOffsetSystem,
+					  boolean checkCRC,
 					  int[] accelerations,
 					  int[] maxAccelerations,
 					  int[] maxSpeedChanges,
@@ -1708,6 +1731,7 @@
 				 preheatDuringPauseBox.setSelected(preheatDuringPauseEnabled);
 				 extruderHoldBox.setSelected(extruderHoldEnabled);
 				 newToolheadOffsetSystemBox.setSelected(newToolheadOffsetSystem);
+				 checkCRCBox.setSelected(checkCRC);
 
 				 if (JKNadvance != null) {
 					 JKNAdvance1.setValue(JKNadvance[0]);
@@ -1732,6 +1756,7 @@
 			 boolean preheatDuringPauseEnabled = target.getEEPROMParamInt(OnboardParameters.EEPROMParams.PREHEAT_DURING_PAUSE) != 0;
 			 boolean extruderHoldEnabled = target.getEEPROMParamInt(OnboardParameters.EEPROMParams.EXTRUDER_HOLD) != 0;
 			 boolean newToolheadOffsetSystem = target.getEEPROMParamInt(OnboardParameters.EEPROMParams.TOOLHEAD_OFFSET_SYSTEM) != 0;
+			 boolean checkCRC = target.getEEPROMParamInt(OnboardParameters.EEPROMParams.SD_USE_CRC) != 0;
 			 int[] maxAccelerations = new int[] {
 				 target.getEEPROMParamInt(OnboardParameters.EEPROMParams.ACCEL_MAX_ACCELERATION_X),
 				 target.getEEPROMParamInt(OnboardParameters.EEPROMParams.ACCEL_MAX_ACCELERATION_Y),
@@ -1759,8 +1784,8 @@
 				 target.getEEPROMParamInt(OnboardParameters.EEPROMParams.ACCEL_EXTRUDER_DEPRIME_B) };
 
 			 setUIFields(UI_TAB_1 | UI_TAB_2, accelerationEnabled, slowdownEnabled, overrideGCodeTempEnabled,
-				     preheatDuringPauseEnabled, extruderHoldEnabled, newToolheadOffsetSystem, accelerations,
-				     maxAccelerations, maxSpeedChanges, JKNadvance, deprime);
+				     preheatDuringPauseEnabled, extruderHoldEnabled, newToolheadOffsetSystem, checkCRC,
+				     accelerations, maxAccelerations, maxSpeedChanges, JKNadvance, deprime);
 		 }
 
 		 @Override
@@ -1835,9 +1860,10 @@
 			 extruderDeprimeA.setColumns(8);
 			 extruderDeprimeB.setColumns(8);
 
+			 addWithSharedToolTips(accelerationMiscTab, "Enable SD card error checking", checkCRCBox, "wrap");
+			 addWithSharedToolTips(accelerationMiscTab, "Slow printing when acceleration planing falls behind", slowdownFlagBox, "wrap");
 			 addWithSharedToolTips(accelerationMiscTab, "Override the target temperatures in the gcode", overrideGCodeTempBox, "wrap");
 			 addWithSharedToolTips(accelerationMiscTab, "Preheat during paused operations", preheatDuringPauseBox, "wrap");
-			 addWithSharedToolTips(accelerationMiscTab, "Slow printing when acceleration planing falls behind", slowdownFlagBox, "wrap");
 			 addWithSharedToolTips(accelerationMiscTab, "Extruder hold enabled", extruderHoldBox, "wrap");
 			 addWithSharedToolTips(accelerationMiscTab, "Use the new dualstrustion toolhead offset system", newToolheadOffsetSystemBox, "wrap");
 			 addWithSharedToolTips(accelerationMiscTab, "JKN Advance K", JKNAdvance1, "wrap");
@@ -2591,6 +2617,7 @@
 			 boolean dittoEnabled;
 			 boolean extruderHold;
 			 boolean newToolheadOffsetSystem;
+		         boolean checkCRC;
 			 int buzzerRepeats;
 			 int lcdType;
 			 int scriptId;
@@ -2601,6 +2628,7 @@
 					 boolean dittoEnabled,
 					 boolean extruderHold,
 					 boolean newToolheadOffsetSystem,
+					 boolean checkCRC,
 					 int buzzerRepeats,
 					 int lcdType,
 					 int scriptId,
@@ -2611,6 +2639,7 @@
 				 this.dittoEnabled             = dittoEnabled;
 				 this.extruderHold             = extruderHold;
 				 this.newToolheadOffsetSystem  = newToolheadOffsetSystem;
+				 this.checkCRC                 = checkCRC;
 				 this.buzzerRepeats            = buzzerRepeats;
 				 this.lcdType                  = lcdType;
 				 this.scriptId                 = scriptId;
@@ -2737,6 +2766,22 @@
             "indicated the ideal toolhead offsets.  Regardless of which selection you make, you do not need to adjust your " +
             "toolhead offsets stored in the EEPROM: Sailfish will automatically adjust them for you.  However, the values " +
             "stored in the bot's EEPROM will be left unchanged."));
+		 }
+
+		 private JCheckBox checkCRCBox = new JCheckBox();
+		 {
+			 checkCRCBox.setToolTipText(wrap2HTML(width,
+            "Your SD cards contain a tiny computer which talks with the computer within your bot.  Electrical noise within " +
+            "your bot can introduce errors in these conversations which, in turn, can cause defects in your print or " +
+            "even cause the print to fail.  These errors normally go undetected: the bot and SD card do not normally " +
+            "check to see whether the file data sent from the SD card to the bot arrives without errors and the bot assumes " +
+            "that the data is correct with no errors.  By enabling this feature, the SD card's computer is told to add extra " +
+            "information to the end of each data transfer.  This extra information, a 16bit CRC, is used to confirm that the " +
+            "file data was transferred without the introduction of errors.  If your bot then sees that an error occurred, it " +
+            "will ask the SD card to retransmit the data.  This maximizes the likelihood of successful prints by catching and " +
+            "repairing data transfer errors.  If the same file data fails to transfer correctly after five attempts, then the " +
+            "print is gracefully cancelled and an error message displayed.  NOTE THAT Replicator 1's are particularly " +
+            "susceptible to data transfer errors owing to their electronics design."));
 		 } 
 
 		 private JButton draftButton = new JButton("Quick Draft");
@@ -2962,6 +3007,7 @@
 								    dittoBox.isSelected(),
 								    extruderHoldBox.isSelected(),
 								    newToolheadOffsetSystemBox.isSelected(),
+								    checkCRCBox.isSelected(),
 								    ((Number)buzzerRepeats.getValue()).intValue(),
 								    lcdType,
 								    scriptId,
@@ -2982,6 +3028,7 @@
 			 target.setEEPROMParam(OnboardParameters.EEPROMParams.DITTO_PRINT_ENABLED, params.tab3.dittoEnabled ? 1 : 0);
 			 target.setEEPROMParam(OnboardParameters.EEPROMParams.EXTRUDER_HOLD, params.tab3.extruderHold ? 1 : 0);
 			 target.setEEPROMParam(OnboardParameters.EEPROMParams.TOOLHEAD_OFFSET_SYSTEM, params.tab3.newToolheadOffsetSystem ? 1 : 0);
+			 target.setEEPROMParam(OnboardParameters.EEPROMParams.SD_USE_CRC, params.tab3.checkCRC ? 1 : 0);
 			 target.setEEPROMParam(OnboardParameters.EEPROMParams.OVERRIDE_GCODE_TEMP, params.tab3.overrideGCodeTempEnabled ? 1 : 0);
 
 			 int lv = params.tab2.slowdownEnabled ? 1 : 0;
@@ -3079,6 +3126,7 @@
 				 dittoBox.setSelected(tab3.dittoEnabled);
 				 extruderHoldBox.setSelected(tab3.extruderHold);
 				 newToolheadOffsetSystemBox.setSelected(tab3.newToolheadOffsetSystem);
+				 checkCRCBox.setSelected(tab3.checkCRC);
 				 buzzerRepeats.setValue(tab3.buzzerRepeats);
 				 int lcdIndex;
 				 if (tab3.lcdType == 50)
@@ -3114,6 +3162,7 @@
 			 boolean dittoEnabled = target.getEEPROMParamInt(OnboardParameters.EEPROMParams.DITTO_PRINT_ENABLED) != 0;
 			 boolean extruderHold = target.getEEPROMParamInt(OnboardParameters.EEPROMParams.EXTRUDER_HOLD) != 0;
 			 boolean newToolheadOffsetSystem = target.getEEPROMParamInt(OnboardParameters.EEPROMParams.TOOLHEAD_OFFSET_SYSTEM) != 0;
+			 boolean checkCRC = target.getEEPROMParamInt(OnboardParameters.EEPROMParams.SD_USE_CRC) != 0;
 			 int buzzerRepeats = target.getEEPROMParamInt(OnboardParameters.EEPROMParams.BUZZER_REPEATS);
 			 int scriptId = target.getEEPROMParamInt(OnboardParameters.EEPROMParams.MOOD_LIGHT_SCRIPT);
 			 int lcdType = target.getEEPROMParamInt(OnboardParameters.EEPROMParams.LCD_TYPE);
@@ -3165,6 +3214,7 @@
 							 dittoEnabled,
 							 extruderHold,
 							 newToolheadOffsetSystem,
+							 checkCRC,
 							 buzzerRepeats,
 							 lcdType,
 							 scriptId,
@@ -3266,14 +3316,16 @@
 			 addWithSharedToolTips(miscTab, "Buzzer repeats", buzzerRepeats, "wrap");
 
 			 addWithSharedToolTips(miscTab, "Left extruder (tool 1) preheat & override temperature (C)", tool1Temp);
-			 addWithSharedToolTips(miscTab, "Mood light script", moodLightScript, "wrap");
-
-			 addWithSharedToolTips(miscTab, "Platform preheat & override temperature (C)",platformTemp);
+			 addWithSharedToolTips(miscTab, "Check SD card reads", checkCRCBox, "wrap");
+			 
+			 addWithSharedToolTips(miscTab, "Platform preheat & override temperature (C)", platformTemp);
 			 addWithSharedToolTips(miscTab, "Ditto (duplicate) printing enabled", dittoBox, "wrap");
-			 addWithSharedToolTips(miscTab, "Extruder hold enabled", extruderHoldBox, "wrap");
-			 addWithSharedToolTips(miscTab, "Use the new dualstrustion toolhead offset system",
-					       newToolheadOffsetSystemBox, "wrap");
 
+			 addWithSharedToolTips(miscTab, "Use the new dualstrustion toolhead offset system",
+					       newToolheadOffsetSystemBox);
+			 addWithSharedToolTips(miscTab, "Extruder hold enabled", extruderHoldBox, "wrap");
+
+			 addWithSharedToolTips(miscTab, "Mood light script", moodLightScript, "wrap");
 			 addWithSharedToolTips(miscTab, "Mood light color",
 					       moodLightCustomColor, "span 4, wrap, gapbottom push, gapright push");
 		 }

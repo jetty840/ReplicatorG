@@ -71,9 +71,11 @@ public class Makerbot4GAlternateDriver extends Makerbot4GDriver {
 			// okay, send it off!
 			// TODO: bug: We move all axes (even ones that shouldn't be moved) How to avoid?
 			Point5d excess = new Point5d(stepExcess);
+			if ( absoluteXYZ ) { excess.setX(0); excess.setY(0); excess.setZ(0); }
 			queueAbsolutePoint(machine.mmToSteps(filteredPoint, excess), longestDDA);
+			if ( absoluteXYZ ) { excess.setX(0); excess.setY(0); excess.setZ(0); }
 			// Only update excess if no retry was thrown.
-			pastExcess = stepExcess;
+			pastExcess = new Point5d(stepExcess);
 			stepExcess = excess;
 			// Finally, recored the position, and mark it as valid.
 			setInternalPosition(filteredPoint);
@@ -84,11 +86,14 @@ public class Makerbot4GAlternateDriver extends Makerbot4GDriver {
 			// currentPosition (which we get from the Motherboard).
 			Point5d filteredpoint = new Point5d(p);
 			Point5d filteredcurrent = new Point5d(getCurrentPosition(false));
+			Point5d excess = new Point5d();
 			int relative = 0;
+			if ( !absoluteXYZ ) excess = new Point5d(stepExcess);
 			for (AxisId axis : getAllHijackedAxes()) {
 				filteredpoint.setAxis(axis, 0d);
 				filteredcurrent.setAxis(axis, 0d);
 				relative |= 1 << axis.getIndex();
+				excess.setAxis(axis, stepExcess.axis(axis)); // save accumulated roundoff for relative move
 			}
 		
 			// is this point even step-worthy? Only compute nonzero moves
@@ -102,10 +107,9 @@ public class Makerbot4GAlternateDriver extends Makerbot4GDriver {
 				delta.add(axesmovement);
 				filteredpoint.add(axesmovement);
 
-				Point5d excess = new Point5d(stepExcess);
 				// Calculate time for move in usec
 				Point5d steps = machine.mmToSteps(filteredpoint,excess);		
-	
+
 				// okay, send it off!
 				// The 4. and 5. dimensions doesn't have a spatial interpretation. Calculate time in 3D space
 				double minutes = delta.get3D().distance(new Point3d())/ getSafeFeedrate(delta);
@@ -113,8 +117,14 @@ public class Makerbot4GAlternateDriver extends Makerbot4GDriver {
 				queueNewPoint(steps, (long) (60 * 1000 * 1000 * minutes), relative);
 
 				// Only update excess if no retry was thrown.
-				pastExcess = stepExcess;
-				stepExcess = excess;
+				pastExcess = new Point5d(stepExcess);
+				if ( absoluteXYZ) {
+				    stepExcess = new Point5d();
+				    for (AxisId axis : getAllHijackedAxes()) 
+					stepExcess.setAxis(axis, excess.axis(axis)); // save roundoff for relative axes
+				}
+				else
+				    stepExcess = excess;
 
 				setInternalPosition(filteredpoint);
 			}
