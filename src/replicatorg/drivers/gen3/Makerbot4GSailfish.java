@@ -72,6 +72,7 @@ public class Makerbot4GSailfish extends Makerbot4GAlternateDriver
 	 */
 	public Makerbot4GSailfish() {
 		super();
+		absoluteXYZ = true;
 		ledColorByEffect = new Hashtable();
 		ledColorByEffect.put(0, Color.BLACK);
 		Base.logger.info("Created a Sailfish");
@@ -419,7 +420,10 @@ public class Makerbot4GSailfish extends Makerbot4GAlternateDriver
 			
 			// calculate absolute position of target in steps
 			Point5d excess = new Point5d(stepExcess);
+			// X, Y, and Z are absolute moves and should not accumulate roundoff errors!
+			excess.setX(0); excess.setY(0); excess.setZ(0);
 			Point5d steps = machine.mmToSteps(target,excess);	
+			excess.setX(0); excess.setY(0); excess.setZ(0);
 			
 			double usec = (60 * 1000 * 1000 * minutes);
 
@@ -451,6 +455,7 @@ public class Makerbot4GSailfish extends Makerbot4GAlternateDriver
 //			}
 
 			// Only update excess if no retry was thrown.
+			pastExcess = new Point5d(stepExcess);
 			stepExcess = excess;
 
 			// because of the hinky stuff we've been doing with A & B axes, just pretend we've
@@ -1028,6 +1033,7 @@ public class Makerbot4GSailfish extends Makerbot4GAlternateDriver
                 case DITTO_PRINT_ENABLED        : return getUInt8EEPROM(SailfishEEPROM.DITTO_PRINT_ENABLED);
 		case EXTRUDER_HOLD              : return getUInt8EEPROM(SailfishEEPROM.EXTRUDER_HOLD);
 		case TOOLHEAD_OFFSET_SYSTEM     : return getUInt8EEPROM(SailfishEEPROM.TOOLHEAD_OFFSET_SYSTEM);
+		case SD_USE_CRC                 : return getUInt8EEPROM(SailfishEEPROM.SD_USE_CRC);
 		default				: return super.getEEPROMParamInt(param);
                 }
         }
@@ -1049,6 +1055,7 @@ public class Makerbot4GSailfish extends Makerbot4GAlternateDriver
                 case DITTO_PRINT_ENABLED        : setUInt8EEPROM(SailfishEEPROM.DITTO_PRINT_ENABLED, (val != 0) ? 1 : 0); break;
 		case EXTRUDER_HOLD              : setUInt8EEPROM(SailfishEEPROM.EXTRUDER_HOLD, (val != 0) ? 1 : 0); break;
 		case TOOLHEAD_OFFSET_SYSTEM     : setUInt8EEPROM(SailfishEEPROM.TOOLHEAD_OFFSET_SYSTEM, (val != 0) ? 1 : 0); break;
+		case SD_USE_CRC                 : setUInt8EEPROM(SailfishEEPROM.SD_USE_CRC, (val != 0) ? 1 : 0); break;
 		default				: super.setEEPROMParam(param, val); break;
 		}
 	}

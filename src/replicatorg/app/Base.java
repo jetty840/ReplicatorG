@@ -107,7 +107,7 @@ public class Base {
 	/**
 	 * The textual representation of this version (4 digits, zero padded).
 	 */
-	public static final String VERSION_NAME = String.format("Sailfish - %04dr5",VERSION);
+	public static final String VERSION_NAME = String.format("Sailfish - %04dr7",VERSION);
 
 	/**
 	 * The machine controller in use.

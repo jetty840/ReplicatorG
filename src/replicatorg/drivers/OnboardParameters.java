@@ -78,6 +78,7 @@ public interface OnboardParameters {
 		PREHEAT_DURING_ESTIMATE,    // Start preheating while estimating build time
 		PREHEAT_DURING_PAUSE,       // Preheat during pause
 		RAM_USAGE_DEBUG,            // SRAM highwater mark
+		SD_USE_CRC,                 // Perform SD card CRC checks
 		STEPPER_DRIVER,             // Bit 0: accel driver on/off, bit 1: planner on/off, bit 2: strangled on/off
 		STEPS_PER_MM_A,             // A axis steps per millimeter (steps/mm)
 		STEPS_PER_MM_B,             // B axis steps per millimeter (steps/mm)

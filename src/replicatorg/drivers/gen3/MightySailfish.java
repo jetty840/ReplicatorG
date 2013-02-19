@@ -271,6 +271,7 @@ public class MightySailfish extends Makerbot4GAlternateDriver
 	 */
 	public MightySailfish() {
 		super();
+		absoluteXYZ = true;
 		ledColorByEffect = new Hashtable();
 		ledColorByEffect.put(0, Color.BLACK);
 		Base.logger.info("Created a MightySailfish");
@@ -847,7 +848,10 @@ public class MightySailfish extends Makerbot4GAlternateDriver
 			
 			// calculate absolute position of target in steps
 			Point5d excess = new Point5d(stepExcess);
-			Point5d steps = machine.mmToSteps(target,excess);	
+			// X, Y, and Z are absolute moves and should not accumulate roundoff errors!
+			excess.setX(0); excess.setY(0); excess.setZ(0);
+			Point5d steps = machine.mmToSteps(target,excess);
+			excess.setX(0); excess.setY(0); excess.setZ(0);
 			
 			double usec = (60 * 1000 * 1000 * minutes);
 
@@ -879,7 +883,7 @@ public class MightySailfish extends Makerbot4GAlternateDriver
       queueNewPoint(steps, (long)usec, relativeAxes);
     }
 			// Only update excess if no retry was thrown.
-			pastExcess = stepExcess;
+                        pastExcess = new Point5d(stepExcess);
 			stepExcess = excess;
 
 			// because of the hinky stuff we've been doing with A & B axes, just pretend we've
@@ -2306,6 +2310,7 @@ public class MightySailfish extends Makerbot4GAlternateDriver
 		case OVERRIDE_GCODE_TEMP        : return getUInt8EEPROM(JettyMBEEPROM.OVERRIDE_GCODE_TEMP);
 		case EXTRUDER_HOLD              : return getUInt8EEPROM(JettyMBEEPROM.EXTRUDER_HOLD);
 		case TOOLHEAD_OFFSET_SYSTEM     : return getUInt8EEPROM(JettyMBEEPROM.TOOLHEAD_OFFSET_SYSTEM);
+		case SD_USE_CRC                 : return getUInt8EEPROM(JettyMBEEPROM.SD_USE_CRC);
 		default :
 			Base.logger.log(Level.WARNING, "getEEPROMParamInt(" + param + ") call failed");
 			return 0;
@@ -2356,6 +2361,7 @@ public class MightySailfish extends Makerbot4GAlternateDriver
 		case OVERRIDE_GCODE_TEMP        : setUInt8EEPROM(JettyMBEEPROM.OVERRIDE_GCODE_TEMP, (val != 0) ? 1 : 0); break;
 		case EXTRUDER_HOLD              : setUInt8EEPROM(JettyMBEEPROM.EXTRUDER_HOLD, (val != 0) ? 1 : 0); break;
 		case TOOLHEAD_OFFSET_SYSTEM     : setUInt8EEPROM(JettyMBEEPROM.TOOLHEAD_OFFSET_SYSTEM, (val != 0) ? 1 : 0); break;
+		case SD_USE_CRC                 : setUInt8EEPROM(JettyMBEEPROM.SD_USE_CRC, (val != 0) ? 1 : 0); break;
 		default : Base.logger.log(Level.WARNING, "setEEPROMParam(" + param + ", " + val + ") call failed"); break;
 		}
 	}
