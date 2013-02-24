@@ -1756,7 +1756,7 @@
 			 boolean preheatDuringPauseEnabled = target.getEEPROMParamInt(OnboardParameters.EEPROMParams.PREHEAT_DURING_PAUSE) != 0;
 			 boolean extruderHoldEnabled = target.getEEPROMParamInt(OnboardParameters.EEPROMParams.EXTRUDER_HOLD) != 0;
 			 boolean newToolheadOffsetSystem = target.getEEPROMParamInt(OnboardParameters.EEPROMParams.TOOLHEAD_OFFSET_SYSTEM) != 0;
-			 boolean checkCRC = target.getEEPROMParamInt(OnboardParameters.EEPROMParams.SD_USE_CRC) != 0;
+			 boolean checkCRC = target.getEEPROMParamInt(OnboardParameters.EEPROMParams.SD_USE_CRC) == 1;
 			 int[] maxAccelerations = new int[] {
 				 target.getEEPROMParamInt(OnboardParameters.EEPROMParams.ACCEL_MAX_ACCELERATION_X),
 				 target.getEEPROMParamInt(OnboardParameters.EEPROMParams.ACCEL_MAX_ACCELERATION_Y),
@@ -3162,7 +3162,7 @@
 			 boolean dittoEnabled = target.getEEPROMParamInt(OnboardParameters.EEPROMParams.DITTO_PRINT_ENABLED) != 0;
 			 boolean extruderHold = target.getEEPROMParamInt(OnboardParameters.EEPROMParams.EXTRUDER_HOLD) != 0;
 			 boolean newToolheadOffsetSystem = target.getEEPROMParamInt(OnboardParameters.EEPROMParams.TOOLHEAD_OFFSET_SYSTEM) != 0;
-			 boolean checkCRC = target.getEEPROMParamInt(OnboardParameters.EEPROMParams.SD_USE_CRC) != 0;
+			 boolean checkCRC = target.getEEPROMParamInt(OnboardParameters.EEPROMParams.SD_USE_CRC) == 1;
 			 int buzzerRepeats = target.getEEPROMParamInt(OnboardParameters.EEPROMParams.BUZZER_REPEATS);
 			 int scriptId = target.getEEPROMParamInt(OnboardParameters.EEPROMParams.MOOD_LIGHT_SCRIPT);
 			 int lcdType = target.getEEPROMParamInt(OnboardParameters.EEPROMParams.LCD_TYPE);
