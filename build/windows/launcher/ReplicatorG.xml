@@ -33,7 +33,7 @@
     <maxVersion></maxVersion>
     <jdkPreference>preferJre</jdkPreference>
     <initialHeapSize>256</initialHeapSize>
-    <maxHeapSize>750</maxHeapSize>
+    <maxHeapSize>1433</maxHeapSize>
     <opt>-D32</opt>
   </jre>
 </launch4jConfig>

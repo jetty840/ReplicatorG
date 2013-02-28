@@ -94,7 +94,7 @@
 			<!-- jvm="/usr/lib/jvm/java-1.5.0-sun/bin/java" -->
 
 			<jvmarg value="-ea" />
-			<jvmarg value="-Xmx512m" />
+			<jvmarg value="-Xmx2g" />
 			<jvmarg value="-XX:+HeapDumpOnOutOfMemoryError" />
 			<jvmarg value="${native.java.flags}" />
 			<classpath>
@@ -182,7 +182,7 @@
 
 		<taskdef name="jarbundler" classname="net.sourceforge.jarbundler.JarBundler" />
 		<antcall target="dist-common-plain" />
-		<jarbundler dir="${target.dir}" name="ReplicatorG" bundleid="org.replicatorg.app" mainclass="replicatorg.app.Base" icon="${dist.dir}/replicatorg.icns" extraclasspath="/System/Library/Java" vmoptions="-d32 -ea -Xmx1G" infostring="ReplicatorG ${replicatorg.version}, © 2009-${current.year} MakerBot Industries" version="${replicatorg.version}" jvmversion="1.5+" stubfile="${dist.dir}/ReplicatorG">
+		<jarbundler dir="${target.dir}" name="ReplicatorG" bundleid="org.replicatorg.app" mainclass="replicatorg.app.Base" icon="${dist.dir}/replicatorg.icns" extraclasspath="/System/Library/Java" vmoptions="-d32 -ea -Xmx2G" infostring="ReplicatorG ${replicatorg.version}, © 2009-${current.year} MakerBot Industries" version="${replicatorg.version}" jvmversion="1.5+" stubfile="${dist.dir}/ReplicatorG">
 			<jarfileset dir="${jar.dir}" includes="ReplicatorG.jar" />
 			<jarfileset dir="${lib.dir}" includes="*.jar" />
 			<jarfileset dir="${dist.dir}" includes="*.jnilib" />
