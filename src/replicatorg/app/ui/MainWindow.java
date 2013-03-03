@@ -2292,15 +2292,15 @@ ToolpathGenerator.GeneratorListener
       s3gFilter = new ExtensionFilter(".s3g"," .s3g  (For use with firmware v3.5 or earlier)");
       x3gFilter = new ExtensionFilter(".x3g"," .x3g  (For use with firmware v4.1 or later)");
     } 
-		fc.addChoosableFileFilter(s3gFilter);
 		fc.addChoosableFileFilter(x3gFilter);
-		if(((OnboardParameters)machineLoader.getDriver()).hasJettyAcceleration() ||
-			(machineLoader.getDriver().getBuildToFileVersion() >= 4) ){
-			fc.setFileFilter(x3gFilter);
-		}
-		else{
-			fc.setFileFilter(s3gFilter);
-		}
+		fc.addChoosableFileFilter(s3gFilter);
+		// Always default to x3gFilter
+		fc.setFileFilter(x3gFilter);
+		//if(((OnboardParameters)machineLoader.getDriver()).hasJettyAcceleration() ||
+		//	(machineLoader.getDriver().getBuildToFileVersion() >= 4) )
+		//	fc.setFileFilter(x3gFilter);
+		//else
+		//	fc.setFileFilter(s3gFilter);
 
 		fc.setDialogTitle("Save Makerbot build as...");
 		fc.setDialogType(JFileChooser.SAVE_DIALOG);
