@@ -974,5 +974,8 @@ public class DriverBaseImplementation implements Driver, DriverQueryInterface{
 		return baseline;
 	}
 
+	public boolean getPStop() { return false; }
+
+	public void setPStop(boolean enable) { return; }
 
 }

@@ -80,6 +80,7 @@ class SailfishEEPROM extends JettyG3EEPROM {
 	final public static int EXTRUDER_HOLD                   = 0x01E9;
 	final public static int TOOLHEAD_OFFSET_SYSTEM          = 0X01EA;
 	final public static int SD_USE_CRC                      = 0X01EB;
+	final public static int PSTOP_ENABLE                    = 0X01EC;
 }
 
 
@@ -103,6 +104,7 @@ class JettyMBEEPROM extends Sanguino3GEEPRPOM {
 	final public static int DEFAULTS_FLAG                  = 0x0265;
 	final public static int FUTURE_USE                     = 0x0266;
 	final public static int AXIS_MAX_FEEDRATES             = 0x027A;
+	final public static int PSTOP_ENABLE                   = 0x0F90;
 	final public static int SD_USE_CRC                     = 0x0F91;
 	final public static int EXTRUDER_HOLD                  = 0x0F92;
 	final public static int TOOLHEAD_OFFSET_SYSTEM         = 0x0F93;

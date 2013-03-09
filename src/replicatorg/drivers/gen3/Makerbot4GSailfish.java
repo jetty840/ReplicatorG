@@ -1034,6 +1034,7 @@ public class Makerbot4GSailfish extends Makerbot4GAlternateDriver
 		case EXTRUDER_HOLD              : return getUInt8EEPROM(SailfishEEPROM.EXTRUDER_HOLD);
 		case TOOLHEAD_OFFSET_SYSTEM     : return getUInt8EEPROM(SailfishEEPROM.TOOLHEAD_OFFSET_SYSTEM);
 		case SD_USE_CRC                 : return getUInt8EEPROM(SailfishEEPROM.SD_USE_CRC);
+		case PSTOP_ENABLE               : return getUInt8EEPROM(SailfishEEPROM.PSTOP_ENABLE);
 		default				: return super.getEEPROMParamInt(param);
                 }
         }
@@ -1056,6 +1057,7 @@ public class Makerbot4GSailfish extends Makerbot4GAlternateDriver
 		case EXTRUDER_HOLD              : setUInt8EEPROM(SailfishEEPROM.EXTRUDER_HOLD, (val != 0) ? 1 : 0); break;
 		case TOOLHEAD_OFFSET_SYSTEM     : setUInt8EEPROM(SailfishEEPROM.TOOLHEAD_OFFSET_SYSTEM, (val != 0) ? 1 : 0); break;
 		case SD_USE_CRC                 : setUInt8EEPROM(SailfishEEPROM.SD_USE_CRC, (val != 0) ? 1 : 0); break;
+		case PSTOP_ENABLE               : setUInt8EEPROM(SailfishEEPROM.PSTOP_ENABLE, (val != 0) ? 1 : 0); break;
 		default				: super.setEEPROMParam(param, val); break;
 		}
 	}
@@ -1080,5 +1082,16 @@ public class Makerbot4GSailfish extends Makerbot4GAlternateDriver
 		case ACCEL_MAX_SPEED_CHANGE_B   : setUInt32EEPROM(SailfishEEPROM.ACCEL_MAX_SPEED_CHANGE_B, (long)(val * 10.0d)); break;
 		default				: super.setEEPROMParam(param, val); break;
 		}
+	}
+
+	@Override
+	public boolean getPStop() {
+		return ( 1 == getEEPROMParamInt(OnboardParameters.EEPROMParams.PSTOP_ENABLE) );
+	}
+
+	@Override
+	public void setPStop(boolean enable) {
+		setEEPROMParam(OnboardParameters.EEPROMParams.PSTOP_ENABLE, enable ? (int)1 : (int)0);
+		return;
 	}
 }

@@ -2311,6 +2311,7 @@ public class MightySailfish extends Makerbot4GAlternateDriver
 		case EXTRUDER_HOLD              : return getUInt8EEPROM(JettyMBEEPROM.EXTRUDER_HOLD);
 		case TOOLHEAD_OFFSET_SYSTEM     : return getUInt8EEPROM(JettyMBEEPROM.TOOLHEAD_OFFSET_SYSTEM);
 		case SD_USE_CRC                 : return getUInt8EEPROM(JettyMBEEPROM.SD_USE_CRC);
+		case PSTOP_ENABLE               : return getUInt8EEPROM(JettyMBEEPROM.PSTOP_ENABLE);
 		default :
 			Base.logger.log(Level.WARNING, "getEEPROMParamInt(" + param + ") call failed");
 			return 0;
@@ -2362,6 +2363,7 @@ public class MightySailfish extends Makerbot4GAlternateDriver
 		case EXTRUDER_HOLD              : setUInt8EEPROM(JettyMBEEPROM.EXTRUDER_HOLD, (val != 0) ? 1 : 0); break;
 		case TOOLHEAD_OFFSET_SYSTEM     : setUInt8EEPROM(JettyMBEEPROM.TOOLHEAD_OFFSET_SYSTEM, (val != 0) ? 1 : 0); break;
 		case SD_USE_CRC                 : setUInt8EEPROM(JettyMBEEPROM.SD_USE_CRC, (val != 0) ? 1 : 0); break;
+		case PSTOP_ENABLE               : setUInt8EEPROM(JettyMBEEPROM.PSTOP_ENABLE, (val != 0) ? 1 : 0); break;
 		default : Base.logger.log(Level.WARNING, "setEEPROMParam(" + param + ", " + val + ") call failed"); break;
 		}
 	}
@@ -2385,7 +2387,19 @@ public class MightySailfish extends Makerbot4GAlternateDriver
 		default : Base.logger.log(Level.WARNING, "setEEPROMParam(" + param + ", " + val + ") call failed"); break;
 		}
 	}
+
+	@Override
+	public boolean getPStop() {
+		return ( 1 == getEEPROMParamInt(OnboardParameters.EEPROMParams.PSTOP_ENABLE) );
+	}
+
+	@Override
+	public void setPStop(boolean enable) {
+		setEEPROMParam(OnboardParameters.EEPROMParams.PSTOP_ENABLE, enable ? (int)1 : (int)0);
+		return;
+	}
 }
+
 /* footnote[1]:
  MakerBot added a bunch of awesome advanced features, new commands, and new EEPROM layout for version 6
  of firmware. This firmware is shipped for several products, especially Replicator and Replicator 2. 

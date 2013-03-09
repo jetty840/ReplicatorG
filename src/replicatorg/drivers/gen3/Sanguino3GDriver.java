@@ -2997,5 +2997,4 @@ public class Sanguino3GDriver extends SerialDriver implements
 		// TODO Auto-generated method stub
 		
 	}
-	
 }
