@@ -51,6 +51,7 @@
 	 private JCheckBox aAxisInvertBox = new JCheckBox();
 	 private JCheckBox bAxisInvertBox = new JCheckBox();
 	 private JCheckBox zHoldBox = new JCheckBox();
+	 private JCheckBox pStopBox = new JCheckBox();
 	 private JButton resetToFactoryButton = new JButton("Reset motherboard to factory settings");
 	 private JButton resetToBlankButton = new JButton("Reset motherboard completely");
 	 private JButton commitButton = new JButton("Commit Changes");
@@ -179,6 +180,8 @@
 			 target.setEstopConfig(estop);
 		 }
 
+		 target.setPStop(pStopBox.isSelected());
+
 		 target.setAxisHomeOffset(0, ((Number)xAxisHomeOffsetField.getValue()).doubleValue());
 		 target.setAxisHomeOffset(1, ((Number)yAxisHomeOffsetField.getValue()).doubleValue());
 		 target.setAxisHomeOffset(2, ((Number)zAxisHomeOffsetField.getValue()).doubleValue());
@@ -300,7 +303,9 @@
 		aAxisInvertBox.setSelected(invertedAxes.contains(AxisId.A));
 		bAxisInvertBox.setSelected(invertedAxes.contains(AxisId.B));
 		zHoldBox.setSelected(     !invertedAxes.contains(AxisId.V));
-		
+
+		pStopBox.setSelected(target.getPStop());
+
 		if(target.hasHbp()){
 			byte hbp_setting = target.currentHbpSetting();
 			if(hbp_setting > 0)
@@ -417,6 +422,11 @@
 		endstopsTab.add(new JLabel("Hold Z axis"));
 		
 		endstopsTab.add(zHoldBox,"span 2, wrap");
+		endstopsTab.add(new JLabel("Pause stop"));
+		pStopBox.setToolTipText(wrap2HTML(defaultToolTipWidth,
+						  "When checked, enable Sailfish's Pause Stop (P-Stop) switch detect " +
+						  "mechanism for automatically pausing prints via an external electrical signal"));
+		endstopsTab.add(pStopBox,"span 2, wrap");
 		endstopsTab.add(new JLabel("Invert endstops"));
 		
 		endstopsTab.add(endstopInversionSelection,"span 2, wrap");
@@ -933,7 +943,7 @@
 		 //   So, we want 0 < val < 0xffff
 
 		 private NumberFormat repNF = NumberFormat.getIntegerInstance();
-
+		
 		 private JCheckBox accelerationBox = new JCheckBox();
 		 {
 			 accelerationBox.setToolTipText(wrap2HTML(width, "Enable or disable printing with acceleration"));
