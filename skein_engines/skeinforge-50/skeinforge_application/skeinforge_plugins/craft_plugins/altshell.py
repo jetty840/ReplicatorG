@@ -31,6 +31,11 @@ The default 'Activate Altshell' checkbox is off, enable it if you would like an 
 Use M320/M321 to enable  / disable acceleration if checked.
 When unchecked, uses Open/Close Valve (M126/M127).
 For Makerbot and Sailfish firmwares, use M320/M321.  For the Jetty Firmware (v3.5 and earlier), do not use M320/M321.
+
+===Include All Shells/Loops===
+
+Disable acceleration for all shells when checked.
+When unchecked, acceleration is only disabled for exterior shells.  When checked, acceleration is disabled for all shells.
 """
 
 from __future__ import absolute_import
@@ -85,6 +90,7 @@ class AltshellRepository:
 		self.fileNameInput = settings.FileNameInput().getFromFileName( fabmetheus_interpret.getGNUTranslatorGcodeFileTypeTuples(), 'Open File for Altshell', self, '' )
 		self.activateAltshell = settings.BooleanSetting().getFromValue( 'Activate Altshell', self, False)
 		self.useM320M321 = settings.BooleanSetting().getFromValue( 'Use M320/M321', self, True)
+		self.includeLoops = settings.BooleanSetting().getFromValue( 'Include All Shells/Loops', self, False)
 		self.executeTitle = 'Altshell'
 
 	def execute( self ):
@@ -124,8 +130,9 @@ class AltshellSkein:
 
 		if line == '(<edge> outer )' or line == '(<edge> inner )':
 			self.state = 1
-	
-		elif firstWord == '(</edge>)':
+		elif self.repository.includeLoops.value and line == '(<loop> outer )' or line == '(<loop> inner )':
+			self.state = 1
+		elif firstWord == '(</edge>)' or ( self.repository.includeLoops.value and firstWord == '(</loop>)' ):
 			if self.state == 3:
 				# Open valve command
 				if self.repository.useM320M321.value:
