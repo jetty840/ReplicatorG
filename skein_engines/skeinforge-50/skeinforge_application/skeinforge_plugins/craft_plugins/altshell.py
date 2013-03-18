@@ -130,7 +130,7 @@ class AltshellSkein:
 
 		if line == '(<edge> outer )' or line == '(<edge> inner )':
 			self.state = 1
-		elif self.repository.includeLoops.value and line == '(<loop> outer )' or line == '(<loop> inner )':
+		elif self.repository.includeLoops.value and (line == '(<loop> outer )' or line == '(<loop> inner )'):
 			self.state = 1
 		elif firstWord == '(</edge>)' or ( self.repository.includeLoops.value and firstWord == '(</loop>)' ):
 			if self.state == 3:
