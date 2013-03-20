@@ -32,6 +32,7 @@ public class SwingPyPySelector implements Selector {
 		JFileChooser chooser = new JFileChooser();
 		chooser.setDialogTitle("Select installed PyPy binary");
 		chooser.setDialogType(JFileChooser.OPEN_DIALOG);
+		chooser.setApproveButtonText("Select");
 		if (chooser.showOpenDialog(this.frame) == JFileChooser.APPROVE_OPTION) {
 			File chosen = chooser.getSelectedFile();
 			if (chosen != null) {
