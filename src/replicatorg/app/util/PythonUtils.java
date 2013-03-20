@@ -26,7 +26,8 @@ public class PythonUtils {
 	/**
 	 * Preference name for preferred Python path.
 	 */
-	final static String PYTON_PATH_PREF = "python.default_path";
+	final static String PYTHON_PATH_PREF = "python.default_path";
+	final static String PYPY_PATH_PREF = "pypy.default_path";
 	
 	/**
 	 * Callback for Python selector method.
@@ -81,6 +82,7 @@ public class PythonUtils {
 	
 	static String pythonPath = null;
 	static Version pythonVersion = null;
+	static String pypyPath = null;
 	
 	/**
 	 * Calculate the expected path to the Python installation.  The result is cached.
@@ -119,7 +121,7 @@ public class PythonUtils {
 		// Assemble a list of candidate paths.
 		// First, check if the user has explicitly set the Python path.
 		{
-			String path = Base.preferences.get(PYTON_PATH_PREF, null);
+			String path = Base.preferences.get(PYTHON_PATH_PREF, null);
 			if (path != null) {
 				File candidate = new File(path);
 				if (candidate.exists()) {
@@ -176,7 +178,7 @@ public class PythonUtils {
 		if (selector != null && viableCandidates.size() > 1) {
 			String path = selector.selectPythonPath(viableCandidates);
 			if (path != null) {
-				Base.preferences.put(PYTON_PATH_PREF, path);
+				Base.preferences.put(PYTHON_PATH_PREF, path);
 				pythonPath = path;
 				pythonVersion = checkVersion(pythonPath);
 			}
@@ -208,14 +210,30 @@ public class PythonUtils {
 	}
 	
 	/**
-	 * Check for the existence of a working python at the standard location.
-	 * @return null if python is not installed, or the version of python found. 
+	 * Calculate the expected path to the Pypy installation.  The result is cached.
+	 * @return the path as a string
 	 */
-	public static Version checkVersion() {
-		if (getPythonPath() == null) { return null; }
-		return checkVersion(getPythonPath());
+	public static String getPyPyPath() {
+		return getPyPyPath(null, null);
 	}
-	
+
+	public static String getPyPyPath(Version minVersion, Version maxVersion) {
+		if (pypyPath != null)
+			return pypyPath;
+
+		String path = Base.preferences.get(PYPY_PATH_PREF, null);
+		if ( path != null) {
+			File candidate = new File(path);
+			if (candidate.exists())
+				pypyPath = candidate.getAbsolutePath();
+			return pypyPath;
+		}
+
+		// pypy path is not set or is no longer a viable path
+		// use python
+		return getPythonPath(minVersion, maxVersion);
+	}
+
 	/**
 	 * Check for the version of a working python binary at the given path. 
 	 * @return null if python is not installed, or the version of python found. 
@@ -343,7 +361,12 @@ public class PythonUtils {
 	 * Sets the new preferred place to find python
 	 */
 	public static void setPythonPath(String path) {
-		Base.preferences.put(PythonUtils.PYTON_PATH_PREF, path);
+		Base.preferences.put(PythonUtils.PYTHON_PATH_PREF, path);
 		pythonPath = path;
+	}
+
+	public static void setPyPyPath(String path) {
+		Base.preferences.put(PythonUtils.PYPY_PATH_PREF, path);
+		pypyPath = path;
 	}
 }
