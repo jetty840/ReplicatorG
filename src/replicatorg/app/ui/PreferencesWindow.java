@@ -43,6 +43,7 @@ import replicatorg.app.Base;
 import replicatorg.app.Base.InitialOpenBehavior;
 import replicatorg.app.util.PythonUtils;
 import replicatorg.app.util.SwingPythonSelector;
+import replicatorg.app.util.SwingPyPySelector;
 import replicatorg.machine.MachineInterface;
 import replicatorg.machine.model.MachineType;
 import replicatorg.uploader.FirmwareUploader;
@@ -451,7 +452,22 @@ public class PreferencesWindow extends JFrame implements GuiConstants {
 				}
 			});
 		}
-		
+
+		if (Base.isWindows()) {
+
+			JButton b = new JButton("Select PyPy interpreter...");
+			content.add(b,"spanx,wrap 10px");
+			b.addActionListener(new ActionListener() {
+					public void actionPerformed(ActionEvent e) {
+						SwingPyPySelector sps = new SwingPyPySelector(PreferencesWindow.this);
+						String path = sps.selectFreeformPath();
+						if (path != null) {
+							PythonUtils.setPyPyPath(path);
+						}
+					}
+				});
+		}
+
 		addInitialFilePrefs(content);
 		
 		prefTabs.add(basic, "Basic");

@@ -578,7 +578,7 @@ public abstract class SkeinforgeGenerator extends ToolpathGenerator {
 
 		List<String> arguments = new LinkedList<String>();
 		// The -u makes python output unbuffered. Oh joyous day.
-		String[] baseArguments = { PythonUtils.getPythonPath(), "-u",
+		String[] baseArguments = { PythonUtils.getPyPyPath(), "-u",
 				"skeinforge.py", "-p", profile };
 		for (String arg : baseArguments) {
 			arguments.add(arg);
