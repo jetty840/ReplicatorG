@@ -467,7 +467,14 @@ public interface Driver {
 	 * reads temperature from all heated build platforms
 	 */
 	public void readAllPlatformTemperatures();
-	
 
+	/**
+	 * Enable or disable the P-Stop firmware/hardware function
+	 */
+	public void setPStop(boolean enable);
 
+	/**
+	 * Report the state of the P-Stop firmware/hardware setting
+	 */
+	public boolean getPStop();
 }

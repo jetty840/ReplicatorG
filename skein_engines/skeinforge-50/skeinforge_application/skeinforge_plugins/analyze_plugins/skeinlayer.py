@@ -184,8 +184,11 @@ def writeOutput(fileName, fileNamePenultimate, fileNameSuffix, filePenultimateWr
 	try:
 		import Tkinter
 	except:
-		print('Warning, skeinlayer will do nothing because Tkinter is not installed.')
-		return
+		try:
+			import tkinter as Tkinter
+		except:
+			print('Warning, skeinlayer will do nothing because Tkinter is not installed.')
+			return
 	repository = settings.getReadRepository( SkeinlayerRepository() )
 	if repository.activateSkeinlayer.value:
 		gcodeText = archive.getTextIfEmpty( fileNameSuffix, gcodeText )

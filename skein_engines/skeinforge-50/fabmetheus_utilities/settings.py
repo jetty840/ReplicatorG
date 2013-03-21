@@ -20,8 +20,11 @@ import webbrowser
 try:
 	import Tkinter
 except:
-	print('You do not have Tkinter, which is needed for the graphical interface, you will only be able to use the command line.')
-	print('Information on how to download Tkinter is at:\nwww.tcl.tk/software/tcltk/')
+	try:
+		import tkinter as Tkinter
+	except:
+		print('You do not have Tkinter, which is needed for the graphical interface, you will only be able to use the command line.')
+		print('Information on how to download Tkinter is at:\nwww.tcl.tk/software/tcltk/')
 
 
 __author__ = 'Enrique Perez (perez_enrique@yahoo.com)'

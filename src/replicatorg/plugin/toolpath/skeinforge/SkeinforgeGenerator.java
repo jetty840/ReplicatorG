@@ -357,11 +357,11 @@ public abstract class SkeinforgeGenerator extends ToolpathGenerator {
 		if (!hasPython) {
 			return false;
 		}
-		boolean hasTkInter = PythonUtils.interactiveCheckTkInter(parent,
-				name);
-		if (!hasTkInter) {
-			return false;
-		}
+
+		// Print-o-Matic ceased being a Python GUI a long time ago...
+		//boolean hasTkInter = PythonUtils.interactiveCheckTkInter(parent, name);
+		//if (!hasTkInter) return false;
+
 		if(parent != null)
 			parent.setName(name);
 		cd = new ConfigurationDialog(parent, this);

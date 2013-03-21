@@ -7,7 +7,11 @@ from __future__ import absolute_import
 #Init has to be imported first because it has code to workaround the python bug where relative imports don't work if the module is imported as a main module.
 import __init__
 try:
-	import Tkinter
+	try:
+		import Tkinter
+	except ImportError:
+		import tkinter as Tkinter
+
 	class HiddenScrollbar(Tkinter.Scrollbar):
 		'A class to hide the scrollbar if it is not needed.'
 		def set(self, lo, hi):
