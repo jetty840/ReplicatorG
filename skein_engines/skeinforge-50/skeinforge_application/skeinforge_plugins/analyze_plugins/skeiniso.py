@@ -286,8 +286,11 @@ def writeOutput(fileName, fileNamePenultimate, fileNameSuffix, filePenultimateWr
 	try:
 		import Tkinter
 	except:
-		print('Warning, skeiniso will do nothing because Tkinter is not installed.')
-		return
+		try:
+			import tkinter as Tkinter
+		except:
+			print('Warning, skeiniso will do nothing because Tkinter is not installed.')
+			return
 	repository = settings.getReadRepository( SkeinisoRepository() )
 	if repository.activateSkeiniso.value:
 		gcodeText = archive.getTextIfEmpty( fileNameSuffix, gcodeText )

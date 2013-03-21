@@ -1,9 +1,12 @@
 import sys
 try:
     import Tkinter
-except:
-    print('You do not have Tkinter, which is needed for the graphical interface.')
-    print('Information on how to download Tkinter is at:\nwww.tcl.tk/software/tcltk/')
+except ImportError:
+    try:
+        import tkinter as Tkinter
+    except:
+        print('You do not have Tkinter, which is needed for the graphical interface.')
+        print('Information on how to download Tkinter is at:\nwww.tcl.tk/software/tcltk/')
 try:
     from layers import *
     from gRead import *

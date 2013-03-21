@@ -75,6 +75,7 @@ public interface OnboardParameters {
 		MOOD_LIGHT_SCRIPT,          //
 		OVERRIDE_GCODE_TEMP,        // Override gcode temp settings with preheat temps
 		PLATFORM_TEMP,              // Preheat & Override build platform temperature (C)
+		PSTOP_ENABLE,               // Enable/disable the firmware Pause Stop (P-Stop)
 		PREHEAT_DURING_ESTIMATE,    // Start preheating while estimating build time
 		PREHEAT_DURING_PAUSE,       // Preheat during pause
 		RAM_USAGE_DEBUG,            // SRAM highwater mark
@@ -323,4 +324,10 @@ public interface OnboardParameters {
 	boolean hasJettyAcceleration();
 	/// Returns true if the driver has the advanced reporting feature set
 	boolean hasAdvancedFeatures();
+
+	/// Enable or disable the P-Stop
+	void setPStop(boolean enable);
+
+	/// Query the P-Stop setting in EEPROM
+	boolean getPStop();
 }

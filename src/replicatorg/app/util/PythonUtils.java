@@ -276,7 +276,13 @@ public class PythonUtils {
 		try {
 			Process p = pb.start();
 			int returnCode = p.waitFor();
-			if (returnCode != 0) { return false; }
+			//if (returnCode != 0) { 
+			//	pb = new ProcessBuilder(getPythonPath(), "-c", "import tkinter as Tkinter");
+			//	p = pb.start();
+			//	returnCode = p.waitFor();
+			//	if (returnCode != 0) return false;
+			//}
+			if (returnCode != 0) return false;
 		} catch (Exception e) {
 			Base.logger.log(Level.SEVERE,"Error attempting to detect TkInter",e);
 		}

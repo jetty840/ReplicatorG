@@ -2168,38 +2168,25 @@ public class MightySailfish extends Makerbot4GAlternateDriver
 	@Override
 	/// for 6.0 or later, we do not use offset system See footnote[2]
 	public Point3d getOffset(int i) {
-		if(!hasAdvancedFeatures())
-			return offsets[i];
-		Base.logger.info("offsets deprecated in firmware: " + version.toString());
-		return offsets[0];
+		return offsets[i];
 	}
 
 	@Override
 	/// for 6.0 or later, we do not use offset system See footnote[2]
 	public void setOffsetX(int offsetSystemNum, double j) {
-		if(!hasAdvancedFeatures())
-			offsets[offsetSystemNum].x = j;
-    else
-		  Base.logger.info("offsets deprecated in firmware: " + version.toString());
-    
+		offsets[offsetSystemNum].x = j;
 	}
 
 	@Override
 	/// for 6.0 or later, we do not use offset system See footnote[2]
 	public void setOffsetY(int offsetSystemNum, double j) {
-		if(!hasAdvancedFeatures())
-			offsets[offsetSystemNum].y = j;
-    else
-      Base.logger.info("offsets deprecated in firmware: " + version.toString());
+		offsets[offsetSystemNum].y = j;
 	}
 
 	@Override
 	/// for 6.0 or later, we do not use offset system See footnote[2]
 	public void setOffsetZ(int offsetSystemNum, double j) {
-		if(!hasAdvancedFeatures())
-			offsets[offsetSystemNum].z = j;
-    else
-      Base.logger.info("offsets deprecated in firmware: " + version.toString());	
+		offsets[offsetSystemNum].z = j;
 	}
 
 
