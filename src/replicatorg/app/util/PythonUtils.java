@@ -224,9 +224,10 @@ public class PythonUtils {
 		String path = Base.preferences.get(PYPY_PATH_PREF, null);
 		if ( path != null) {
 			File candidate = new File(path);
-			if (candidate.exists())
+			if (candidate.exists()) {
 				pypyPath = candidate.getAbsolutePath();
-			return pypyPath;
+				return pypyPath;
+			}
 		}
 
 		// pypy path is not set or is no longer a viable path

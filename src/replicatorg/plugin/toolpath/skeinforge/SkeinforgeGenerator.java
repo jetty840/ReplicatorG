@@ -8,6 +8,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -501,11 +502,13 @@ public abstract class SkeinforgeGenerator extends ToolpathGenerator {
 			long timeoutValue = Base.preferences.getInt("replicatorg.skeinforge.timeout", -1);
 			
 			process = pb.start();
+			InputStream stdout = process.getInputStream();
 			
 			//if no timeout set
 			if(timeoutValue == -1)
 			{
 				Base.logger.log(Level.FINEST, "\tRunning SF without a timeout");
+				while (stdout.read() >= 0) { ; }
 				value = process.waitFor();
 			}
 			else // run for timeoutValue cycles trying to get an exit value from the process
@@ -514,6 +517,7 @@ public abstract class SkeinforgeGenerator extends ToolpathGenerator {
 				while(timeoutValue > 0)
 				{
 					Thread.sleep(1000);
+					stdout.read();
 					try
 					{
 						value = process.exitValue(); 
