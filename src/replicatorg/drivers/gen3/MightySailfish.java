@@ -168,6 +168,7 @@ class MightySailfish5XEEPROM implements EEPROMClass
 	/// 2 bytes padding
 	/// Light Effect table. 3 Bytes x 3 entries
 	final public static int LED_STRIP_SETTINGS		= 0x0140;
+	final public static int CUSTOM_COLOR_OFFSET             = 0x0144;
 	/// Buzz Effect table. 4 Bytes x 3 entries
 	/// 1 byte padding for offsets
 	final public static int BUZZ_SETTINGS		= 0x014A;
