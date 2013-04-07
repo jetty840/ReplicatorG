@@ -56,6 +56,7 @@ public interface OnboardParameters {
 		DITTO_PRINT_ENABLED,	    //
 		ENDSTOPS_USED,              //
 		ENDSTOP_INVERSION,          //
+	        ENDSTOP_Z_MIN,              //
 		ESTOP_CONFIGURATION,        //
 		EXTRUDE_DURATION,           //
 		EXTRUDER_HOLD,		    //

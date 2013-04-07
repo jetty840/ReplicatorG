@@ -81,6 +81,7 @@ class SailfishEEPROM extends JettyG3EEPROM {
 	final public static int TOOLHEAD_OFFSET_SYSTEM          = 0X01EA;
 	final public static int SD_USE_CRC                      = 0X01EB;
 	final public static int PSTOP_ENABLE                    = 0X01EC;
+	final public static int ENDSTOP_Z_MIN                   = 0X01ED;
 }
 
 
