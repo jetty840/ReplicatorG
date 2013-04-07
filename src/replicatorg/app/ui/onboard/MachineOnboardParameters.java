@@ -52,6 +52,7 @@
 	 private JCheckBox bAxisInvertBox = new JCheckBox();
 	 private JCheckBox zHoldBox = new JCheckBox();
 	 private JCheckBox pStopBox = new JCheckBox();
+	 private JCheckBox zMinStopBox = new JCheckBox();
 	 private JButton resetToFactoryButton = new JButton("Reset motherboard to factory settings");
 	 private JButton resetToBlankButton = new JButton("Reset motherboard completely");
 	 private JButton commitButton = new JButton("Commit Changes");
@@ -182,6 +183,9 @@
 
 		 target.setPStop(pStopBox.isSelected());
 
+		 if (driverType == DriverType.SAILFISH)
+		     target.setEEPROMParam(OnboardParameters.EEPROMParams.ENDSTOP_Z_MIN, zMinStopBox.isSelected() ? 1 : 0);
+
 		 target.setAxisHomeOffset(0, ((Number)xAxisHomeOffsetField.getValue()).doubleValue());
 		 target.setAxisHomeOffset(1, ((Number)yAxisHomeOffsetField.getValue()).doubleValue());
 		 target.setAxisHomeOffset(2, ((Number)zAxisHomeOffsetField.getValue()).doubleValue());
@@ -306,6 +310,9 @@
 
 		pStopBox.setSelected(target.getPStop());
 
+		if (driverType == DriverType.SAILFISH)
+		    zMinStopBox.setSelected(target.getEEPROMParamInt(OnboardParameters.EEPROMParams.ENDSTOP_Z_MIN) == 1);
+
 		if(target.hasHbp()){
 			byte hbp_setting = target.currentHbpSetting();
 			if(hbp_setting > 0)
@@ -417,23 +424,33 @@
 		if( axesAltNamesMap.containsKey(AxisId.B) )
 			bName = bName + " (" + axesAltNamesMap.get(AxisId.B) + ") ";
 		endstopsTab.add(new JLabel(bName));
-		
 		endstopsTab.add(bAxisInvertBox,"span 2, wrap");
+
 		endstopsTab.add(new JLabel("Hold Z axis"));
-		
 		endstopsTab.add(zHoldBox,"span 2, wrap");
+
+		if (driverType == DriverType.SAILFISH) {
+		    endstopsTab.add(new JLabel("3G5D Z endstop is min"));
+		    zMinStopBox.setToolTipText(wrap2HTML(defaultToolTipWidth,
+   "When checked, the 3G5D Z endstop is treated as a Z minimum endstop.  " +
+   "When not checked, the 3G5D Z endstop is treated as a Z maximum " +
+   "endstop.  This setting is ignored by Gen 4 electronics."));
+		    endstopsTab.add(zMinStopBox,"span 2, wrap");
+		}
+
 		endstopsTab.add(new JLabel("Pause stop"));
 		pStopBox.setToolTipText(wrap2HTML(defaultToolTipWidth,
-						  "When checked, enable Sailfish's Pause Stop (P-Stop) switch detect " +
-						  "mechanism for automatically pausing prints via an external electrical signal"));
+   "When checked, enable Sailfish's Pause Stop (P-Stop) switch detect " +
+   "mechanism for automatically pausing prints via an external electrical " +
+   "signal"));
 		endstopsTab.add(pStopBox,"span 2, wrap");
-		endstopsTab.add(new JLabel("Invert endstops"));
-		
-		endstopsTab.add(endstopInversionSelection,"span 2, wrap");
+
 		endstopsTab.add(new JLabel("Emergency stop"));
 		endstopsTab.add(estopSelection,"spanx, wrap");
-		
-		
+
+		endstopsTab.add(new JLabel("Invert endstops"));
+		endstopsTab.add(endstopInversionSelection,"span 2, wrap");
+				
 		xAxisHomeOffsetField.setColumns(10);
 		yAxisHomeOffsetField.setColumns(10);
 		zAxisHomeOffsetField.setColumns(10);
