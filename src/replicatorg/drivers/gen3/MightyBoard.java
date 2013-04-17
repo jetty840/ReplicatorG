@@ -667,29 +667,32 @@ public class MightyBoard extends Makerbot4GAlternateDriver
 			
 			Point5d stepsPerMM = machine.getStepsPerMM();
 			
+			//
+			// Commented out 4/16/13 Jetty.  Likely redundant and an overhang from RPM days.
+			//
 			// if either a or b is 0, but their motor is on, create a distance for them
-			if(deltaMM.a() == 0) {
-				ToolModel aTool = extruderHijackedMap.get(AxisId.A);
-				if(aTool != null && aTool.isMotorEnabled()) {
-					// minute * revolution/minute
-					double numRevolutions = minutes * aTool.getMotorSpeedRPM();
-					// steps/revolution * mm/steps 	
-					double mmPerRevolution = aTool.getMotorSteps() * (1/stepsPerMM.a());
-					// set distance
-					target.setA( -(numRevolutions * mmPerRevolution));
-				}
-			}
-			if(deltaMM.b() == 0) {
-				ToolModel bTool = extruderHijackedMap.get(AxisId.B);
-				if(bTool != null && bTool.isMotorEnabled()) {
-					// minute * revolution/minute
-					double numRevolutions = minutes * bTool.getMotorSpeedRPM();
-					// steps/revolution * mm/steps 	
-					double mmPerRevolution = bTool.getMotorSteps() * (1/stepsPerMM.b());
-					// set distance
-					target.setB( -(numRevolutions * mmPerRevolution));
-				}
-			}
+			//if(deltaMM.a() == 0) {
+			//	ToolModel aTool = extruderHijackedMap.get(AxisId.A);
+			//	if(aTool != null && aTool.isMotorEnabled()) {
+			//		// minute * revolution/minute
+			//		double numRevolutions = minutes * aTool.getMotorSpeedRPM();
+			//		// steps/revolution * mm/steps 	
+			//		double mmPerRevolution = aTool.getMotorSteps() * (1/stepsPerMM.a());
+			//		// set distance
+			//		target.setA( -(numRevolutions * mmPerRevolution));
+			//	}
+			//}
+			//if(deltaMM.b() == 0) {
+			//	ToolModel bTool = extruderHijackedMap.get(AxisId.B);
+			//	if(bTool != null && bTool.isMotorEnabled()) {
+			//		// minute * revolution/minute
+			//		double numRevolutions = minutes * bTool.getMotorSpeedRPM();
+			//		// steps/revolution * mm/steps 	
+			//		double mmPerRevolution = bTool.getMotorSteps() * (1/stepsPerMM.b());
+			//		// set distance
+			//		target.setB( -(numRevolutions * mmPerRevolution));
+			//	}
+			//}
 			
 			// calculate absolute position of target in steps
 			Point5d excess = new Point5d(stepExcess);
