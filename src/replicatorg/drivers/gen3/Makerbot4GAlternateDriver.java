@@ -408,6 +408,18 @@ public class Makerbot4GAlternateDriver extends Makerbot4GDriver {
                 runCommand(pb.getPacket());
         }
 
+	/**
+	 * Turn acceleration on/off for subsequent commands
+	 */
+        public void pauseAtZPos(double zpos) throws RetryException {
+                Base.logger.finer("PauseAtZPos (" + zpos + ")" );
+
+                PacketBuilder pb = new PacketBuilder(MotherboardCommandCode.PAUSE_AT_ZPOS.getCode());
+
+		pb.addFloat((float)zpos);
+
+                runCommand(pb.getPacket());
+        }
 
 	/// This is a list of which axis are hijacked for extruder use.
 	EnumMap<AxisId,ToolModel> extruderHijackedMap = new EnumMap<AxisId,ToolModel>(AxisId.class);

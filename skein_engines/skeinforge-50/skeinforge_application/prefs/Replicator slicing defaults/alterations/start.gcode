@@ -1,6 +1,7 @@
 (**** beginning of start.gcode ****)
 (This is start code for The Replicator running a single material print)
 M73 P0 (enable build progress)
+M103 (disable RPM)
 G21 (set units to mm)
 G90 (set positioning to absolute)
 G10 P1 X16.5 Y0 Z-0.3 (Designate T0 Offset)
@@ -21,10 +22,10 @@ G130 X0 Y0 A0 B0 (Set Stepper motor Vref to lower value while heating)
 M6 T0 (wait for toolhead parts, nozzle, HBP, etc., to reach temperature)
 G130 X127 Y127 A127 B127 (Set Stepper motor Vref to defaults)
 M6 T0
-M108 R3.0 T0
+M108 T0
 G0 X105 Y-70 (Position Nozzle)
 G0 Z0.6     (Position Height)
-M108 R4.0   (Set Extruder Speed)
-M101        (Start Extruder)
-G4 P1500    (Create Anchor)
+G92 E0 (Set E to 0)
+G1 E4 F300 (Extrude 4mm of filament)
+G92 E0 (Set E to 0 again)
 (**** end of start.gcode ****)

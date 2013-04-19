@@ -36,6 +36,7 @@ public enum MotherboardCommandCode {
 	BUILD_END_NOTIFICATION(154, "Notify the bot object build is complete."),
 	QUEUE_POINT_NEW_EXT(155, ""),
 	SET_ACCELERATION_TOGGLE(156, ""),
+	PAUSE_AT_ZPOS(158, ""),
 
 	GET_COMMUNICATION_STATS(25,""),
 	

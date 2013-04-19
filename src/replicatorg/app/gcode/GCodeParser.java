@@ -520,10 +520,13 @@ public class GCodeParser {
 			break;
 		// set max extruder speed, RPM
 		case M108:
-			if (gcode.hasCode('S'))
-				commands.add(new replicatorg.drivers.commands.SetMotorSpeedPWM((int)gcode.getCodeValue('S')));
-			else if (gcode.hasCode('R'))
-				commands.add(new replicatorg.drivers.commands.SetMotorSpeedRPM(gcode.getCodeValue('R')));
+			//Disabled by Jetty 4/18/13.  RPM is now retired.
+			//We still process the command, we just ignore it
+			//And dual extrusion will still use M108's, but with a T? command added to change tool
+			//if (gcode.hasCode('S'))
+			//	commands.add(new replicatorg.drivers.commands.SetMotorSpeedPWM((int)gcode.getCodeValue('S')));
+			//else if (gcode.hasCode('R'))
+			//	commands.add(new replicatorg.drivers.commands.SetMotorSpeedRPM(gcode.getCodeValue('R')));
 			break;
 		// set build platform temperature
 		case M109:
@@ -607,6 +610,13 @@ public class GCodeParser {
 		// Acceleration off
 		case M321:
 			commands.add(new replicatorg.drivers.commands.SetAccelerationToggle(false));
+			break;
+		// Pause@ZPos
+		case M322:
+			if (gcode.hasCode('Z'))
+				commands.add(new replicatorg.drivers.commands.PauseAtZPos(gcode.getCodeValue('Z')));
+			else
+				throw new GCodeException("The Z parameter is required for PauseAtZPos. (M322)");
 			break;
 		default:
 			throw new GCodeException("Unknown M code: M" + (int) gcode.getCodeValue('M'));
