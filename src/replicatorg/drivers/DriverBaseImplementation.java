@@ -459,6 +459,14 @@ public class DriverBaseImplementation implements Driver, DriverQueryInterface{
 	}
 
 	/***************************************************************************
+	 * PauseAtZPos
+	 * @throws RetryException 
+	 **************************************************************************/
+
+	public void pauseAtZPos(double zpos) throws RetryException {
+	}
+
+	/***************************************************************************
 	 * pause function
 	 * @throws RetryException 
 	 **************************************************************************/

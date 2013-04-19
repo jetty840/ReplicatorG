@@ -1,9 +1,10 @@
 (**** beginning of end.gcode ****)
 M109 S95 T0 (set heated-build-platform temperature)
 G1 X0 Y54 F3300.0 (move platform to ejection position)
-M102 (Extruder on, reverse)
-G04 P2000 (Wait t/1000 seconds)
-M103 (Extruder off)
+(**** begin filament reversal ****)
+G92 E0
+G1 E-0.5 F300 (Retract 0.5 mm of filament)
+(**** end filament reversal ****)
 G04 P90000 (wait t/1000 seconds)
 M106 (conveyor on)
 G04 P2000 (wait t/1000 seconds)
