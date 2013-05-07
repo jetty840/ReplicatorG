@@ -142,18 +142,9 @@
 				 target.setToolCountOnboard( -1 );
 		 }
 
-      if(target.hasHbp())
-      {
-        if((target.currentHbpSetting() == 0) && hbpToggleBox.isSelected())
-        {
-          target.setHbpSetting(true);
-        }
-          
-        else if(((target.currentHbpSetting() > 0) && !hbpToggleBox.isSelected()))
-        {
-          target.setHbpSetting(false);
-        }
-      }
+		if (driverType == DriverType.MIGHTYBOARD ||
+		    driverType == DriverType.MIGHTYSAILFISH)
+			target.setHbpSetting(hbpToggleBox.isSelected());
 	
 		 EnumSet<AxisId> axesInverted = EnumSet.noneOf(AxisId.class);
 		 if (xAxisInvertBox.isSelected()) axesInverted.add(AxisId.X);
@@ -312,14 +303,9 @@
 
 		if (driverType == DriverType.SAILFISH)
 		    zMinStopBox.setSelected(target.getEEPROMParamInt(OnboardParameters.EEPROMParams.ENDSTOP_Z_MIN) == 1);
-
-		if(target.hasHbp()){
-			byte hbp_setting = target.currentHbpSetting();
-			if(hbp_setting > 0)
-				hbpToggleBox.setSelected(true);
-			else
-				hbpToggleBox.setSelected(false);
-		}
+		if (driverType == DriverType.MIGHTYBOARD ||
+		    driverType == DriverType.MIGHTYSAILFISH)
+			hbpToggleBox.setSelected(target.hasHbp());
 
 		// 0 == inverted, 1 == not inverted
 		OnboardParameters.EndstopType endstops = this.target.getInvertedEndstops();
@@ -400,7 +386,9 @@
   			endstopsTab.add(new JLabel("Reported Tool Count:"));
   			endstopsTab.add(toolCountField, "span 2, wrap");
   		}
-		if(target.hasHbp()){
+
+		if (driverType == DriverType.MIGHTYBOARD ||
+		    driverType == DriverType.MIGHTYSAILFISH) {
 			endstopsTab.add(new JLabel("HBP present"));
 			endstopsTab.add(hbpToggleBox,"span 2, wrap");
 		}

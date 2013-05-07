@@ -2206,25 +2206,11 @@ public class MightySailfish extends Makerbot4GAlternateDriver
 
 
 	public boolean hasHbp(){
-		byte[] eeprom_hbp_present = readFromEEPROM(MightySailfish6X2EEPROM.HBP_PRESENT, 1);
-		byte hbp_on_off = eeprom_hbp_present[0];
-		if(hbp_on_off >= 0)
-			return true;
-		else
-			return false;
-	}
-	
-	public byte currentHbpSetting(){
-		byte[] eeprom_hbp_present = readFromEEPROM(MightySailfish6X2EEPROM.HBP_PRESENT, 1);
-		byte hbp_on_off = eeprom_hbp_present[0];
-		return hbp_on_off;
+		return getEEPROMParamInt(OnboardParameters.EEPROMParams.HBP_PRESENT) == 1;
 	}
 	
 	public void setHbpSetting(boolean on_off){
-		if(on_off)		
-			writeToEEPROM(MightySailfish6X2EEPROM.HBP_PRESENT, intToLE(1));
-		else
-			writeToEEPROM(MightySailfish6X2EEPROM.HBP_PRESENT, intToLE(0));
+		setEEPROMParam(OnboardParameters.EEPROMParams.HBP_PRESENT, on_off ? 1 : 0);
 	}
 
 	/// read a 32 bit unsigned int from EEPROM at location 'offset'
@@ -2314,6 +2300,7 @@ public class MightySailfish extends Makerbot4GAlternateDriver
 		case TOOLHEAD_OFFSET_SYSTEM     : return getUInt8EEPROM(JettyMBEEPROM.TOOLHEAD_OFFSET_SYSTEM);
 		case SD_USE_CRC                 : return getUInt8EEPROM(JettyMBEEPROM.SD_USE_CRC);
 		case PSTOP_ENABLE               : return getUInt8EEPROM(JettyMBEEPROM.PSTOP_ENABLE);
+		case HBP_PRESENT                : return getUInt8EEPROM(JettyMBEEPROM.HBP_PRESENT);
 		default :
 			Base.logger.log(Level.WARNING, "getEEPROMParamInt(" + param + ") call failed");
 			return 0;
@@ -2366,6 +2353,7 @@ public class MightySailfish extends Makerbot4GAlternateDriver
 		case TOOLHEAD_OFFSET_SYSTEM     : setUInt8EEPROM(JettyMBEEPROM.TOOLHEAD_OFFSET_SYSTEM, (val != 0) ? 1 : 0); break;
 		case SD_USE_CRC                 : setUInt8EEPROM(JettyMBEEPROM.SD_USE_CRC, (val != 0) ? 1 : 0); break;
 		case PSTOP_ENABLE               : setUInt8EEPROM(JettyMBEEPROM.PSTOP_ENABLE, (val != 0) ? 1 : 0); break;
+		case HBP_PRESENT                : setUInt8EEPROM(JettyMBEEPROM.HBP_PRESENT, (val != 0) ? 1 : 0); break;
 		default : Base.logger.log(Level.WARNING, "setEEPROMParam(" + param + ", " + val + ") call failed"); break;
 		}
 	}

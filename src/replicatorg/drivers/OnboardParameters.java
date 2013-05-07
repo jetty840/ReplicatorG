@@ -63,6 +63,7 @@ public interface OnboardParameters {
 		EXTRUDE_MMS,                //
 		FILAMENT_USED,              // Lifetime filament used (steps)
 		FILAMENT_USED_TRIP,         // Filament used since trip counter last reset (steps)
+		HBP_PRESENT,                //
 		HOMING_FEED_RATE_X,         //
 		HOMING_FEED_RATE_Y,         //
 		HOMING_FEED_RATE_Z,         //
@@ -318,8 +319,6 @@ public interface OnboardParameters {
 		//See if eeprom has hbp_exists defined
 	public void setHbpSetting(boolean on_off);
 		//set the eeprom HBP setting
-	byte currentHbpSetting();
-		//Reads eeprom returns if HBP is on or off
 
 	/// Returns true if the accelerated driver is Jetty flavour
 	boolean hasJettyAcceleration();
