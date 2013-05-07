@@ -112,4 +112,5 @@ class JettyMBEEPROM extends Sanguino3GEEPRPOM {
 	final public static int OVERRIDE_GCODE_TEMP            = 0x0FFD;
 	final public static int HEAT_DURING_PAUSE              = 0x0FFE;
 	final public static int DITTO_PRINT_ENABLED            = 0x0FFF;
+	final public static int HBP_PRESENT                    = 0x004C;
 }

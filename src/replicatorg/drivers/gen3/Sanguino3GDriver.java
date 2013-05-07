@@ -2987,14 +2987,7 @@ public class Sanguino3GDriver extends SerialDriver implements
 	public boolean hasHbp(){return false;}
 
 	@Override
-	public byte currentHbpSetting() {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
-	@Override
 	public void setHbpSetting(boolean on_off) {
 		// TODO Auto-generated method stub
-		
 	}
 }
