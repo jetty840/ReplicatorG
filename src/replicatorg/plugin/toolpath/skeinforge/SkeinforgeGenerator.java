@@ -582,8 +582,16 @@ public abstract class SkeinforgeGenerator extends ToolpathGenerator {
 
 		List<String> arguments = new LinkedList<String>();
 		// The -u makes python output unbuffered. Oh joyous day.
-		String[] baseArguments = { PythonUtils.getPyPyPath(), "-u",
-				"skeinforge.py", "-p", profile };
+		String[] baseArguments = {
+		    PythonUtils.getPyPyPath(), "-u",
+// To obtain profiling data on a Skeinforge run, uncomment the line
+// below and change the directory path for the profile file to something
+// appropriate.  The resulting profile can later be processed with the
+// command "python -m pstats skeinforge.profile".
+//
+// The next line is the one to uncomment
+//                  "-m", "cProfile", "-o", "/skeinforge.profile",
+		    "skeinforge.py", "-p", profile };
 		for (String arg : baseArguments) {
 			arguments.add(arg);
 		}
