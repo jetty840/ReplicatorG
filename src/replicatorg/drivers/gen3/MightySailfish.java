@@ -1514,16 +1514,12 @@ public class MightySailfish extends Makerbot4GAlternateDriver
 
 	@Override
 	public EstopType getEstopConfig() {
-		checkEEPROM();
-		byte[] b = readFromEEPROM(MightySailfish5XEEPROM.ENDSTOP_INVERSION,1);
-		return EstopType.estopTypeForValue(b[0]);
+		return OnboardParameters.EstopType.NOT_PRESENT;
 	}
 
 	@Override
 	public void setEstopConfig(EstopType estop) {
-		byte b[] = new byte[1];
-		b[0] = estop.getValue();
-		writeToEEPROM(MightySailfish5XEEPROM.ENDSTOP_INVERSION,b);
+		// No ESTOP on MightyBoard
 	}
 	
 	

@@ -165,7 +165,7 @@
 				 OnboardParameters.EndstopType.values()[idx]; 
 			 target.setInvertedEndstops(endstops);
 		 }
-		 {
+		 if (driverType != DriverType.MIGHTYBOARD && driverType != DriverType.MIGHTYSAILFISH) {
 			 int idx = estopSelection.getSelectedIndex();
 			 OnboardParameters.EstopType estop = 
 				 OnboardParameters.EstopType.estopTypeForValue((byte)idx); 
@@ -311,8 +311,10 @@
 		OnboardParameters.EndstopType endstops = this.target.getInvertedEndstops();
 		endstopInversionSelection.setSelectedIndex(endstops.ordinal());
 
-		OnboardParameters.EstopType estop = this.target.getEstopConfig();
-		estopSelection.setSelectedIndex(estop.ordinal());
+		if (driverType != DriverType.MIGHTYBOARD && driverType != DriverType.MIGHTYSAILFISH) {
+			OnboardParameters.EstopType estop = this.target.getEstopConfig();
+			estopSelection.setSelectedIndex(estop.ordinal());
+		}
 	   
 		xAxisHomeOffsetField.setValue(this.target.getAxisHomeOffset(0));
 		yAxisHomeOffsetField.setValue(this.target.getAxisHomeOffset(1));
@@ -433,8 +435,10 @@
    "signal"));
 		endstopsTab.add(pStopBox,"span 2, wrap");
 
-		endstopsTab.add(new JLabel("Emergency stop"));
-		endstopsTab.add(estopSelection,"spanx, wrap");
+		if (driverType != DriverType.MIGHTYBOARD && driverType != DriverType.MIGHTYSAILFISH) {
+			endstopsTab.add(new JLabel("Emergency stop"));
+			endstopsTab.add(estopSelection,"spanx, wrap");
+		}
 
 		endstopsTab.add(new JLabel("Invert endstops"));
 		endstopsTab.add(endstopInversionSelection,"span 2, wrap");
