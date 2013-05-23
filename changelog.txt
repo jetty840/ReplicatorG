@@ -1,4 +1,4 @@
-0040r19-Sailfish ReplicatorG
+0040r21-Sailfish ReplicatorG
 * Replicator 2 profile now more robust
 * support for selecting between s3g, x3g file formats (future bots)
 * minor profile updates
