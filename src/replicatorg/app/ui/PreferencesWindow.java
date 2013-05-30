@@ -87,7 +87,7 @@ public class PreferencesWindow extends JFrame implements GuiConstants {
 
 	private void addInitialFilePrefs(Container c) {
 		final String prefName = "replicatorg.initialopenbehavior";
-		int defaultBehavior = InitialOpenBehavior.OPEN_LAST.ordinal();
+		int defaultBehavior = InitialOpenBehavior.OPEN_NEW.ordinal();
 		int ordinal = Base.preferences.getInt(prefName, defaultBehavior);
 		if (ordinal >= InitialOpenBehavior.values().length) {
 			ordinal = defaultBehavior;
