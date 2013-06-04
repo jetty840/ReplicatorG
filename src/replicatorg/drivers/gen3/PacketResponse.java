@@ -16,11 +16,16 @@ public class PacketResponse {
 		OK("OK"), 
 		BUFFER_OVERFLOW("Buffer full"), 
 		CRC_MISMATCH("CRC mismatch"), 
-		QUERY_OVERFLOW("Query overflow"), 
+		QUERY_OVERFLOW("RepG sent packet that Printer considered too long"),
 		UNSUPPORTED("Unsupported command"),
 		TIMEOUT("Packet timeout"),
 		UNKNOWN("Unknown code"),
-		CANCEL("Cancel Build")
+		DOWNSTREAM_TIMEOUT("Downstream Timeout"),
+		TOOL_LOCK_TIMEOUT("Tool Lock Timeout"),
+		CANCEL("Cancel Build"),
+		BOT_BUILDING("Building from SDCard, RepG shouldn't be sending commands"),
+		BOT_OVERHEAT("Printer Overheated"),
+		BOT_RX_TIMEDOUT("Receive Timeout On Printer")
 		;
 		
 		private final String message;
@@ -55,9 +60,24 @@ public class PacketResponse {
 			case 0x6:
 			case 0x86:
 				return OK; // more packets expected?
+			case 0x7:
+			case 0x87:
+				return DOWNSTREAM_TIMEOUT;
+			case 0x8:
+			case 0x88:
+				return TOOL_LOCK_TIMEOUT;
 			case 0x09:
 			case 0x89:
 				return CANCEL;
+			case 0x0A:
+			case 0x8A:
+				return BOT_BUILDING;
+			case 0x0B:
+			case 0x8B:
+				return BOT_OVERHEAT;
+			case 0x0C:
+			case 0x8C:
+				return BOT_RX_TIMEDOUT;
 			case 127:
 				return TIMEOUT;
 			}

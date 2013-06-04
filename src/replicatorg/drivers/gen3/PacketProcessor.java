@@ -23,7 +23,9 @@ public class PacketProcessor implements PacketConstants {
 		public int getActual() { return actual; }
 		public int getExpected() { return expected; }
 	}
-	
+
+	public static class PacketNoiseException extends Exception { }
+
 	enum PacketState {
 		START, LEN, PAYLOAD, CRC, LAST
 	}
@@ -41,14 +43,6 @@ public class PacketProcessor implements PacketConstants {
 	IButtonCrc crc;
 
 	/**
-	 * Reset the packet's state. (The crc is (re-)generated on the length byte
-	 * and thus doesn't need to be reset.(
-	 */
-	public void reset() {
-		packetState = PacketState.START;
-	}
-
-	/**
 	 * Create a PacketResponse object that contains this packet's payload.
 	 * 
 	 * @return A valid PacketResponse object
@@ -62,9 +56,9 @@ public class PacketProcessor implements PacketConstants {
 	 * Process the next byte in an incoming packet.
 	 * 
 	 * @return true if the packet is complete and valid; false otherwise.
-	 * @throws CRCException 
+	 * @throws CRCException, PacketNoiseException
 	 */
-	public boolean processByte(byte b) throws CRCException {
+	public boolean processByte(byte b) throws CRCException, PacketNoiseException {
 
 		if (Base.logger.isLoggable(Level.FINER)) {
 			if (b >= 32 && b <= 127)
@@ -81,7 +75,7 @@ public class PacketProcessor implements PacketConstants {
 			if (b == START_BYTE) {
 				packetState = PacketState.LEN;
 			} else {
-				// throw exception?
+				throw new PacketNoiseException();
 			}
 			break;
 

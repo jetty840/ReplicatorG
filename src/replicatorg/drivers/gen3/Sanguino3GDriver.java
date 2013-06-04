@@ -47,6 +47,7 @@ import replicatorg.drivers.SDCardCapture;
 import replicatorg.drivers.SerialDriver;
 import replicatorg.drivers.Version;
 import replicatorg.drivers.gen3.PacketProcessor.CRCException;
+import replicatorg.drivers.gen3.PacketProcessor.PacketNoiseException;
 import replicatorg.machine.model.AxisId;
 import replicatorg.machine.model.ToolModel;
 import replicatorg.uploader.FirmwareUploader;
@@ -104,6 +105,11 @@ class Sanguino3GEEPRPOM implements EEPROMClass {
 public class Sanguino3GDriver extends SerialDriver implements
 		OnboardParameters, SDCardCapture, PenPlotter, MultiTool {
 	protected final static int DEFAULT_RETRIES = 5;
+
+	enum CommandType {
+		COMMAND,
+		QUERY
+	}
 
         Point5d pastExcess = new Point5d(0, 0, 0, 0, 0);
 
@@ -164,11 +170,6 @@ public class Sanguino3GDriver extends SerialDriver implements
 			}
 			sendInit();
 			super.initialize();
-			// dial down timeout for accelerated firmware so that we can refill
-			// firmware command buffer as quickly as possible
-			if(acceleratedFirmware){
-				serial.setTimeout(200);
-			}
 			invalidatePosition();
 
 			return;
@@ -285,16 +286,24 @@ public class Sanguino3GDriver extends SerialDriver implements
 		return runCommand(packet, DEFAULT_RETRIES);
 	}
 
+	protected PacketResponse runQueryNoLogging(byte[] packet, int retries) {
+		try {
+			return runCommand(packet, retries, CommandType.QUERY, false);
+		} catch (RetryException re) {
+			throw new RuntimeException("Queries can not have valid retries!");
+		}
+	}
+
 	protected PacketResponse runQuery(byte[] packet, int retries) {
 		try {
-			return runCommand(packet, retries);
+			return runCommand(packet, retries, CommandType.QUERY, true);
 		} catch (RetryException re) {
 			throw new RuntimeException("Queries can not have valid retries!");
 		}
 	}
 
 	protected PacketResponse runQuery(byte[] packet) {
-		return runQuery(packet, 1);
+		return runQuery(packet, DEFAULT_RETRIES);
 	}
 
 	//// Get a list of all toolheads we save onboard preferences for 
@@ -319,30 +328,52 @@ public class Sanguino3GDriver extends SerialDriver implements
 		Base.logger.finer(buf.toString());
 	}
 
+	protected PacketResponse runCommand(byte[] packet, int retries)
+			throws RetryException {
+		return runCommand(packet, retries, CommandType.COMMAND, true);
+	}
+
 	/**
 	 * It's important here to understand the difference between "retries" and
 	 * the retry exception. A retry is called when packet transmission itself
 	 * failed and we want to try again. The retry exception is thrown when the
-	 * packet was successfully processed, but the buffer was full, indicating to
-	 * the controller that another attempt is warranted.
+	 * packet was successfully processed, but the buffer was full on the printer, or
+	 * the printer didn't receive the data from RepG fast enough and it timed out the packet,
+	 * indicating to the controller that another attempt is warranted.
 	 * 
-	 * If the specified number of retries is negative, the packet will be tried
-	 * -N times, and no logging message will be displayed when the packet times
-	 * out. This is for "unreliable" packets (ordinarily, when scanning for
-	 * toolheads).
-	 * 
+	 * If logOperationalErrors is false, no logging message will be displayed when the packet times
+	 * out, is retried or errors, it's silent. This is for "unreliable" packets (ordinarily, 
+	 * when scanning for toolheads).  Errors due to incorrect caller invocation will still be displayed.
+	 *
+	 * There are differences between the way Commands and Queries are handle (CommandType.COMMAND or CommandType.QUERY)
+	 *
+	 *	Commands can throw a RetryException when a buffer is full on a bot, or the bot times out the packet
+	 *	being sent from RepG.  On errors, commands are retried
+	 *
+	 *	Queries do not throw a RetryExcpetion, they return a timeout instead (leaving the call to deal with the
+	 *	retranmission.  On errors which indicate the bot didn't action the transmission, the packet is retried
+	 *	to retries times.
+	 *
 	 * @param packet
 	 * @param retries
+	 * @param commandType
+	 * @param dontLogErrors
 	 * @return
 	 * @throws RetryException
 	 */
-	protected PacketResponse runCommand(byte[] packet, int retries)
+	protected PacketResponse runCommand(byte[] packet, int retries, CommandType commandType, boolean logOperationalErrors)
 			throws RetryException {
 
 		if (retries == 0) {
-			Base.logger.severe("Packet timed out!");
+			if ( logOperationalErrors )	Base.logger.severe("Packet timed out!");
 			return PacketResponse.timeoutResponse();
 		}
+
+		if ( retries < 0 ) {
+			Base.logger.severe("Attempt to send packet with negative retries");
+			return null; // skip empty commands or broken commands
+		}
+
 		if (packet == null || packet.length < 4) {
 			Base.logger.severe("Attempt to send empty or too-small packet");
 			return null; // skip empty commands or broken commands
@@ -361,8 +392,7 @@ public class Sanguino3GDriver extends SerialDriver implements
 				// our whole call stack; we'll wrap it in a runtime error.
 				throw new RuntimeException(ioe);
 			}
-			return PacketResponse.okResponse(); // Always pretend that it's all
-												// good.
+			return PacketResponse.okResponse(); // Always pretend that it's all good.
 		}
 
 		// This can actually happen during shutdown.
@@ -418,49 +448,86 @@ public class Sanguino3GDriver extends SerialDriver implements
 					if (Thread.currentThread().isInterrupted()) {
 						break;
 					}
-					if (retries > 1) {
-                                            
-                                            // accelerated Firmware has a low timeout period and times out frequently
-                                            // dial down timeout logging because there will be a LOT of it
-                                            if(acceleratedFirmware){
-						Base.logger.finest("Read timed out; retries remaining: "
-										+ Integer.toString(retries));
-                                            }
-                                            else{
-                                                Base.logger.severe("Read timed out; retries remaining: "
-										+ Integer.toString(retries));
-                                            }
+					if ( commandType == CommandType.QUERY ) {
+						return runCommand(packet, 0, commandType, logOperationalErrors);
 					}
-					if (retries == -1) {
+
+					if ( retries > 1 ) {
+					    if ( logOperationalErrors )
+						Base.logger.severe("Read timed out; retries remaining: " + Integer.toString(retries));
+					}
+					else if ( retries == 1 && ( ! logOperationalErrors) ) {
 						// silently return a timeout response
 						return PacketResponse.timeoutResponse();
-					} else if (retries < 0) {
-						return runCommand(packet, retries + 1);
 					}
-					return runCommand(packet, retries - 1);
+
+					return runCommand(packet, retries - 1, commandType, logOperationalErrors);
 				}
 				try {
 					completed = pp.processByte((byte) b);
 				} catch (CRCException e) {
-					Base.logger.severe("Bad CRC received; retries remaining: "
-							+ Integer.toString(retries));
-					return runCommand(packet, retries - 1);
+					if ( logOperationalErrors )
+						Base.logger.severe("Bad CRC received; retries remaining: " + Integer.toString(retries));
+
+					return runCommand(packet, retries - 1, commandType, logOperationalErrors);
+				} catch (PacketNoiseException e) {
+					if ( logOperationalErrors )
+						Base.logger.severe("Bad Start Byte received; retries remaining: " + Integer.toString(retries));
+
+					return runCommand(packet, retries - 1, commandType, logOperationalErrors);
 				}
 			}
 			pr = pp.getResponse();
 
 			if (pr.isOK()) {
 				// okay!
-			} else if (pr.getResponseCode() == PacketResponse.ResponseCode.BUFFER_OVERFLOW) {
-				throw new RetryException();
-			} else if (pr.getResponseCode() == PacketResponse.ResponseCode.CANCEL){
+			} else if (pr.getResponseCode() == PacketResponse.ResponseCode.BUFFER_OVERFLOW ) {
+				//Base.logger.severe("Command buffer full on printer");
+				if ( commandType == CommandType.QUERY )	return PacketResponse.timeoutResponse();
+				else					throw new RetryException();
+			} else if (pr.getResponseCode() == PacketResponse.ResponseCode.BOT_RX_TIMEDOUT) {
+				if ( logOperationalErrors )	Base.logger.severe("Printer timed out packet from RepG, will try again");
+				if ( commandType == CommandType.QUERY )	return PacketResponse.timeoutResponse();
+				else					throw new RetryException();
+			} else if (pr.getResponseCode() == PacketResponse.ResponseCode.CANCEL) {
 				Base.getEditor().handleStop(); ///  horrible horrible 
 				Base.logger.severe("Build Canceled by Printer");
+			} else if (pr.getResponseCode() == PacketResponse.ResponseCode.BOT_BUILDING) {
+				Base.getEditor().handleStop(); ///  horrible horrible 
+				Base.logger.severe("Printer was building from SD Card, when RepG sent it a command, build cancelled");
+			} else if (pr.getResponseCode() == PacketResponse.ResponseCode.BOT_OVERHEAT) {
+				Base.getEditor().handleStop(); ///  horrible horrible 
+				Base.logger.severe("Printer has overheated, build cancelled");
+			} else if ( pr.getResponseCode() == PacketResponse.ResponseCode.UNSUPPORTED && packet[2] == MotherboardCommandCode.IS_FINISHED.getCode()) {
+				if (!isNotifiedFinishedFeature) {
+					Base.logger.severe("isBufferEmpty: IsFinished not supported by this firmware. " +
+							"Update your firmware.");
+					isNotifiedFinishedFeature = true;
+				}
 			} else {
 				// Other random error
-				printDebugData("Unknown error sending, retry", packet);
+
+				if ( logOperationalErrors ) {
+					printDebugData("Unknown error sending, retry", packet);
+					Base.logger.severe(pr.getResponseCode().getMessage() + "; retries remaining: " + Integer.toString(retries));
+					//pr.printDebug();
+				}
+	
 				if (retries > 1) {
-					return runCommand(packet, retries - 1);
+					return runCommand(packet, retries - 1, commandType, logOperationalErrors);
+				} else if ( retries == 1 ) {
+					if ( pr.getResponseCode() == PacketResponse.ResponseCode.GENERIC_ERROR ||
+					     pr.getResponseCode() == PacketResponse.ResponseCode.CRC_MISMATCH ||
+					     pr.getResponseCode() == PacketResponse.ResponseCode.QUERY_OVERFLOW ||
+					     pr.getResponseCode() == PacketResponse.ResponseCode.UNSUPPORTED ||
+					     pr.getResponseCode() == PacketResponse.ResponseCode.UNKNOWN ||
+					     pr.getResponseCode() == PacketResponse.ResponseCode.DOWNSTREAM_TIMEOUT ||
+					     pr.getResponseCode() == PacketResponse.ResponseCode.TOOL_LOCK_TIMEOUT ) {
+						if ( isInitialized() && commandType != CommandType.QUERY ) {
+							Base.getEditor().handleStop(); ///  horrible horrible 
+							Base.logger.severe("Build Canceled Due To Communications Error");
+						}
+					}
 				}
 			}
 		}
@@ -473,48 +540,22 @@ public class Sanguino3GDriver extends SerialDriver implements
 		if (fileCaptureOstream != null) {
 			return true;
 		} // always done instantly if writing to file
-		PacketBuilder pb = new PacketBuilder(
-				MotherboardCommandCode.IS_FINISHED.getCode());
-		PacketResponse pr = runQuery(pb.getPacket());
-		if (!pr.isOK()) {
-			return false;
-		}
-		int v = pr.get8();
-		if (pr.getResponseCode() == PacketResponse.ResponseCode.UNSUPPORTED) {
-			if (!isNotifiedFinishedFeature) {
-				Base.logger.severe("IsFinished not supported by this firmware. " +
-						"Update your firmware.");
-				isNotifiedFinishedFeature = true;
-			}
-			return true;
-		}
-		boolean finished = (v != 0);
-		Base.logger.fine("Is finished: " + Boolean.toString(finished));
-		return finished;
+
+		return isBufferEmpty();
 	}
 
 	
 	
 	public boolean isBufferEmpty() {
-		// TODO: Make sure this is right
-		PacketBuilder pb = new PacketBuilder(
-				MotherboardCommandCode.IS_FINISHED.getCode());
+		PacketBuilder pb = new PacketBuilder(MotherboardCommandCode.IS_FINISHED.getCode());
 		PacketResponse pr = runQuery(pb.getPacket());
-		if (!pr.isOK()) {
-			return false;
+		if (pr.isOK()) {
+			int v = pr.get8();
+			boolean finished = (v != 0);
+			Base.logger.fine("Buffer empty: " + Boolean.toString(finished));
+			return finished;
 		}
-		int v = pr.get8();
-		if (pr.getResponseCode() == PacketResponse.ResponseCode.UNSUPPORTED) {
-			if (!isNotifiedFinishedFeature) {
-				Base.logger.severe("IsFinished not supported by this firmware. " +
-						"Update your firmware.");
-				isNotifiedFinishedFeature = true;
-			}
-			return true;
-		}
-		boolean finished = (v != 0);
-		Base.logger.fine("Buffer empty: " + Boolean.toString(finished));
-		return finished;
+		else return false;
 	}
 
 	public void dispose() {
@@ -534,7 +575,7 @@ public class Sanguino3GDriver extends SerialDriver implements
 		PacketBuilder pb = new PacketBuilder(MotherboardCommandCode.VERSION.getCode());
 		pb.add16(Base.VERSION);
 
-		PacketResponse pr = runQuery(pb.getPacket(), 1);
+		PacketResponse pr = runQueryNoLogging(pb.getPacket(), 1);
 		if (pr.isEmpty() || !pr.isOK())
 			return null;
 		int versionNum = pr.get16();
@@ -543,7 +584,7 @@ public class Sanguino3GDriver extends SerialDriver implements
 		pb.add16(Base.VERSION);
 
 		String buildname = "";
-		pr = runQuery(pb.getPacket(), 1);
+		pr = runQueryNoLogging(pb.getPacket(), 1);
 		if (!pr.isEmpty() && pr.isOK()) {
 			byte[] payload = pr.getPayload();
 			byte[] subarray = new byte[payload.length - 1];
@@ -591,7 +632,7 @@ public class Sanguino3GDriver extends SerialDriver implements
 		slavepb.add8((byte) toolhead);
 		slavepb.add8(ToolCommandCode.VERSION.getCode());
 		int slaveVersionNum = 0;
-		PacketResponse slavepr = runQuery(slavepb.getPacket(), -2);
+		PacketResponse slavepr = runQueryNoLogging(slavepb.getPacket(), 2);
 		if (!slavepr.isEmpty()) {
 			slaveVersionNum = slavepr.get16();
 		}
@@ -599,7 +640,7 @@ public class Sanguino3GDriver extends SerialDriver implements
 		slavepb = new PacketBuilder(MotherboardCommandCode.TOOL_QUERY.getCode());
 		slavepb.add8((byte) toolhead);
 		slavepb.add8(ToolCommandCode.GET_BUILD_NAME.getCode());
-		slavepr = runQuery(slavepb.getPacket(), -2);
+		slavepr = runQueryNoLogging(slavepb.getPacket(), 2);
 
 		String buildname = "";
 		slavepr = runQuery(slavepb.getPacket(), 1);
@@ -1439,6 +1480,7 @@ public class Sanguino3GDriver extends SerialDriver implements
 		return this.getSpindleSpeedPWM(machine.currentTool().getIndex());
 	}
 	
+	@Deprecated
 	public int getSpindleSpeedPWM(int toolhead) {
 
 		/// toolhead -1 indicate auto-detect.Fast hack to get software out..
