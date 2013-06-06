@@ -122,9 +122,6 @@ public class Makerbot4GSailfish extends Makerbot4GAlternateDriver
 			Base.logger.severe("Please double-check your selected machine.");
 		}
 			
-		// I have no idea why we still do this, we may want to test and refactor away
-		getSpindleSpeedPWM();
-
 		// Check the steps per mm and axis lengths stored in the firmware for the XYZAB axis, and if they
 		// don't match the machine definition, write them and reset the bot
 		boolean needsReset = checkAndWriteStepsPerMM();

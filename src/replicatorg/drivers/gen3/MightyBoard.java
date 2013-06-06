@@ -345,9 +345,6 @@ public class MightyBoard extends Makerbot4GAlternateDriver
 	  }
 
 		
-		// I have no idea why we still do this, we may want to test and refactor away
-		getSpindleSpeedPWM();
-
 		// Check the steps per mm and axis lengths stored in the firmware for the XYZAB axis, and if they
 		// don't match the machine definition, write them and reset the bot
 		boolean needsReset = checkAndWriteStepsPerMM();

@@ -2169,6 +2169,20 @@ ToolpathGenerator.GeneratorListener
 			return; //exit ro cancel clicked
 		}
 
+		JOptionPane.showMessageDialog( this,
+			"You are about to build using USB for communications.\n\n" +
+			"This practice results in poor print quality due to communication performance issues\n" +
+			"at speeds greater than 10mm/s and will result in blobbing.\n\n" +
+			"Additionally prints may fail partway if you quit, crash or use ReplicatorG, you suspend your machine\n" +
+			"or your machine sleeps or crashes.\n\n" +
+			"There is also the possibility that your machine could be damaged or may cause property damage\n" + 
+			"due to an error in communication and the associated potential for overheating, digipot corruption, risk\n" +
+			"of fire and other potential disaster scenarios.\n\n" + 
+			"** You use this feature entirely at your own risk. **\n\n" +
+			"Building from SD Card (although it still carries the same risks) is more reliable.",
+			"Build Over USB Warning",
+			JOptionPane.WARNING_MESSAGE);
+			
 		machineLoader.getDriver().setBuildToFileVersion(0);
 
 		if(buildFlag == BuildFlag.GEN_AND_BUILD) {
