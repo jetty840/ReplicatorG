@@ -29,7 +29,7 @@ public class BuildSelectionDialog extends JDialog {
 		super(parent,"Select a file to build",true);
 		Container c = getContentPane();
 		c.setLayout(new MigLayout("fill"));
-		c.add(new JLabel("Select the .s3g file to build:"),"wrap,spanx");
+		c.add(new JLabel("Select the file to build:"),"wrap,spanx");
 		okButton = new JButton("OK");
 		okButton.setEnabled(false);
 		okButton.addActionListener(new ActionListener() {
