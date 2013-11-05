@@ -1351,7 +1351,7 @@ ToolpathGenerator.GeneratorListener
 		int tool0Target = 0;
 		int tool1Target = 0;
 		int platTarget = 0;
-		
+
 		preheatMachine = preheat;
 		
 		// update preheat menu info
