@@ -175,6 +175,8 @@ ToolpathGenerator.GeneratorListener
 	/**
 	 * 
 	 */
+        private boolean warned = false;
+
 	private static final long serialVersionUID = 4144538738677712284L;
 
 	static final String WINDOW_TITLE = "ReplicatorG" + " - " + Base.VERSION_NAME;
@@ -2169,7 +2171,8 @@ ToolpathGenerator.GeneratorListener
 			return; //exit ro cancel clicked
 		}
 
-		JOptionPane.showMessageDialog( this,
+		if (!warned) {
+		    JOptionPane.showMessageDialog( this,
 			"You are about to build using USB for communications.\n\n" +
 			"This practice results in poor print quality due to communication performance issues\n" +
 			"at speeds greater than 10mm/s and will result in blobbing.\n\n" +
@@ -2182,6 +2185,8 @@ ToolpathGenerator.GeneratorListener
 			"Building from SD Card (although it still carries the same risks) is more reliable.",
 			"Build Over USB Warning",
 			JOptionPane.WARNING_MESSAGE);
+		    warned = true;
+		}
 			
 		machineLoader.getDriver().setBuildToFileVersion(0);
 
