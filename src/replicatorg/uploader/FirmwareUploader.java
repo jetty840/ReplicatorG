@@ -83,7 +83,8 @@ public class FirmwareUploader {
 		t.start();
 	}
 
-	static public final String DEFAULT_UPDATES_URL = "http://firmware.makerbot.com/firmware.xml";
+        // static public final String DEFAULT_UPDATES_URL = "http://firmware.makerbot.com/firmware.xml";
+        static public final String DEFAULT_UPDATES_URL = "http://jettyfirmware.yolasite.com/resources/release/firmware.xml";
 
 	/**
 	 * Get the URL of the source for dowloading
