@@ -876,8 +876,8 @@
 
 		 // Bitmask bits indicating which tabs to set
 		 // We worry about this aspect as part of supporting the "draft" and "quality" buttons
-		 final int UI_TAB_1 = 0x01;
-		 final int UI_TAB_2 = 0x02;
+		 final int UI_TAB_1   = 0x01;
+		 final int UI_TAB_2   = 0x02;
 
 		 // Accel Parameters of Tab 1
 		 class AccelParamsTab1 {
@@ -1339,8 +1339,44 @@
 
 		 // Bitmask bits indicating which tabs to set
 		 // We worry about this aspect as part of supporting the "draft" and "quality" buttons
-		 final int UI_TAB_1 = 0x01;
-		 final int UI_TAB_2 = 0x02;
+		 final int UI_TAB_1   = 0x01;
+		 final int UI_TAB_2   = 0x02;
+		 final int UI_TAB_LED = 0x04;
+
+	         // RGB LED params
+	         class LEDParamsTab {
+			 int     colorChoice;
+			 boolean showHeating;
+			 int     red;
+			 int     green;
+			 int     blue;
+
+			 LEDParamsTab(int colorChoice,
+				      boolean showHeating,
+				      int red,
+				      int green,
+				      int blue)
+			 {
+				 if (colorChoice < 0 || colorChoice > 8)
+					 colorChoice = 0;
+				 this.colorChoice = colorChoice;
+				 this.showHeating = showHeating;
+				 this.red         = red & 0xff;
+				 this.green       = green & 0xff;
+				 this.blue        = blue & 0xff;
+			 }
+
+			 boolean isEqual(LEDParamsTab params)
+			 {
+				 if (this == params)
+					 return true;
+				 return(colorChoice == params.colorChoice &&
+					showHeating == params.showHeating &&
+					red == params.red &&
+					green == params.green &&
+					blue == params.blue);
+			 }
+		 }
 
 		 // Accel Parameters of Tab 1
 		 class AccelParamsTab1 {
@@ -1406,10 +1442,12 @@
 		 private class AccelParams {
 			 public AccelParamsTab1 tab1;
 			 public AccelParamsTab2 tab2;
+			 public LEDParamsTab    tabLED;
 
-			 AccelParams(AccelParamsTab1 params1, AccelParamsTab2 params2) {
-				 this.tab1 = params1;
-				 this.tab2 = params2;
+			 AccelParams(AccelParamsTab1 params1, AccelParamsTab2 params2, LEDParamsTab paramsLED) {
+				 this.tab1    = params1;
+				 this.tab2    = params2;
+				 this.tabLED  = paramsLED;
 			 }
 		 }
 
@@ -1600,6 +1638,34 @@
 	    "The reduction in printing speed then gives the planner a chance to catch up."));
 		 }
 
+		 private JCheckBox moodLightShowHeatingBox = new JCheckBox();
+
+		 public final String[] moodLightChoices = {
+			 "White",
+			 "Red",
+			 "Orange",
+			 "Pink",
+			 "Green",
+			 "Blue",
+			 "Purple",
+			 "Off",
+			 "Custom Color"
+		 };
+
+		 private JColorChooser moodLightCustomColor = new JColorChooser();
+		 {
+			 moodLightCustomColor.setToolTipText(wrap2HTML(width,
+		   "Select the color to use when the \"Custom Color\" lighting choice " +
+		   "is selected."));
+		 }
+
+		 private JComboBox moodLightScript = new JComboBox(moodLightChoices);
+		 {
+			 moodLightScript.setToolTipText(wrap2HTML(width,
+                    "Select the LED lighting color.  To use a custom color, select \"Custom Color\" " +
+		    "and then pick the color with the color selection tool below."));
+		 }
+
 		 private MightySailfishMachineOnboardAccelerationParameters(OnboardParameters target,
 			 						    Driver driver,
 									    JTabbedPane subtabs) {
@@ -1623,6 +1689,7 @@
 		 }
 
 		 AccelParams getAccelParamsFromUI() {
+			 Color c = moodLightCustomColor.getColor();
 			 return new AccelParams(new AccelParamsTab1(accelerationBox.isSelected(),
 								    new int[] {((Number)normalMoveAcceleration.getValue()).intValue(),
 									       ((Number)extruderMoveAcceleration.getValue()).intValue()},
@@ -1645,7 +1712,12 @@
 								    new int[] {((Number)extruderDeprimeA.getValue()).intValue(),
 									       ((Number)extruderDeprimeB.getValue()).intValue()},
 								    new double[] {((Number)JKNAdvance1.getValue()).doubleValue(),
-										  ((Number)JKNAdvance2.getValue()).doubleValue()}));
+										    ((Number)JKNAdvance2.getValue()).doubleValue()}),
+						new LEDParamsTab(moodLightScript.getSelectedIndex(),
+								 moodLightShowHeatingBox.isSelected(),
+								 c.getRed(),
+								 c.getGreen(),
+								 c.getBlue()));
 		 }
 
 		 @Override
@@ -1682,6 +1754,12 @@
 
 			 target.setEEPROMParam(OnboardParameters.EEPROMParams.ACCEL_EXTRUDER_DEPRIME_A, params.tab2.deprime[0]);
 			 target.setEEPROMParam(OnboardParameters.EEPROMParams.ACCEL_EXTRUDER_DEPRIME_B, params.tab2.deprime[1]);
+
+			 target.setEEPROMParam(OnboardParameters.EEPROMParams.MOOD_LIGHT_SCRIPT,       params.tabLED.colorChoice);
+			 target.setEEPROMParam(OnboardParameters.EEPROMParams.MOOD_LIGHT_SHOW_HEATING, params.tabLED.showHeating ? 1 : 0);
+			 target.setEEPROMParam(OnboardParameters.EEPROMParams.MOOD_LIGHT_CUSTOM_RED,   params.tabLED.red);
+			 target.setEEPROMParam(OnboardParameters.EEPROMParams.MOOD_LIGHT_CUSTOM_GREEN, params.tabLED.green);
+			 target.setEEPROMParam(OnboardParameters.EEPROMParams.MOOD_LIGHT_CUSTOM_BLUE,  params.tabLED.blue);
 		 }
 
 		 @Override
@@ -1702,7 +1780,12 @@
 				     params.maxAccelerations,
 				     params.maxSpeedChanges,
 				     null,
-				     null);
+				     null,
+				     0,
+				     false,
+				     0x00,
+				     0x00,
+				     0x00);
 		 }
 
 		 private void setUIFields(int tabs,
@@ -1717,7 +1800,12 @@
 					  int[] maxAccelerations,
 					  int[] maxSpeedChanges,
 					  double[] JKNadvance,
-					  int[] deprime) {
+					  int[] deprime,
+			                  int colorChoice,
+			                  boolean showHeating,
+			                  int red,
+			                  int green,
+			                  int blue) {
 
 			 if ((tabs & UI_TAB_1) != 0) {
 				 accelerationBox.setSelected(accelerationEnabled);
@@ -1763,6 +1851,14 @@
 				 }
 			 }
 
+			 if ((tabs & UI_TAB_LED) != 0) {
+				 if (colorChoice < 0 || colorChoice > 8)
+					 colorChoice = 0;
+				 moodLightScript.setSelectedIndex(colorChoice);
+				 moodLightShowHeatingBox.setSelected(showHeating);
+				 moodLightCustomColor.setColor(red & 0xff, green & 0xff, blue & 0xff);				 
+			 }
+
 			 // Enable/disable the draft & quality buttons based upon the UI field values
 			 // propertyChange(null);
 		 }
@@ -1802,9 +1898,16 @@
 				 target.getEEPROMParamInt(OnboardParameters.EEPROMParams.ACCEL_EXTRUDER_DEPRIME_A),
 				 target.getEEPROMParamInt(OnboardParameters.EEPROMParams.ACCEL_EXTRUDER_DEPRIME_B) };
 
-			 setUIFields(UI_TAB_1 | UI_TAB_2, accelerationEnabled, slowdownEnabled, overrideGCodeTempEnabled,
+			 int colorChoice = target.getEEPROMParamInt(OnboardParameters.EEPROMParams.MOOD_LIGHT_SCRIPT);
+			 boolean showHeating = target.getEEPROMParamInt(OnboardParameters.EEPROMParams.MOOD_LIGHT_SHOW_HEATING) != 0;
+			 int red = target.getEEPROMParamInt(OnboardParameters.EEPROMParams.MOOD_LIGHT_CUSTOM_RED);
+			 int green = target.getEEPROMParamInt(OnboardParameters.EEPROMParams.MOOD_LIGHT_CUSTOM_GREEN);
+			 int blue = target.getEEPROMParamInt(OnboardParameters.EEPROMParams.MOOD_LIGHT_CUSTOM_BLUE);
+
+			 setUIFields(UI_TAB_1 | UI_TAB_2 | UI_TAB_LED, accelerationEnabled, slowdownEnabled, overrideGCodeTempEnabled,
 				     preheatDuringPauseEnabled, extruderHoldEnabled, newToolheadOffsetSystem, checkCRC,
-				     accelerations, maxAccelerations, maxSpeedChanges, JKNadvance, deprime);
+				     accelerations, maxAccelerations, maxSpeedChanges, JKNadvance, deprime,
+				     colorChoice, showHeating, red, green, blue);
 		 }
 
 		 @Override
@@ -1814,6 +1917,9 @@
 
 			 JPanel accelerationMiscTab = new JPanel(new MigLayout("fill", "[r][l]"));
 			 subTabs.addTab("Acceleration (Misc)", accelerationMiscTab);
+
+			 JPanel LEDTab = new JPanel(new MigLayout("fill", "[r][l]"));
+			 subTabs.addTab("Lighting", LEDTab);
 
 			 normalMoveAcceleration.setColumns(8);
 			 extruderMoveAcceleration.setColumns(8);
@@ -1889,6 +1995,11 @@
 			 addWithSharedToolTips(accelerationMiscTab, "JKN Advance K2", JKNAdvance2, "wrap");
 			 addWithSharedToolTips(accelerationMiscTab, "Right extruder deprime (steps)", extruderDeprimeA, "wrap");
 			 addWithSharedToolTips(accelerationMiscTab, "Left extruder deprime (steps)", extruderDeprimeB, "wrap");
+
+			 // LED Lighting
+			 addWithSharedToolTips(LEDTab, "Show heating progress by changing the lighting color", moodLightShowHeatingBox, "wrap");
+			 addWithSharedToolTips(LEDTab, "Lighting color when idle or during printing", moodLightScript, "wrap");
+			 addWithSharedToolTips(LEDTab, "Custom color choice", moodLightCustomColor, "span 2, wrap, gapbottom push, gapright push");
 		 }
 	 }
 

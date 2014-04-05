@@ -60,7 +60,7 @@ M18 (Turn off steppers after a build.)
 		<cooldown>
 M18 (Turn off steppers after a build.)
 		</cooldown>
-		<bookend start="machines/replicator2/Dual_Head_start.gcode"  end="machines/replicator2/Single_Head_HBP_end.gcode"/>
+		<bookend start="machines/replicator2/Single_Head_HBP_start.gcode"  end="machines/replicator2/Single_Head_HBP_end.gcode"/>
 	</machine>
 <machine experimental="0">
 		<name>Replicator 2X (Sailfish)</name>

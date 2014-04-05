@@ -75,6 +75,7 @@ public interface OnboardParameters {
 		MOOD_LIGHT_CUSTOM_GREEN,    //
 		MOOD_LIGHT_CUSTOM_RED,      //
 		MOOD_LIGHT_SCRIPT,          //
+		MOOD_LIGHT_SHOW_HEATING,    //
 		OVERRIDE_GCODE_TEMP,        // Override gcode temp settings with preheat temps
 		PLATFORM_TEMP,              // Preheat & Override build platform temperature (C)
 		PSTOP_ENABLE,               // Enable/disable the firmware Pause Stop (P-Stop)
