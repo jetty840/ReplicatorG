@@ -157,7 +157,7 @@ class MightySailfish5XEEPROM implements EEPROMClass
   /// Boolean if HBP exists
   //  two bytes
   final public static int HBP_PRESENT             = 0X004C;
-  /// 38 bytes padding
+	/// 38 bytes padding
 	/// Thermistor table 0: 128 bytes
 	final public static int THERM_TABLE				= 0x0074;
 	/// Padding: 8 bytes
@@ -168,6 +168,8 @@ class MightySailfish5XEEPROM implements EEPROMClass
 	/// 2 bytes padding
 	/// Light Effect table. 3 Bytes x 3 entries
 	final public static int LED_STRIP_SETTINGS		= 0x0140;
+	final public static int BASIC_COLOR                     = 0x0140;
+	final public static int LED_HEAT                        = 0x0142;
 	final public static int CUSTOM_COLOR_OFFSET             = 0x0144;
 	/// Buzz Effect table. 4 Bytes x 3 entries
 	/// 1 byte padding for offsets
@@ -1555,7 +1557,12 @@ public class MightySailfish extends Makerbot4GAlternateDriver
 		if ( this.machineId == VidPid.UNKNOWN ) {
 			readMachineVidPid();
 		}
-		return this.machineId.equals(VidPid.THE_REPLICATOR) || this.machineId.equals(VidPid.REPLICATOR_2);
+		return
+		    this.machineId.equals(VidPid.MIGHTY_BOARD) ||
+		    this.machineId.equals(VidPid.THE_REPLICATOR) ||
+		    this.machineId.equals(VidPid.REPLICATOR_2) ||
+		    this.machineId.equals(VidPid.REPLICATOR_2h) ||
+		    this.machineId.equals(VidPid.REPLICATOR_2X);
 	}
 
 	@Override
@@ -2294,6 +2301,11 @@ public class MightySailfish extends Makerbot4GAlternateDriver
 		case SD_USE_CRC                 : return getUInt8EEPROM(JettyMBEEPROM.SD_USE_CRC);
 		case PSTOP_ENABLE               : return getUInt8EEPROM(JettyMBEEPROM.PSTOP_ENABLE);
 		case HBP_PRESENT                : return getUInt8EEPROM(JettyMBEEPROM.HBP_PRESENT);
+		case MOOD_LIGHT_SCRIPT          : return getUInt8EEPROM(MightySailfish5XEEPROM.BASIC_COLOR);
+		case MOOD_LIGHT_SHOW_HEATING    : return getUInt8EEPROM(MightySailfish5XEEPROM.LED_HEAT);
+		case MOOD_LIGHT_CUSTOM_RED      : return getUInt8EEPROM(MightySailfish5XEEPROM.CUSTOM_COLOR_OFFSET + 0x00);
+		case MOOD_LIGHT_CUSTOM_GREEN    : return getUInt8EEPROM(MightySailfish5XEEPROM.CUSTOM_COLOR_OFFSET + 0x01);
+		case MOOD_LIGHT_CUSTOM_BLUE     : return getUInt8EEPROM(MightySailfish5XEEPROM.CUSTOM_COLOR_OFFSET + 0x02);
 		default :
 			Base.logger.log(Level.WARNING, "getEEPROMParamInt(" + param + ") call failed");
 			return 0;
@@ -2347,6 +2359,11 @@ public class MightySailfish extends Makerbot4GAlternateDriver
 		case SD_USE_CRC                 : setUInt8EEPROM(JettyMBEEPROM.SD_USE_CRC, (val != 0) ? 1 : 0); break;
 		case PSTOP_ENABLE               : setUInt8EEPROM(JettyMBEEPROM.PSTOP_ENABLE, (val != 0) ? 1 : 0); break;
 		case HBP_PRESENT                : setUInt8EEPROM(JettyMBEEPROM.HBP_PRESENT, (val != 0) ? 1 : 0); break;
+		case MOOD_LIGHT_SCRIPT          : setUInt8EEPROM(MightySailfish5XEEPROM.BASIC_COLOR, val); break;
+		case MOOD_LIGHT_SHOW_HEATING    : setUInt8EEPROM(MightySailfish5XEEPROM.LED_HEAT, (val != 0) ? 1 : 0); break;
+		case MOOD_LIGHT_CUSTOM_RED      : setUInt8EEPROM(MightySailfish5XEEPROM.CUSTOM_COLOR_OFFSET + 0x00, val); break;
+		case MOOD_LIGHT_CUSTOM_GREEN    : setUInt8EEPROM(MightySailfish5XEEPROM.CUSTOM_COLOR_OFFSET + 0x01, val); break;
+		case MOOD_LIGHT_CUSTOM_BLUE     : setUInt8EEPROM(MightySailfish5XEEPROM.CUSTOM_COLOR_OFFSET + 0x02, val); break;
 		default : Base.logger.log(Level.WARNING, "setEEPROMParam(" + param + ", " + val + ") call failed"); break;
 		}
 	}
