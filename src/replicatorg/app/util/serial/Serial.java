@@ -30,7 +30,10 @@ import gnu.io.RXTXVersion;
 import gnu.io.SerialPort;
 import gnu.io.SerialPortEvent;
 import gnu.io.SerialPortEventListener;
+import gnu.io.RXTXCommDriver;
+import gnu.io.CommDriver;
 
+import java.util.ArrayList;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -43,6 +46,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.io.FileReader;
+import java.io.BufferedReader;
 
 import replicatorg.app.Base;
 import replicatorg.app.exceptions.SerialException;
@@ -69,6 +74,8 @@ public class Serial implements SerialPortEventListener {
 	private int parity;
 	private int data;
 	private int stop;
+  
+  private static ArrayList<String> manualPortOverrides;
 	
 	/**
 	 * The amount of time we're willing to wait for a read to timeout.  Defaults to 500ms.
@@ -109,6 +116,29 @@ public class Serial implements SerialPortEventListener {
 		Base.logger.fine("RXTX Version" + RXTXVersion.getVersion());
 		
 		
+    // the ~/.replicatorg/ports file can contain a list of devices to manually
+    // force into the serial ports list.  Note that this doesn't actaully
+    // create a new CommPortIdentifier, just adds it to the list which is
+    // eventually used to create the Serial Port menu in the UI.
+    manualPortOverrides = new ArrayList();
+    try {
+      File portsFile = new File(Base.getUserDirectory(),"ports");
+      if (portsFile.exists()) {
+        BufferedReader br = new BufferedReader(new FileReader(portsFile));
+        String port;
+        while ((port = br.readLine()) != null) {
+          File portFile = new File(port);
+          if (portFile.exists()) {
+            Name sn = new Name(port,true);
+            v.add(sn);
+          }
+          manualPortOverrides.add(port); // save the port name for later
+        }
+        br.close();      
+      }
+    } catch (Exception e) { }
+
+    
 		// In-use ports may not end up in the enumeration (thanks, RXTX), so
 		// we'll scan for them, and insert them if necessary.  (The app wants
 		// to display in-use ports to reduce user confusion.)
@@ -191,6 +221,31 @@ public class Serial implements SerialPortEventListener {
 				return id;
 			}
 		}
+    
+    // If we didn't find the port in our list yet.  Then it might be one of our manual
+    // overrides.  This is kind of a hack though.  RXTX doesn't really make it easy to
+    // force ports into the list.
+    CommDriver RXTXDriver = null;  // we only need one of these
+    for (String portName : manualPortOverrides) {
+      // See if this is one of our manually created ports.
+      if (name.equals(portName)) {
+        //This is a request for one of our manual port overrides.
+        try {
+          // Create an instance of the driver for the purpose of running our new port/
+          if (RXTXDriver == null) {
+            RXTXDriver = (CommDriver) Class.forName("gnu.io.RXTXCommDriver").newInstance();
+            RXTXDriver.initialize();
+          }
+        
+          // Add the port to the chain.  Note that any sbesquent call to "getPortIdentifiers"
+          // Will blow this new port out of the list.  So we need to use it imediately.
+          // Hopefully the caller doesn't do anyhting to jeopardize the port's existnace.
+          CommPortIdentifier.addPortName(portName, CommPortIdentifier.PORT_SERIAL, RXTXDriver);
+          return CommPortIdentifier.getPortIdentifier(portName);
+        } catch (Exception e) { }
+      }
+    }
+    
 		return null;
 	}
 	
