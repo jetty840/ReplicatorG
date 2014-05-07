@@ -264,3 +264,5 @@ M18
 M104 S0 T0 (set extruder temperature)
 M104 S0 T1 (set extruder temperature)
 M109 S0 T0 (set HBP temperature)
+
+M73 P100

@@ -25,3 +25,4 @@ M18 X Y A B (Leave Z stepper enabled; disable the others)
 M71 (Press "M" when level)
 (**** All done -- disable all the stepper motors ****)
 M18 X Y Z A B (Disable all stepper motors)
+M73 P100

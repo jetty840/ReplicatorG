@@ -18,3 +18,4 @@ M131 X Y (record the current coordinates to the motherboard)
 M70 P10 (Calibration complete)
 M73 P100 ( End  build progress )
 M01 (Your coordinates are now saved! To adjust them, use the 'Machine Onboard Preferences' dialog in the Machine menu to change the Axis Offsets.)
+M73 P100
