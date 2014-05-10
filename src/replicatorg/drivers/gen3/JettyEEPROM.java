@@ -78,10 +78,11 @@ class SailfishEEPROM extends JettyG3EEPROM {
 	final public static int DITTO_PRINT_ENABLED             = 0x01DC;
 	final public static int VID_PID_INFO		        = 0x01E5;
 	final public static int EXTRUDER_HOLD                   = 0x01E9;
-	final public static int TOOLHEAD_OFFSET_SYSTEM          = 0X01EA;
-	final public static int SD_USE_CRC                      = 0X01EB;
-	final public static int PSTOP_ENABLE                    = 0X01EC;
-	final public static int ENDSTOP_Z_MIN                   = 0X01ED;
+	final public static int TOOLHEAD_OFFSET_SYSTEM          = 0x01EA;
+	final public static int SD_USE_CRC                      = 0x01EB;
+	final public static int PSTOP_ENABLE                    = 0x01EC;
+	final public static int ENDSTOP_Z_MIN                   = 0x01ED;
+        final public static int EXTRUDER_DEPRIME_ON_TRAVEL      = 0x01EE;
 }
 
 

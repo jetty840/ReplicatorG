@@ -5,7 +5,9 @@
 (   onward, this runs the automated build   )
 (   platform for 50 seconds.                )
 (**** begin eject ****)
+M73 P0
 M106 (conveyor on)
 G04 P50000 (wait t/1000 seconds)
 M107 (conveyor off)
+M73 P100
 (**** end eject ****)

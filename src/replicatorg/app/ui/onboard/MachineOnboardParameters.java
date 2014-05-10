@@ -1411,6 +1411,7 @@
 		 // Accel Parameters of Tab 2
 		 class AccelParamsTab2 {
 			 boolean slowdownEnabled;
+		         boolean deprimeTravel;
 			 boolean overrideGCodeTempEnabled;
 			 boolean preheatDuringPauseEnabled;
 			 boolean extruderHold;
@@ -1420,6 +1421,7 @@
 			 double[] JKNadvance;
 
 			 AccelParamsTab2(boolean slowdownEnabled,
+					 boolean deprimeTravel,
 					 boolean overrideGCodeTempEnabled,
 					 boolean preheatDuringPauseEnabled,
 					 boolean extruderHold,
@@ -1429,6 +1431,7 @@
 					 double[] JKNadvance)
 			 {
 				 this.slowdownEnabled           = slowdownEnabled;
+				 this.deprimeTravel             = deprimeTravel;
 				 this.overrideGCodeTempEnabled  = overrideGCodeTempEnabled;
 				 this.preheatDuringPauseEnabled = preheatDuringPauseEnabled;
 				 this.extruderHold              = extruderHold;
@@ -1603,7 +1606,20 @@
            "this parameter range from around 0.001 to 0.1.  Set to a value of 0 to disable use of this " +
            "compensation.");
 
-		 private JFormattedTextField extruderDeprimeA = PositiveTextFieldInt(repNF, 10000,
+		 private JCheckBox extruderDeprimeTravel = new JCheckBox();
+		 {
+			 extruderDeprimeTravel.setToolTipText(wrap2HTML(width,
+           "The firmware can retract the filament thus depriming the extruder on (1) detected travel moves, (2) " +
+           "pauses of the build, and (3) tiny brief pauses caused by the acceleration planner not keeping pace " +
+           "with the print and leaving the bot very briefly idle.  Item (3) can cause tiny pimples or zits on " +
+           "the print.  When this box is checked and the deprime values ares non-zero, the extruder is deprimed " +
+           "on (1), (2), and (3) and reprimed when extrusion resumes.  When this box is not checked and the " +
+           "deprime values are non-zero, the extruder is deprimed on (2) and (3) and reprimed when extrusion " +
+           "resumes.  If you will be using retraction/deprime with your slicer, then leave this box unchecked.  " +
+           "To entirely disable firmware deprime, set the deprime values to be zero."));
+		 }
+
+       		 private JFormattedTextField extruderDeprimeA = PositiveTextFieldInt(repNF, 10000,
            "The number of steps to retract the right extruder's filament when the pipeline of buffered moves empties " +
            "or a travel-only move is encountered.  Set to a value of 0 to disable this feature for this extruder.  " +
            "Do not use with Skeinforge's Reversal plugin nor Skeinforge's Dimension plugin's \"Retraction Distance\".");
@@ -1704,6 +1720,7 @@
 									       ((Number)aAxisMaxSpeedChange.getValue()).intValue(),
 									       ((Number)bAxisMaxSpeedChange.getValue()).intValue()}),
 						new AccelParamsTab2(slowdownFlagBox.isSelected(),
+								    extruderDeprimeTravel.isSelected(),
 								    overrideGCodeTempBox.isSelected(),
 								    preheatDuringPauseBox.isSelected(),
 								    extruderHoldBox.isSelected(),
@@ -1752,6 +1769,7 @@
 			 target.setEEPROMParam(OnboardParameters.EEPROMParams.ACCEL_ADVANCE_K,  params.tab2.JKNadvance[0]);
 			 target.setEEPROMParam(OnboardParameters.EEPROMParams.ACCEL_ADVANCE_K2, params.tab2.JKNadvance[1]);
 
+			 target.setEEPROMParam(OnboardParameters.EEPROMParams.DEPRIME_ON_TRAVEL,        params.tab2.deprimeTravel ? 1 : 0);
 			 target.setEEPROMParam(OnboardParameters.EEPROMParams.ACCEL_EXTRUDER_DEPRIME_A, params.tab2.deprime[0]);
 			 target.setEEPROMParam(OnboardParameters.EEPROMParams.ACCEL_EXTRUDER_DEPRIME_B, params.tab2.deprime[1]);
 
@@ -1776,6 +1794,7 @@
 				     false,
 				     false,
 				     false,
+				     false,
 				     params.accelerations,
 				     params.maxAccelerations,
 				     params.maxSpeedChanges,
@@ -1791,6 +1810,7 @@
 		 private void setUIFields(int tabs,
 					  boolean accelerationEnabled,
 					  boolean slowdownEnabled,
+					  boolean deprimeTravel,
 					  boolean overrideGCodeTempEnabled,
 					  boolean preheatDuringPauseEnabled,
 					  boolean extruderHoldEnabled,
@@ -1834,6 +1854,7 @@
 
 			 if ((tabs & UI_TAB_2) != 0) {
 				 slowdownFlagBox.setSelected(slowdownEnabled);
+				 extruderDeprimeTravel.setSelected(deprimeTravel);
 				 overrideGCodeTempBox.setSelected(overrideGCodeTempEnabled);
 				 preheatDuringPauseBox.setSelected(preheatDuringPauseEnabled);
 				 extruderHoldBox.setSelected(extruderHoldEnabled);
@@ -1867,6 +1888,7 @@
 		 public void setUIFromEEPROM() {
 			 boolean accelerationEnabled = target.getAccelerationStatus() != 0;
 			 boolean slowdownEnabled = target.getEEPROMParamInt(OnboardParameters.EEPROMParams.ACCEL_SLOWDOWN_FLAG) != 0;
+			 boolean deprimeTravel = target.getEEPROMParamInt(OnboardParameters.EEPROMParams.DEPRIME_ON_TRAVEL) != 0;
 			 boolean overrideGCodeTempEnabled = target.getEEPROMParamInt(OnboardParameters.EEPROMParams.OVERRIDE_GCODE_TEMP) != 0;
 			 boolean preheatDuringPauseEnabled = target.getEEPROMParamInt(OnboardParameters.EEPROMParams.PREHEAT_DURING_PAUSE) != 0;
 			 boolean extruderHoldEnabled = target.getEEPROMParamInt(OnboardParameters.EEPROMParams.EXTRUDER_HOLD) != 0;
@@ -1904,9 +1926,9 @@
 			 int green = target.getEEPROMParamInt(OnboardParameters.EEPROMParams.MOOD_LIGHT_CUSTOM_GREEN);
 			 int blue = target.getEEPROMParamInt(OnboardParameters.EEPROMParams.MOOD_LIGHT_CUSTOM_BLUE);
 
-			 setUIFields(UI_TAB_1 | UI_TAB_2 | UI_TAB_LED, accelerationEnabled, slowdownEnabled, overrideGCodeTempEnabled,
-				     preheatDuringPauseEnabled, extruderHoldEnabled, newToolheadOffsetSystem, checkCRC,
-				     accelerations, maxAccelerations, maxSpeedChanges, JKNadvance, deprime,
+			 setUIFields(UI_TAB_1 | UI_TAB_2 | UI_TAB_LED, accelerationEnabled, slowdownEnabled, deprimeTravel,
+				     overrideGCodeTempEnabled, preheatDuringPauseEnabled, extruderHoldEnabled, newToolheadOffsetSystem,
+				     checkCRC, accelerations, maxAccelerations, maxSpeedChanges, JKNadvance, deprime,
 				     colorChoice, showHeating, red, green, blue);
 		 }
 
@@ -1993,6 +2015,7 @@
 			 addWithSharedToolTips(accelerationMiscTab, "Use the new dualstrustion toolhead offset system", newToolheadOffsetSystemBox, "wrap");
 			 addWithSharedToolTips(accelerationMiscTab, "JKN Advance K", JKNAdvance1, "wrap");
 			 addWithSharedToolTips(accelerationMiscTab, "JKN Advance K2", JKNAdvance2, "wrap");
+			 addWithSharedToolTips(accelerationMiscTab, "Deprime on travel moves", extruderDeprimeTravel, "wrap");
 			 addWithSharedToolTips(accelerationMiscTab, "Right extruder deprime (steps)", extruderDeprimeA, "wrap");
 			 addWithSharedToolTips(accelerationMiscTab, "Left extruder deprime (steps)", extruderDeprimeB, "wrap");
 
@@ -2193,9 +2216,9 @@
            "steps/mm.  For a Mk6 with 3.00 mm filament, typical values range from about 1.2 to 1.7.");
 
 		 private JFormattedTextField extruderDeprime = PositiveTextFieldDouble(jerkNF,
-           "The number of millimeters to retract the extruded filament when the pipeline of buffered moves empties or " +
-           "a travel-only move is encountered.  The default value is 4.0 mm.  Set to a value of 0 to disable this " +
-           "feature.  Do not use with Skeinforge's Reversal plugin nor Skeinforge's Dimension plugin's " +
+           "The number of stepper motor steps to retract the extruded filament when the pipeline of buffered moves " +
+           "empties or a travel-only move is encountered.  The default value is 4.0 mm.  Set to a value of 0 to disable " +
+           "this feature.  Do not use with Skeinforge's Reversal plugin nor Skeinforge's Dimension plugin's " +
 	   "\"Retraction Distance\".");
 
 		 private JFormattedTextField revMaxFeedrate = PositiveTextFieldInt(frNF,
@@ -2727,14 +2750,17 @@
 		 class AccelParamsTab2 {
 
 			 boolean slowdownEnabled;
+		         boolean deprimeTravel;
 			 long[] deprime;
 			 double[] JKNadvance;
 
 			 AccelParamsTab2(boolean slowdownEnabled,
+					 boolean deprimeTravel,
 					 long[] deprime,
 					 double[] JKNadvance)
 			 {
 				 this.slowdownEnabled           = slowdownEnabled;
+				 this.deprimeTravel             = deprimeTravel;
 				 this.deprime                   = deprime;
 				 this.JKNadvance                = JKNadvance;
 			 }
@@ -3007,6 +3033,19 @@
            "this parameter range from around 0.001 to 0.1.  Set to a value of 0 to disable use of this " +
            "compensation.");
 
+		 private JCheckBox extruderDeprimeTravel = new JCheckBox();
+		 {
+			 extruderDeprimeTravel.setToolTipText(wrap2HTML(width,
+           "The firmware can retract the filament thus depriming the extruder on (1) detected travel moves, (2) " +
+           "pauses of the build, and (3) tiny brief pauses caused by the acceleration planner not keeping pace " +
+           "with the print and leaving the bot very briefly idle.  Item (3) can cause tiny pimples or zits on " +
+           "the print.  When this box is checked and the deprime values are non-zero, the extruder is deprimed " +
+           "on (1), (2), and (3) and reprimed when extrusion resumes.  When this box is not checked and the " +
+           "deprime values are non-zero, the extruder is deprimed on (2) and (3) and reprimed when extrusion " +
+           "resumes.  If you will be using retraction/deprime with your slicer, then leave this box unchecked.  " +
+           "To entirely disable firmware deprime, set the deprime values to zero."));
+		 }
+
 		 private JFormattedTextField extruderDeprimeA = PositiveTextFieldInt(repNF, 10000,
            "The number of steps to retract the right extruder's filament when the pipeline of buffered moves empties " +
            "or a travel-only move is encountered.  Set to a value of 0 to disable this feature for this extruder.  " +
@@ -3129,6 +3168,7 @@
 									          ((Number)aAxisMaxSpeedChange.getValue()).doubleValue(),
 									          ((Number)bAxisMaxSpeedChange.getValue()).doubleValue()}),
 						new AccelParamsTab2(slowdownFlagBox.isSelected(),
+								    extruderDeprimeTravel.isSelected(),
 								    new long[] {((Number)extruderDeprimeA.getValue()).longValue(),
 									        ((Number)extruderDeprimeB.getValue()).longValue()},
 								    new double[] {((Number)JKNAdvance1.getValue()).doubleValue(),
@@ -3182,6 +3222,7 @@
 			 target.setEEPROMParam(OnboardParameters.EEPROMParams.ACCEL_ADVANCE_K,  params.tab2.JKNadvance[0]);
 			 target.setEEPROMParam(OnboardParameters.EEPROMParams.ACCEL_ADVANCE_K2, params.tab2.JKNadvance[1]);
 
+			 target.setEEPROMParam(OnboardParameters.EEPROMParams.DEPRIME_ON_TRAVEL, params.tab2.deprimeTravel ? 1L : 0L);
 			 target.setEEPROMParam(OnboardParameters.EEPROMParams.ACCEL_EXTRUDER_DEPRIME_A, params.tab2.deprime[0]);
 			 target.setEEPROMParam(OnboardParameters.EEPROMParams.ACCEL_EXTRUDER_DEPRIME_B, params.tab2.deprime[1]);
 
@@ -3239,7 +3280,7 @@
 
 			 if (tab2 != null) {
 				 slowdownFlagBox.setSelected(tab2.slowdownEnabled);
-
+				 extruderDeprimeTravel.setSelected(tab2.deprimeTravel);
 				 if (tab2.JKNadvance != null) {
 					 JKNAdvance1.setValue(tab2.JKNadvance[0]);
 					 JKNAdvance2.setValue(tab2.JKNadvance[1]);
@@ -3287,6 +3328,7 @@
 		 public void setUIFromEEPROM() {
 
 			 boolean accelerationEnabled = target.getAccelerationStatus() != 0;
+			 boolean deprimeTravel = target.getEEPROMParamInt(OnboardParameters.EEPROMParams.DEPRIME_ON_TRAVEL) != 0;
 			 boolean slowdownEnabled = target.getEEPROMParamInt(OnboardParameters.EEPROMParams.ACCEL_SLOWDOWN_FLAG) != 0;
 			 boolean overrideGCodeTempEnabled = target.getEEPROMParamInt(OnboardParameters.EEPROMParams.OVERRIDE_GCODE_TEMP) != 0;
 			 boolean dittoEnabled = target.getEEPROMParamInt(OnboardParameters.EEPROMParams.DITTO_PRINT_ENABLED) != 0;
@@ -3338,6 +3380,7 @@
 							 maxAccelerations,
 							 maxSpeedChanges),
 				     new AccelParamsTab2(slowdownEnabled,
+							 deprimeTravel,
 							 deprime,
 							 JKNadvance),
 				     new AccelParamsTab3(overrideGCodeTempEnabled,
@@ -3430,6 +3473,7 @@
 			 addWithSharedToolTips(accelerationMiscTab, "Slow printing when acceleration planing falls behind", slowdownFlagBox, "wrap");
 			 addWithSharedToolTips(accelerationMiscTab, "JKN Advance K", JKNAdvance1, "wrap");
 			 addWithSharedToolTips(accelerationMiscTab, "JKN Advance K2", JKNAdvance2, "wrap");
+			 addWithSharedToolTips(accelerationMiscTab, "Deprime on travel moves", extruderDeprimeTravel, "wrap");
 			 addWithSharedToolTips(accelerationMiscTab, "Right extruder deprime (steps)", extruderDeprimeA, "wrap");
 			 addWithSharedToolTips(accelerationMiscTab, "Left extruder deprime (steps)", extruderDeprimeB, "wrap");
 

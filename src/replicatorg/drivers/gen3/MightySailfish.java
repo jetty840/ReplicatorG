@@ -222,8 +222,10 @@ class MightySailfish6X2EEPROM extends MightySailfish5XEEPROM
 	final public static int BOTSTEP_TYPE      	       = 0x0208;
 	/// Heater calibration byte
 	final public static int HEATER_CALIBRATION             = 0x020A;
+        /// Okay to use deprime on travel moves
+        final public static int EXTRUDER_DEPRIME_ON_TRAVEL     = 0x020B;
 	/// start of free space
-	final public static int FREE_EEPROM_STARTS	       = 0x020B;
+	final public static int FREE_EEPROM_STARTS	       = 0x020C;
 }
 
 
@@ -2306,6 +2308,7 @@ public class MightySailfish extends Makerbot4GAlternateDriver
 		case MOOD_LIGHT_CUSTOM_RED      : return getUInt8EEPROM(MightySailfish5XEEPROM.CUSTOM_COLOR_OFFSET + 0x00);
 		case MOOD_LIGHT_CUSTOM_GREEN    : return getUInt8EEPROM(MightySailfish5XEEPROM.CUSTOM_COLOR_OFFSET + 0x01);
 		case MOOD_LIGHT_CUSTOM_BLUE     : return getUInt8EEPROM(MightySailfish5XEEPROM.CUSTOM_COLOR_OFFSET + 0x02);
+		case DEPRIME_ON_TRAVEL          : return getUInt8EEPROM(MightySailfish6X2EEPROM.EXTRUDER_DEPRIME_ON_TRAVEL);
 		default :
 			Base.logger.log(Level.WARNING, "getEEPROMParamInt(" + param + ") call failed");
 			return 0;
@@ -2364,6 +2367,7 @@ public class MightySailfish extends Makerbot4GAlternateDriver
 		case MOOD_LIGHT_CUSTOM_RED      : setUInt8EEPROM(MightySailfish5XEEPROM.CUSTOM_COLOR_OFFSET + 0x00, val); break;
 		case MOOD_LIGHT_CUSTOM_GREEN    : setUInt8EEPROM(MightySailfish5XEEPROM.CUSTOM_COLOR_OFFSET + 0x01, val); break;
 		case MOOD_LIGHT_CUSTOM_BLUE     : setUInt8EEPROM(MightySailfish5XEEPROM.CUSTOM_COLOR_OFFSET + 0x02, val); break;
+		case DEPRIME_ON_TRAVEL          : setUInt8EEPROM(MightySailfish6X2EEPROM.EXTRUDER_DEPRIME_ON_TRAVEL, val); break;
 		default : Base.logger.log(Level.WARNING, "setEEPROMParam(" + param + ", " + val + ") call failed"); break;
 		}
 	}
