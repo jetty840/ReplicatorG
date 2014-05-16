@@ -1,7 +1,7 @@
 <?xml version="1.1" encoding="utf-8"?>
 <machines>
 <machine>
-		<name>Thingomatic w/ HBP and Stepstruder MK7 (Accelerated)</name>
+		<name>Thingomatic w/ HBP and Stepstruder MK7 (Jetty 3.x)</name>
 		<geometry type="cartesian">
 			<!-- different pulleys on X and Y axii -->
 			<axis id="x" length="106" maxfeedrate="9600" homingfeedrate="2500" stepspermm="47.069852" endstops="min"/>  <!-- Pulley dia: 10.82mm / 1/8 step = 1/(10.82 * pi / 1600) -->
@@ -26,7 +26,7 @@ M18
 		<bookend start="machines/thingomatic/start+HBP+Stepstruder.gcode" end="machines/thingomatic/end+Stepstruder.gcode"/>		
 	</machine>
 <machine>
-<name>Thingomatic w/ ABP and Stepstruder MK7 (Accelerated)</name>
+<name>Thingomatic w/ ABP and Stepstruder MK7 (Jetty 3.x)</name>
 		<geometry type="cartesian">
 			<!-- different pulleys on X and Y axii -->
 			<axis id="x" length="106" maxfeedrate="9600" homingfeedrate="2500" stepspermm="47.069852" endstops="min"/>  <!-- Pulley dia: 10.82mm / 1/8 step = 1/(10.82 * pi / 1600) -->
@@ -76,7 +76,7 @@ M18 (Turn off steppers after a build.)
 		<bookend start="machines/thingomatic/start+HBP+Stepstruder.gcode" end="machines/thingomatic/end+Stepstruder.gcode"/>		
 	</machine>
 <machine>
-		<name>Thingomatic w/ HBP and Extruder MK6 (Accelerated)</name>
+		<name>Thingomatic w/ HBP and Extruder MK6 (Jetty 3.x)</name>
 		<geometry type="cartesian">
 			<!-- different pulleys on X and Y axii -->
 			<axis id="x" length="106" maxfeedrate="9600" homingfeedrate="2500" stepspermm="47.069852" endstops="min"/>  <!-- Pulley dia: 10.82mm / 1/8 step = 1/(10.82 * pi / 1600) -->
@@ -128,7 +128,7 @@ M18
 		<bookend start="machines/thingomatic/start+HBP+Stepstruder.gcode" end="machines/thingomatic/end+Stepstruder.gcode"/>		
 	</machine>
 	<machine>
-		<name>Thingomatic w/ ABP and Extruder MK6 (Accelerated)</name>
+		<name>Thingomatic w/ ABP and Extruder MK6 (Jetty 3.x)</name>
 		<geometry type="cartesian">
 			<!-- different pulleys on X and Y axii -->
 			<axis id="x" length="106" maxfeedrate="9600" homingfeedrate="2500" stepspermm="47.069852" endstops="min"/>  <!-- Pulley dia: 10.82mm / 1/8 step = 1/(10.82 * pi / 1600) -->
