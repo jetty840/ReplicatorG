@@ -1037,6 +1037,7 @@ public class Makerbot4GSailfish extends Makerbot4GAlternateDriver
 		case PSTOP_ENABLE               : return getUInt8EEPROM(SailfishEEPROM.PSTOP_ENABLE);
 		case ENDSTOP_Z_MIN              : return getUInt8EEPROM(SailfishEEPROM.ENDSTOP_Z_MIN);
 		case DEPRIME_ON_TRAVEL          : return getUInt8EEPROM(SailfishEEPROM.EXTRUDER_DEPRIME_ON_TRAVEL);
+		case CLEAR_FOR_ESTOP            : return getUInt8EEPROM(SailfishEEPROM.CLEAR_FOR_ESTOP);
 		default				: return super.getEEPROMParamInt(param);
                 }
         }
@@ -1062,6 +1063,7 @@ public class Makerbot4GSailfish extends Makerbot4GAlternateDriver
 		case PSTOP_ENABLE               : setUInt8EEPROM(SailfishEEPROM.PSTOP_ENABLE, (val != 0) ? 1 : 0); break;
 		case ENDSTOP_Z_MIN              : setUInt8EEPROM(SailfishEEPROM.ENDSTOP_Z_MIN, (val != 0) ? 1 : 0); break;
 		case DEPRIME_ON_TRAVEL          : setUInt8EEPROM(SailfishEEPROM.EXTRUDER_DEPRIME_ON_TRAVEL, (val != 0) ? 1 : 0); break;
+		case CLEAR_FOR_ESTOP            : setUInt8EEPROM(SailfishEEPROM.CLEAR_FOR_ESTOP, (val == 1) ? 1 : 0); break;
 		default				: super.setEEPROMParam(param, val); break;
 		}
 	}

@@ -53,8 +53,10 @@ public interface OnboardParameters {
 		AXIS_HOME_POSITIONS,        //
 		AXIS_INVERSION,             //
 		BUZZER_REPEATS,             //
+		CLEAR_FOR_ESTOP,            //
 		DEPRIME_ON_TRAVEL,          // Deprime the extruder on travel moves (0, 1)
 		DITTO_PRINT_ENABLED,	    //
+		ENABLE_ALTERNATE_UART,      //
 		ENDSTOPS_USED,              //
 		ENDSTOP_INVERSION,          //
 	        ENDSTOP_Z_MIN,              //

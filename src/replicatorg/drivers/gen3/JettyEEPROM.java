@@ -83,6 +83,7 @@ class SailfishEEPROM extends JettyG3EEPROM {
 	final public static int PSTOP_ENABLE                    = 0x01EC;
 	final public static int ENDSTOP_Z_MIN                   = 0x01ED;
         final public static int EXTRUDER_DEPRIME_ON_TRAVEL      = 0x01EE;
+        final public static int CLEAR_FOR_ESTOP                 = 0x01EF;
 }
 
 
@@ -106,6 +107,8 @@ class JettyMBEEPROM extends Sanguino3GEEPRPOM {
 	final public static int DEFAULTS_FLAG                  = 0x0265;
 	final public static int FUTURE_USE                     = 0x0266;
 	final public static int AXIS_MAX_FEEDRATES             = 0x027A;
+        final public static int CLEAR_FOR_ESTOP                = 0x0F8E;
+        final public static int ENABLE_ALTERNATE_UART          = 0x0F8F;
 	final public static int PSTOP_ENABLE                   = 0x0F90;
 	final public static int SD_USE_CRC                     = 0x0F91;
 	final public static int EXTRUDER_HOLD                  = 0x0F92;

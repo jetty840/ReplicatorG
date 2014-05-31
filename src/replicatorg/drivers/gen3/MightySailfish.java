@@ -2309,6 +2309,9 @@ public class MightySailfish extends Makerbot4GAlternateDriver
 		case MOOD_LIGHT_CUSTOM_GREEN    : return getUInt8EEPROM(MightySailfish5XEEPROM.CUSTOM_COLOR_OFFSET + 0x01);
 		case MOOD_LIGHT_CUSTOM_BLUE     : return getUInt8EEPROM(MightySailfish5XEEPROM.CUSTOM_COLOR_OFFSET + 0x02);
 		case DEPRIME_ON_TRAVEL          : return getUInt8EEPROM(MightySailfish6X2EEPROM.EXTRUDER_DEPRIME_ON_TRAVEL);
+		case CLEAR_FOR_ESTOP            : return getUInt8EEPROM(JettyMBEEPROM.CLEAR_FOR_ESTOP);
+		case ENABLE_ALTERNATE_UART      : return getUInt8EEPROM(JettyMBEEPROM.ENABLE_ALTERNATE_UART);
+
 		default :
 			Base.logger.log(Level.WARNING, "getEEPROMParamInt(" + param + ") call failed");
 			return 0;
@@ -2368,6 +2371,9 @@ public class MightySailfish extends Makerbot4GAlternateDriver
 		case MOOD_LIGHT_CUSTOM_GREEN    : setUInt8EEPROM(MightySailfish5XEEPROM.CUSTOM_COLOR_OFFSET + 0x01, val); break;
 		case MOOD_LIGHT_CUSTOM_BLUE     : setUInt8EEPROM(MightySailfish5XEEPROM.CUSTOM_COLOR_OFFSET + 0x02, val); break;
 		case DEPRIME_ON_TRAVEL          : setUInt8EEPROM(MightySailfish6X2EEPROM.EXTRUDER_DEPRIME_ON_TRAVEL, val); break;
+		case ENABLE_ALTERNATE_UART      : setUInt8EEPROM(JettyMBEEPROM.ENABLE_ALTERNATE_UART, (val == 1) ? 1 : 0); break;
+		case CLEAR_FOR_ESTOP            : setUInt8EEPROM(JettyMBEEPROM.CLEAR_FOR_ESTOP, (val == 1) ? 1 : 0); break;
+
 		default : Base.logger.log(Level.WARNING, "setEEPROMParam(" + param + ", " + val + ") call failed"); break;
 		}
 	}

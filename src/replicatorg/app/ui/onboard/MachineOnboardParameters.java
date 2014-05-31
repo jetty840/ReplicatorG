@@ -1412,6 +1412,7 @@
 		 class AccelParamsTab2 {
 			 boolean slowdownEnabled;
 		         boolean deprimeTravel;
+		         boolean clear4EStop;
 			 boolean overrideGCodeTempEnabled;
 			 boolean preheatDuringPauseEnabled;
 			 boolean extruderHold;
@@ -1421,6 +1422,7 @@
 
 			 AccelParamsTab2(boolean slowdownEnabled,
 					 boolean deprimeTravel,
+					 boolean clear4EStop,
 					 boolean overrideGCodeTempEnabled,
 					 boolean preheatDuringPauseEnabled,
 					 boolean extruderHold,
@@ -1430,6 +1432,7 @@
 			 {
 				 this.slowdownEnabled           = slowdownEnabled;
 				 this.deprimeTravel             = deprimeTravel;
+				 this.clear4EStop               = clear4EStop;
 				 this.overrideGCodeTempEnabled  = overrideGCodeTempEnabled;
 				 this.preheatDuringPauseEnabled = preheatDuringPauseEnabled;
 				 this.extruderHold              = extruderHold;
@@ -1592,6 +1595,16 @@
            "this parameter range from around 0.001 to 0.1.  Set to a value of 0 to disable use of this " +
            "compensation.");
 
+		 private JCheckBox clear4EStopBox = new JCheckBox();
+		 {
+			 clear4EStopBox.setToolTipText(wrap2HTML(width,
+           "By default when sending an abort, cancel, or stop command over USB, the bot treats the request as " +
+	   "an Emergency Stop and stops immediately.  Unfortunately, MBI changed this interpetation in 2013 to " +
+           "a non-Emergencey Stop and clears the build away from the extruder nozzle first.  (They should have " +
+           "implemented a new command instead which did a non-EStop.)  To emulate this MBI behavior, check this " +
+	   "box.  To keep the older, Emergency Stop behavior, leave this box unchecked."));
+		 }
+
 		 private JCheckBox extruderDeprimeTravel = new JCheckBox();
 		 {
 			 extruderDeprimeTravel.setToolTipText(wrap2HTML(width,
@@ -1707,6 +1720,7 @@
 									       ((Number)bAxisMaxSpeedChange.getValue()).intValue()}),
 						new AccelParamsTab2(slowdownFlagBox.isSelected(),
 								    extruderDeprimeTravel.isSelected(),
+								    clear4EStopBox.isSelected(),
 								    overrideGCodeTempBox.isSelected(),
 								    preheatDuringPauseBox.isSelected(),
 								    extruderHoldBox.isSelected(),
@@ -1757,6 +1771,7 @@
 			 target.setEEPROMParam(OnboardParameters.EEPROMParams.ACCEL_EXTRUDER_DEPRIME_A, params.tab2.deprime[0]);
 			 target.setEEPROMParam(OnboardParameters.EEPROMParams.ACCEL_EXTRUDER_DEPRIME_B, params.tab2.deprime[1]);
 
+			 target.setEEPROMParam(OnboardParameters.EEPROMParams.CLEAR_FOR_ESTOP,         params.tab2.clear4EStop ? 1 : 0);
 			 target.setEEPROMParam(OnboardParameters.EEPROMParams.MOOD_LIGHT_SCRIPT,       params.tabLED.colorChoice);
 			 target.setEEPROMParam(OnboardParameters.EEPROMParams.MOOD_LIGHT_SHOW_HEATING, params.tabLED.showHeating ? 1 : 0);
 			 target.setEEPROMParam(OnboardParameters.EEPROMParams.MOOD_LIGHT_CUSTOM_RED,   params.tabLED.red);
@@ -1772,6 +1787,7 @@
 		 private void setUIFields(AccelParamsTab1 params) {
 			 setUIFields(UI_TAB_1,
 				     params.accelerationEnabled,
+				     false,
 				     false,
 				     false,
 				     false,
@@ -1794,6 +1810,7 @@
 					  boolean accelerationEnabled,
 					  boolean slowdownEnabled,
 					  boolean deprimeTravel,
+					  boolean clear4EStop,
 					  boolean overrideGCodeTempEnabled,
 					  boolean preheatDuringPauseEnabled,
 					  boolean extruderHoldEnabled,
@@ -1837,6 +1854,7 @@
 			 if ((tabs & UI_TAB_2) != 0) {
 				 slowdownFlagBox.setSelected(slowdownEnabled);
 				 extruderDeprimeTravel.setSelected(deprimeTravel);
+				 clear4EStopBox.setSelected(clear4EStop);
 				 overrideGCodeTempBox.setSelected(overrideGCodeTempEnabled);
 				 preheatDuringPauseBox.setSelected(preheatDuringPauseEnabled);
 				 extruderHoldBox.setSelected(extruderHoldEnabled);
@@ -1869,7 +1887,8 @@
 		 public void setUIFromEEPROM() {
 			 boolean accelerationEnabled = target.getAccelerationStatus() != 0;
 			 boolean slowdownEnabled = target.getEEPROMParamInt(OnboardParameters.EEPROMParams.ACCEL_SLOWDOWN_FLAG) != 0;
-			 boolean deprimeTravel = target.getEEPROMParamInt(OnboardParameters.EEPROMParams.DEPRIME_ON_TRAVEL) != 0;
+			 boolean deprimeTravel = target.getEEPROMParamInt(OnboardParameters.EEPROMParams.DEPRIME_ON_TRAVEL) == 1;
+			 boolean clear4EStop = target.getEEPROMParamInt(OnboardParameters.EEPROMParams.CLEAR_FOR_ESTOP) == 1;
 			 boolean overrideGCodeTempEnabled = target.getEEPROMParamInt(OnboardParameters.EEPROMParams.OVERRIDE_GCODE_TEMP) != 0;
 			 boolean preheatDuringPauseEnabled = target.getEEPROMParamInt(OnboardParameters.EEPROMParams.PREHEAT_DURING_PAUSE) != 0;
 			 boolean extruderHoldEnabled = target.getEEPROMParamInt(OnboardParameters.EEPROMParams.EXTRUDER_HOLD) != 0;
@@ -1907,7 +1926,7 @@
 			 int blue = target.getEEPROMParamInt(OnboardParameters.EEPROMParams.MOOD_LIGHT_CUSTOM_BLUE);
 
 			 setUIFields(UI_TAB_1 | UI_TAB_2 | UI_TAB_LED, accelerationEnabled, slowdownEnabled, deprimeTravel,
-				     overrideGCodeTempEnabled, preheatDuringPauseEnabled, extruderHoldEnabled,
+				     clear4EStop, overrideGCodeTempEnabled, preheatDuringPauseEnabled, extruderHoldEnabled,
 				     checkCRC, accelerations, maxAccelerations, maxSpeedChanges, JKNadvance, deprime,
 				     colorChoice, showHeating, red, green, blue);
 		 }
@@ -1987,6 +2006,7 @@
 			 extruderDeprimeA.setColumns(8);
 			 extruderDeprimeB.setColumns(8);
 
+			 addWithSharedToolTips(accelerationMiscTab, "Clear platform for EStop", clear4EStopBox, "wrap");
 			 addWithSharedToolTips(accelerationMiscTab, "Enable SD card error checking", checkCRCBox, "wrap");
 			 addWithSharedToolTips(accelerationMiscTab, "Slow printing when acceleration planing falls behind", slowdownFlagBox, "wrap");
 			 addWithSharedToolTips(accelerationMiscTab, "Override the target temperatures in the gcode", overrideGCodeTempBox, "wrap");
@@ -2730,16 +2750,19 @@
 
 			 boolean slowdownEnabled;
 		         boolean deprimeTravel;
+		         boolean clear4EStop;
 			 long[] deprime;
 			 double[] JKNadvance;
 
 			 AccelParamsTab2(boolean slowdownEnabled,
 					 boolean deprimeTravel,
+					 boolean clear4EStop,
 					 long[] deprime,
 					 double[] JKNadvance)
 			 {
 				 this.slowdownEnabled           = slowdownEnabled;
 				 this.deprimeTravel             = deprimeTravel;
+				 this.clear4EStop               = clear4EStop;
 				 this.deprime                   = deprime;
 				 this.JKNadvance                = JKNadvance;
 			 }
@@ -2998,6 +3021,16 @@
            "this parameter range from around 0.001 to 0.1.  Set to a value of 0 to disable use of this " +
            "compensation.");
 
+		 private JCheckBox clear4EStopBox = new JCheckBox();
+		 {
+			 clear4EStopBox.setToolTipText(wrap2HTML(width,
+           "By default when sending an abort, cancel, or stop command over USB, the bot treats the request as " +
+	   "an Emergency Stop and stops immediately.  Unfortunately, MBI changed this interpetation in 2013 to " +
+           "a non-Emergencey Stop and clears the build away from the extruder nozzle first.  (They should have " +
+           "implemented a new command instead which did a non-EStop.)  To emulate this MBI behavior, check this " +
+	   "box.  To keep the older, Emergency Stop behavior, leave this box unchecked."));
+		 }
+
 		 private JCheckBox extruderDeprimeTravel = new JCheckBox();
 		 {
 			 extruderDeprimeTravel.setToolTipText(wrap2HTML(width,
@@ -3134,6 +3167,7 @@
 									          ((Number)bAxisMaxSpeedChange.getValue()).doubleValue()}),
 						new AccelParamsTab2(slowdownFlagBox.isSelected(),
 								    extruderDeprimeTravel.isSelected(),
+								    clear4EStopBox.isSelected(),
 								    new long[] {((Number)extruderDeprimeA.getValue()).longValue(),
 									        ((Number)extruderDeprimeB.getValue()).longValue()},
 								    new double[] {((Number)JKNAdvance1.getValue()).doubleValue(),
@@ -3185,6 +3219,7 @@
 			 target.setEEPROMParam(OnboardParameters.EEPROMParams.ACCEL_ADVANCE_K,  params.tab2.JKNadvance[0]);
 			 target.setEEPROMParam(OnboardParameters.EEPROMParams.ACCEL_ADVANCE_K2, params.tab2.JKNadvance[1]);
 
+			 target.setEEPROMParam(OnboardParameters.EEPROMParams.CLEAR_FOR_ESTOP, params.tab2.clear4EStop ? 1 : 0);
 			 target.setEEPROMParam(OnboardParameters.EEPROMParams.DEPRIME_ON_TRAVEL, params.tab2.deprimeTravel ? 1 : 0);
 			 target.setEEPROMParam(OnboardParameters.EEPROMParams.ACCEL_EXTRUDER_DEPRIME_A, params.tab2.deprime[0]);
 			 target.setEEPROMParam(OnboardParameters.EEPROMParams.ACCEL_EXTRUDER_DEPRIME_B, params.tab2.deprime[1]);
@@ -3244,6 +3279,7 @@
 			 if (tab2 != null) {
 				 slowdownFlagBox.setSelected(tab2.slowdownEnabled);
 				 extruderDeprimeTravel.setSelected(tab2.deprimeTravel);
+				 clear4EStopBox.setSelected(tab2.clear4EStop);
 				 if (tab2.JKNadvance != null) {
 					 JKNAdvance1.setValue(tab2.JKNadvance[0]);
 					 JKNAdvance2.setValue(tab2.JKNadvance[1]);
@@ -3290,7 +3326,8 @@
 		 public void setUIFromEEPROM() {
 
 			 boolean accelerationEnabled = target.getAccelerationStatus() != 0;
-			 boolean deprimeTravel = target.getEEPROMParamInt(OnboardParameters.EEPROMParams.DEPRIME_ON_TRAVEL) != 0;
+			 boolean deprimeTravel = target.getEEPROMParamInt(OnboardParameters.EEPROMParams.DEPRIME_ON_TRAVEL) == 1;
+			 boolean clear4EStop = target.getEEPROMParamInt(OnboardParameters.EEPROMParams.CLEAR_FOR_ESTOP) == 1;
 			 boolean slowdownEnabled = target.getEEPROMParamInt(OnboardParameters.EEPROMParams.ACCEL_SLOWDOWN_FLAG) != 0;
 			 boolean overrideGCodeTempEnabled = target.getEEPROMParamInt(OnboardParameters.EEPROMParams.OVERRIDE_GCODE_TEMP) != 0;
 			 boolean dittoEnabled = target.getEEPROMParamInt(OnboardParameters.EEPROMParams.DITTO_PRINT_ENABLED) != 0;
@@ -3342,6 +3379,7 @@
 							 maxSpeedChanges),
 				     new AccelParamsTab2(slowdownEnabled,
 							 deprimeTravel,
+							 clear4EStop,
 							 deprime,
 							 JKNadvance),
 				     new AccelParamsTab3(overrideGCodeTempEnabled,
@@ -3430,6 +3468,7 @@
 			 extruderDeprimeA.setColumns(8);
 			 extruderDeprimeB.setColumns(8);
 
+			 addWithSharedToolTips(accelerationMiscTab, "Clear platform for E-Stop", clear4EStopBox, "wrap");
 			 addWithSharedToolTips(accelerationMiscTab, "Slow printing when acceleration planing falls behind", slowdownFlagBox, "wrap");
 			 addWithSharedToolTips(accelerationMiscTab, "JKN Advance K", JKNAdvance1, "wrap");
 			 addWithSharedToolTips(accelerationMiscTab, "JKN Advance K2", JKNAdvance2, "wrap");
