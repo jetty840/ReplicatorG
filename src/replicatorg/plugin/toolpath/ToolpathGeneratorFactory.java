@@ -15,7 +15,6 @@ import replicatorg.plugin.toolpath.skeinforge.PrintOMatic;
 import replicatorg.plugin.toolpath.skeinforge.PrintOMatic5D;
 import replicatorg.plugin.toolpath.skeinforge.SkeinforgeGenerator;
 import replicatorg.plugin.toolpath.slic3r.Slic3rGenerator;
-import replicatorg.plugin.toolpath.miraclegrue.MiracleGrueGenerator;
 
 public class ToolpathGeneratorFactory {
 	public static class ToolpathGeneratorDescriptor {
@@ -54,7 +53,7 @@ public class ToolpathGeneratorFactory {
 		Vector<ToolpathGeneratorDescriptor> list = new Vector<ToolpathGeneratorDescriptor>();
 		
 		class Slic3r071 extends Slic3rGenerator {
-			{ 	displayName = "Slic3r 0.X - Experimental"; }
+		    { 	displayName = "Slic3r";  }
 			
 			/** return directory where slicer exists */
 			public File getDefaultSlic3rDir() {
@@ -436,46 +435,6 @@ public class ToolpathGeneratorFactory {
 			}
 		};
 
-		
-		class MiracleGrueBeta extends MiracleGrueGenerator {
-			{
-				displayName = "Miracle-Grue Beta 0.0.4.0 - Experimental";
-			}
-			
-			public File getDefaultMiracleGrueDir() {
-				String target = "skein_engines/mg_engines";
-				if (Base.isMacOS()) {
-					target += "/mac";
-					//Base.logger.severe("base dir:" + target);
-				}
-				if (Base.isLinux()) {
-					if(Base.isx86_64()) target += "/linux/x86_64";
-					else  target += "/linux/x86";
-				}	
-				if (Base.isWindows() ) {
-					target += "/windows";
-				}
-				File x = Base.getApplicationFile(target);
-				return x;
-			}
-
-			/// Returns the directory of profiles, if needed copies those to a local 
-			// users preferences location
-			public File getUserProfilesDir() {
-		    	return Base.getUserDir("skein_engines/mg_engines/profiles");
-			}
-
-			public List<MiracleGruePreference> initPreferences() {				
-				List <MiracleGruePreference> prefs = new LinkedList<MiracleGruePreference>();
-				return prefs;
-			}
-		};
-		
-		
-		if((new MiracleGrueBeta()).getDefaultMiracleGrueDir().exists());
-      // We are disabling MiracleGrue in ReplicatorG so as not to confuse people : use Makerware
-			//list.add(new ToolpathGeneratorDescriptor(MiracleGrueBeta.displayName, 
-		  //	"This is the latest version of MiracleGrue.", MiracleGrueBeta.class));
 		if((new Slic3r071()).getDefaultSlic3rDir().exists())
 			list.add(new ToolpathGeneratorDescriptor(Slic3r071.displayName, 
 				"This is the latest version of Slic3r.", Slic3r071.class));

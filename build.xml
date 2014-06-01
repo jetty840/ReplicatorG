@@ -219,15 +219,10 @@
 			<fileset dir="docs/" excludes="HOWTO-add-new-skeinforge.txt,overview.odg" />
 		</copy>
 	
-		<!-- permissions -->
-		<chmod file="${reso.dir}/skein_engines/mg_engines/mac/miracle_grue" perm="ugo+rx" />
-		<chmod file="${reso.dir}/skein_engines/slic3r_engines/mac/slic3r" perm="ugo+rx" />
-
 		<!-- delete the copies in the base dir, to make installer build easier -->
 		<delete dir="${target.dir}/docs" />
 		<delete dir="${target.dir}/examples" />
 		<delete dir="${target.dir}/machines" />
-		<delete dir="${target.dir}/slic3r" />
 		<delete dir="${target.dir}/scripts" />
 		<delete dir="${target.dir}/skein_engines" />
 		<delete file="${target.dir}/todo.txt" />
@@ -261,8 +256,6 @@
 			<zipfileset dir="dist/macosx/${release.name}" prefix="${release.name}" filemode="755">
 				<include name="tools/avrdude" />
 				<include name="ReplicatorG.app/Contents/MacOS/ReplicatorG" />
-				<include name="ReplicatorG.app/Contents/Resources/skein_engines/mg_engines/mac/miracle_grue" />
-				<include name="ReplicatorG.app/Contents/Resources/skein_engines/slic3r_engines/mac/slic3r"/>
 			</zipfileset>
 		</zip>
 	</target>
@@ -328,9 +321,6 @@
 		<copy todir="${target.dir}">
 			<filelist dir="${dist.dir}" files="replicatorg" />
 		</copy>
-		<!--		<copy todir="${target.dir}/slic3r">
-			<fileset dir="slic3r_engines/linux"/>
-		</copy>		-->
 		<copy todir="${target.dir}/tools">
 			<filelist dir="${dist.dir}/tools" files="avrdude,avrdude.conf" />
 		</copy>
@@ -343,22 +333,12 @@
 		<!-- permissions -->
 		<chmod file="${target.dir}/replicatorg" perm="ugo+rx" />
 		<chmod file="${target.dir}/tools/avrdude" perm="ugo+rx" />
-		<chmod file="${target.dir}/skein_engines/slic3r_engines/linux/bin/slic3r" perm="ugo+rx" />
-		<chmod file="${target.dir}/skein_engines/slic3r_engines/linux/bin/do_install" perm="ugo+rx" />
-		<chmod file="${target.dir}/skein_engines/mg_engines/linux/x86_64/miracle_grue" perm="ugo+rx" />
-		<chmod file="${target.dir}/skein_engines/mg_engines/linux/x86_64/miracle_grue_glibc_2_14" perm="ugo+rx" />
-		<chmod file="${target.dir}/skein_engines/mg_engines/linux/x86_64/miracle_grue_glibc_2_13" perm="ugo+rx" />
 
 		<tar destfile="dist/${release.name}-linux.tgz" compression="gzip" longfile="gnu">
 			<tarfileset dir="dist/linux/${release.name}" prefix="${release.name}" />
 			<tarfileset dir="dist/linux/${release.name}" prefix="${release.name}" filemode="755">
 				<include name="replicatorg" />
 				<include name="tools/avrdude" />
-				<include name="skein_engines/slic3r_engines/linux/bin/slic3r" />
-				<include name="skein_engines/slic3r_engines/linux/bin/do_install" />
-				<include name="skein_engines/mg_engines/linux/x86_64/miracle_grue" />
-				<include name="skein_engines/mg_engines/linux/x86_64/miracle_grue_glibc_2_14" />
-				<include name="skein_engines/mg_engines/linux/x86_64/miracle_grue_glibc_2_13" />
 			</tarfileset>
 		</tar>
 	</target>
@@ -368,9 +348,6 @@
 		<!-- standard files -->
 		<antcall target="dist-common" />
 		<!-- platform-specific files -->
-		<!--		<copy todir="${target.dir}/slic3r">
-			<fileset dir="slic3r_engines/windows" />
-		</copy> -->
 		<copy todir="${target.dir}">
 			<fileset dir="${dist.dir}" includes="*.dll" />
 			<filelist dir="${dist.dir}" files="ReplicatorG.exe,ReplicatorG-large-models.exe" />
