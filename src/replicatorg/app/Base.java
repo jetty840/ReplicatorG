@@ -103,7 +103,7 @@ public class Base {
 	 * The version number of this edition of replicatorG.
 	 */
 	public static final int VERSION  = 40;
-	public static final int REVISION = 27;
+	public static final int REVISION = 28;
 	
 	/**
 	 * The textual representation of this version (4 digits, zero padded).
@@ -676,7 +676,7 @@ public class Base {
 				// show the window
 				editor.setVisible(true);
 				checkDirectories();
-				UpdateChecker.checkLatestVersion(editor);
+				// UpdateChecker.checkLatestVersion(editor);
 		    }
 		});
 
