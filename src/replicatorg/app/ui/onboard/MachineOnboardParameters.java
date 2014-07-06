@@ -1395,17 +1395,14 @@
 		 // Accel Parameters of Tab 1
 		 class AccelParamsTab1 {
 			 boolean accelerationEnabled;
-			 int[] accelerations;
 			 int[] maxAccelerations;
 			 int[] maxSpeedChanges;
 
 			 AccelParamsTab1(boolean accelerationEnabled,
-				     int[] accelerations,
 				     int[] maxAccelerations,
 				     int[] maxSpeedChanges)
 			 {
 				 this.accelerationEnabled = accelerationEnabled;
-				 this.accelerations       = accelerations;
 				 this.maxAccelerations    = maxAccelerations;
 				 this.maxSpeedChanges     = maxSpeedChanges;
 			 }
@@ -1416,7 +1413,6 @@
 					 return true;
 
 				 return (accelerationEnabled == params.accelerationEnabled) &&
-					 Arrays.equals(accelerations, params.accelerations) &&
 					 Arrays.equals(maxAccelerations, params.maxAccelerations) &&
 					 Arrays.equals(maxSpeedChanges, params.maxSpeedChanges);
 			 }
@@ -1466,12 +1462,10 @@
 		 }
 
 		 AccelParamsTab1 draftParams = new AccelParamsTab1(true,                                   // acceleration enabled
-								   new int[] {2000, 2000},                 // p_accel, p_retract_accel
 								   new int[] {1000, 1000, 150, 2000, 2000}, // max accelerations x,y,z,a,b
 								   new int[] {40, 40, 10, 40, 40});        // max speed changes x,y,z,a,b
 
 		 AccelParamsTab1 qualityParams = new AccelParamsTab1(true,                                 // acceleration enabled
-								     new int[] {2000, 2000},               // p_accel, p_retract_accel
 								     new int[] {1000, 1000, 150, 2000, 2000}, // max accelerations x,y,z,a,b
 								     new int[] {15, 15, 10, 20, 20});      // max speed changes x,y,z,a,b
 
@@ -1573,17 +1567,6 @@
            "Yet Another Jerk (YAJ) algorithm's maximum change in feedrate for the left extruder when " +
            "transitioning from one printed segment to another, measured in units of mm/s.  I.e., the " +
            "maximum magnitude of the component of the velocity change for the left extruder.");
-
-		 private JFormattedTextField normalMoveAcceleration = PositiveTextFieldInt(repNF, 10000,
-           "The maximum rate of acceleration for normal printing moves in which filament is extruded and " +
-           "there is motion along any or all of the X, Y, or Z axes.  I.e., the maximum magnitude of the " +
-	   "acceleration vector in units of millimeters per second squared, mm/s\u00B2.");
-
-		 private JFormattedTextField extruderMoveAcceleration = PositiveTextFieldInt(repNF, 10000,
-            "The maximum acceleration or deceleration in mm/s\u00B2 to use in an extruder-only move.  An extruder-only " +
-            "move is a move in which there is no motion along the X, Y, or Z axes: the only motion is the extruder " +
-            "extruding or retracting filament.  Typically this value should be at least as large as the A and B axis max " +
-	    "accelerations.");
 
 		 // Advance K1 & K2: nn.nnnnn
 		 private NumberFormat kNF = NumberFormat.getNumberInstance();
@@ -1707,8 +1690,6 @@
 		 AccelParams getAccelParamsFromUI() {
 			 Color c = moodLightCustomColor.getColor();
 			 return new AccelParams(new AccelParamsTab1(accelerationBox.isSelected(),
-								    new int[] {((Number)normalMoveAcceleration.getValue()).intValue(),
-									       ((Number)extruderMoveAcceleration.getValue()).intValue()},
 								    new int[] {((Number)xAxisMaxAcceleration.getValue()).intValue(),
 									       ((Number)yAxisMaxAcceleration.getValue()).intValue(),
 									       ((Number)zAxisMaxAcceleration.getValue()).intValue(),
@@ -1748,9 +1729,6 @@
 			 target.setEEPROMParam(OnboardParameters.EEPROMParams.ACCEL_SLOWDOWN_FLAG, params.tab2.slowdownEnabled ? 1 : 0);
 			 target.setEEPROMParam(OnboardParameters.EEPROMParams.EXTRUDER_HOLD, params.tab2.extruderHold ? 1 : 0);
 			 target.setEEPROMParam(OnboardParameters.EEPROMParams.SD_USE_CRC, params.tab2.checkCRC ? 1 : 0);
-
-			 target.setEEPROMParam(OnboardParameters.EEPROMParams.ACCEL_MAX_EXTRUDER_NORM,    params.tab1.accelerations[0]);
-			 target.setEEPROMParam(OnboardParameters.EEPROMParams.ACCEL_MAX_EXTRUDER_RETRACT, params.tab1.accelerations[1]);
 
 			 target.setEEPROMParam(OnboardParameters.EEPROMParams.ACCEL_MAX_ACCELERATION_X, params.tab1.maxAccelerations[0]);
 			 target.setEEPROMParam(OnboardParameters.EEPROMParams.ACCEL_MAX_ACCELERATION_Y, params.tab1.maxAccelerations[1]);
@@ -1792,7 +1770,6 @@
 				     false,
 				     false,
 				     false,
-				     params.accelerations,
 				     params.maxAccelerations,
 				     params.maxSpeedChanges,
 				     null,
@@ -1812,7 +1789,6 @@
 					  boolean preheatDuringPauseEnabled,
 					  boolean extruderHoldEnabled,
 					  boolean checkCRC,
-					  int[] accelerations,
 					  int[] maxAccelerations,
 					  int[] maxSpeedChanges,
 					  double[] JKNadvance,
@@ -1825,11 +1801,6 @@
 
 			 if ((tabs & UI_TAB_1) != 0) {
 				 accelerationBox.setSelected(accelerationEnabled);
-
-				 if (accelerations != null) {
-					 normalMoveAcceleration.setValue(accelerations[0]);
-					 extruderMoveAcceleration.setValue(accelerations[1]);
-				 }
 
 				 if (maxAccelerations != null) {
 					 xAxisMaxAcceleration.setValue(maxAccelerations[0]);
@@ -1902,10 +1873,6 @@
 				 target.getEEPROMParamInt(OnboardParameters.EEPROMParams.ACCEL_MAX_SPEED_CHANGE_A),
 				 target.getEEPROMParamInt(OnboardParameters.EEPROMParams.ACCEL_MAX_SPEED_CHANGE_B) };
 
-			 int[] accelerations = new int[] {
-				 target.getEEPROMParamInt(OnboardParameters.EEPROMParams.ACCEL_MAX_EXTRUDER_NORM),
-				 target.getEEPROMParamInt(OnboardParameters.EEPROMParams.ACCEL_MAX_EXTRUDER_RETRACT) };
-
 			 double[] JKNadvance = new double[] {
 				 target.getEEPROMParamFloat(OnboardParameters.EEPROMParams.ACCEL_ADVANCE_K),
 				 target.getEEPROMParamFloat(OnboardParameters.EEPROMParams.ACCEL_ADVANCE_K2) };
@@ -1922,7 +1889,7 @@
 
 			 setUIFields(UI_TAB_1 | UI_TAB_2 | UI_TAB_LED, accelerationEnabled, slowdownEnabled, deprimeTravel,
 				     overrideGCodeTempEnabled, preheatDuringPauseEnabled, extruderHoldEnabled,
-				     checkCRC, accelerations, maxAccelerations, maxSpeedChanges, JKNadvance, deprime,
+				     checkCRC, maxAccelerations, maxSpeedChanges, JKNadvance, deprime,
 				     colorChoice, showHeating, red, green, blue);
 		 }
 
@@ -1936,9 +1903,6 @@
 
 			 JPanel LEDTab = new JPanel(new MigLayout("fill", "[r][l]"));
 			 subTabs.addTab("Lighting", LEDTab);
-
-			 normalMoveAcceleration.setColumns(8);
-			 extruderMoveAcceleration.setColumns(8);
 
 			 xAxisMaxAcceleration.setColumns(8);
 			 xAxisMaxSpeedChange.setColumns(4);
@@ -1956,14 +1920,6 @@
 			 bAxisMaxSpeedChange.setColumns(4);
 
 			 addWithSharedToolTips(accelerationTab, "Acceleration enabled", accelerationBox, "wrap");
-
-			 addWithSharedToolTips(accelerationTab,
-					       "Max acceleration (magnitude of acceleration vector; mm/s\u00B2)", "span 2, gapleft push",
-					       normalMoveAcceleration, "wrap, gapright push ");
-
-			 addWithSharedToolTips(accelerationTab,
-					       "Max acceleration for extruder-only moves (mm/s\u00B2)", "span 2, gapleft push", //"split 2, span 3",
-					       extruderMoveAcceleration, "wrap, gapright push");
 
 			 addWithSharedToolTips(accelerationTab, "X max acceleration (mm/s\u00B2)",
 					       xAxisMaxAcceleration);
@@ -2723,17 +2679,14 @@
 		 class AccelParamsTab1 {
 
 			 boolean accelerationEnabled;
-			 long[] accelerations;
 			 long[] maxAccelerations;
 			 double[] maxSpeedChanges;
 
 			 AccelParamsTab1(boolean accelerationEnabled,
-					 long[] accelerations,
 					 long[] maxAccelerations,
 					 double[] maxSpeedChanges)
 			 {
 				 this.accelerationEnabled = accelerationEnabled;
-				 this.accelerations       = accelerations;
 				 this.maxAccelerations    = maxAccelerations;
 				 this.maxSpeedChanges     = maxSpeedChanges;
 			 }
@@ -2807,12 +2760,10 @@
 		 }
 
 		 AccelParamsTab1 draftParams = new AccelParamsTab1(true,                                            // acceleration enabled
-								   new long[]   {2000L, 2000L},                     // p_accel, p_retract_accel
 								   new long[]   {1000L, 1000L, 150L, 2000L, 2000L}, // max accelerations x,y,z,a,b
 								   new double[] {40.0, 40.0, 10.0, 40.0, 40.0});    // max speed changes x,y,z,a,b
 
 		 AccelParamsTab1 qualityParams = new AccelParamsTab1(true,                                            // acceleration enabled
-								     new long[]   {2000L, 2000L},                     // p_accel, p_retract_accel
 								     new long[]   {1000L, 1000L, 150L, 2000L, 2000L}, // max accelerations x,y,z,a,b
 								     new double[] {15.0, 15.0, 10.0, 20.0, 20.0});    // max speed changes x,y,z,a,b
 
@@ -2980,17 +2931,6 @@
            "transitioning from one printed segment to another, measured in units of mm/s.  I.e., the " +
            "maximum magnitude of the component of the velocity change for the left extruder.");
 
-		 private JFormattedTextField normalMoveAcceleration = PositiveTextFieldInt(repNF, 20000,
-           "The maximum rate of acceleration for normal printing moves in which filament is extruded and " +
-           "there is motion along any or all of the X, Y, or Z axes.  I.e., the maximum magnitude of the " +
-	   "acceleration vector in units of millimeters per second squared, mm/s\u00B2.");
-
-		 private JFormattedTextField extruderMoveAcceleration = PositiveTextFieldInt(repNF, 20000,
-            "The maximum acceleration or deceleration in mm/s\u00B2 to use in an extruder-only move.  An extruder-only " +
-            "move is a move in which there is no motion along the X, Y, or Z axes: the only motion is the extruder " +
-            "extruding or retracting filament.  Typically this value should be at least as large as the A and B axis max " +
-	    "accelerations.");
-
 		 // Advance K1 & K2: nn.nnnnn
 		 private NumberFormat kNF = NumberFormat.getNumberInstance();
 		 {
@@ -3099,8 +3039,8 @@
 		 }
 
 		 private SailfishG3MachineOnboardAccelerationParameters(OnboardParameters target,
-									      Driver driver,
-									      JTabbedPane subtabs) {
+									Driver driver,
+									JTabbedPane subtabs) {
 			 super(target, driver, subtabs);
 
 			 int dismissDelay = ToolTipManager.sharedInstance().getDismissDelay();
@@ -3134,8 +3074,6 @@
 			 Color c = moodLightCustomColor.getColor();
 
 			 return new AccelParams(new AccelParamsTab1(accelerationBox.isSelected(),
-								    new long[] {((Number)normalMoveAcceleration.getValue()).longValue(),
-									        ((Number)extruderMoveAcceleration.getValue()).longValue()},
 								    new long[] {((Number)xAxisMaxAcceleration.getValue()).longValue(),
 									        ((Number)yAxisMaxAcceleration.getValue()).longValue(),
 									        ((Number)zAxisMaxAcceleration.getValue()).longValue(),
@@ -3180,9 +3118,6 @@
 
 			 int lv = params.tab2.slowdownEnabled ? 1 : 0;
 			 target.setEEPROMParam(OnboardParameters.EEPROMParams.ACCEL_SLOWDOWN_FLAG, lv);
-
-			 target.setEEPROMParam(OnboardParameters.EEPROMParams.ACCEL_MAX_EXTRUDER_NORM,    params.tab1.accelerations[0]);
-			 target.setEEPROMParam(OnboardParameters.EEPROMParams.ACCEL_MAX_EXTRUDER_RETRACT, params.tab1.accelerations[1]);
 
 			 target.setEEPROMParam(OnboardParameters.EEPROMParams.ACCEL_MAX_ACCELERATION_X, params.tab1.maxAccelerations[0]);
 			 target.setEEPROMParam(OnboardParameters.EEPROMParams.ACCEL_MAX_ACCELERATION_Y, params.tab1.maxAccelerations[1]);
@@ -3232,11 +3167,6 @@
 
 			 if (tab1 != null) {
 				 accelerationBox.setSelected(tab1.accelerationEnabled);
-
-				 if (tab1.accelerations != null) {
-					 normalMoveAcceleration.setValue(tab1.accelerations[0]);
-					 extruderMoveAcceleration.setValue(tab1.accelerations[1]);
-				 }
 
 				 if (tab1.maxAccelerations != null) {
 					 xAxisMaxAcceleration.setValue(tab1.maxAccelerations[0]);
@@ -3328,10 +3258,6 @@
 				 target.getEEPROMParamFloat(OnboardParameters.EEPROMParams.ACCEL_MAX_SPEED_CHANGE_A),
 				 target.getEEPROMParamFloat(OnboardParameters.EEPROMParams.ACCEL_MAX_SPEED_CHANGE_B) };
 
-			 long[] accelerations = new long[] {
-				 target.getEEPROMParamUInt(OnboardParameters.EEPROMParams.ACCEL_MAX_EXTRUDER_NORM),
-				 target.getEEPROMParamUInt(OnboardParameters.EEPROMParams.ACCEL_MAX_EXTRUDER_RETRACT) };
-
 			 double[] JKNadvance = new double[] {
 				 target.getEEPROMParamFloat(OnboardParameters.EEPROMParams.ACCEL_ADVANCE_K),
 				 target.getEEPROMParamFloat(OnboardParameters.EEPROMParams.ACCEL_ADVANCE_K2) };
@@ -3351,7 +3277,6 @@
 				 target.getEEPROMParamInt(OnboardParameters.EEPROMParams.PLATFORM_TEMP) };
 
 			 setUIFields(new AccelParamsTab1(accelerationEnabled,
-							 accelerations,
 							 maxAccelerations,
 							 maxSpeedChanges),
 				     new AccelParamsTab2(slowdownEnabled,
@@ -3380,9 +3305,6 @@
 			 JPanel miscTab = new JPanel(new MigLayout("fill", "[r][l][r][l]"));
 			 subTabs.addTab("Misc", miscTab);
 
-			 normalMoveAcceleration.setColumns(8);
-			 extruderMoveAcceleration.setColumns(8);
-
 			 xAxisMaxAcceleration.setColumns(8);
 			 xAxisMaxSpeedChange.setColumns(4);
 
@@ -3399,14 +3321,6 @@
 			 bAxisMaxSpeedChange.setColumns(4);
 
 			 addWithSharedToolTips(accelerationTab, "Acceleration enabled", accelerationBox, "wrap");
-
-			 addWithSharedToolTips(accelerationTab,
-					       "Max acceleration (magnitude of acceleration vector; mm/s\u00B2)", "span 2, gapleft push",
-					       normalMoveAcceleration, "wrap, gapright push ");
-
-			 addWithSharedToolTips(accelerationTab,
-					       "Max acceleration for extruder-only moves (mm/s\u00B2)", "span 2, gapleft push", //"split 2, span 3",
-					       extruderMoveAcceleration, "wrap, gapright push");
 
 			 addWithSharedToolTips(accelerationTab, "X max acceleration (mm/s\u00B2)",
 					       xAxisMaxAcceleration);
