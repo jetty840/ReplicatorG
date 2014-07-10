@@ -2133,9 +2133,12 @@ public class MightySailfish extends Makerbot4GAlternateDriver
 			return "MightyBoard";
 		else if (this.machineId.equals(VidPid.THE_REPLICATOR))
 			return "The Replicator";
-		else if (this.machineId.equals(VidPid.REPLICATOR_2))
+		else if (this.machineId.equals(VidPid.REPLICATOR_2) || this.machineId.equals(VidPid.REPLICATOR_2h))
 			return "Replicator 2";
-		return "MightyBoard(unverified)";			
+		else if (this.machineId.equals(VidPid.REPLICATOR_2X))
+			return "Replicator 2X";
+		else
+		    return "MightyBoard(unverified)";			
 	} 
 	
 	
