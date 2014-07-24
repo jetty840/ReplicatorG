@@ -1,5 +1,5 @@
 /**
-  * 
+  *
   */
  package replicatorg.app.ui.onboard;
 
@@ -101,7 +101,6 @@
 
 	 private JFormattedTextField xToolheadOffsetField = new JFormattedTextField(threePlaces);
 	 private JFormattedTextField yToolheadOffsetField = new JFormattedTextField(threePlaces);
-	 private JFormattedTextField zToolheadOffsetField = new JFormattedTextField(threePlaces);
 
 
 	 /** Prompts the user to fire a bot  reset after the changes have been sent to the board.
@@ -113,9 +112,9 @@
 		 if(extendedMessage != null)
 			 message = message + extendedMessage;
 
-		 int confirm = JOptionPane.showConfirmDialog(this, 
+		 int confirm = JOptionPane.showConfirmDialog(this,
 				 "<html>" + message + "</html>",
-				 "Reset board.", 
+				 "Reset board.",
 				 JOptionPane.DEFAULT_OPTION,
 				 JOptionPane.INFORMATION_MESSAGE);
 		 if (confirm == JOptionPane.OK_OPTION) {
@@ -127,8 +126,8 @@
 
 	 }
 
-	 /** 
-	  * commit machine onboard parameters 
+	 /**
+	  * commit machine onboard parameters
 	  **/
 	 private void commit() {
 		 String newName = machineNameField.getText();
@@ -137,16 +136,16 @@
 		 target.setMachineName(machineNameField.getText());
 
 		 if( target.hasToolCountOnboard() ) {
-			 if (toolCountField.getSelectedIndex() > 0) 
+			 if (toolCountField.getSelectedIndex() > 0)
 				 target.setToolCountOnboard( toolCountField.getSelectedIndex() );
-			 else 
+			 else
 				 target.setToolCountOnboard( -1 );
 		 }
 
 		if (driverType == DriverType.MIGHTYBOARD ||
 		    driverType == DriverType.MIGHTYSAILFISH)
 			target.setHbpSetting(hbpToggleBox.isSelected());
-	
+
 		 EnumSet<AxisId> axesInverted = EnumSet.noneOf(AxisId.class);
 		 if (xAxisInvertBox.isSelected()) axesInverted.add(AxisId.X);
 		 if (yAxisInvertBox.isSelected()) axesInverted.add(AxisId.Y);
@@ -162,14 +161,14 @@
 		 target.setInvertedAxes(axesInverted);
 		 {
 			 int idx = endstopInversionSelection.getSelectedIndex();
-			 OnboardParameters.EndstopType endstops = 
-				 OnboardParameters.EndstopType.values()[idx]; 
+			 OnboardParameters.EndstopType endstops =
+				 OnboardParameters.EndstopType.values()[idx];
 			 target.setInvertedEndstops(endstops);
 		 }
 		 if (driverType != DriverType.MIGHTYBOARD && driverType != DriverType.MIGHTYSAILFISH) {
 			 int idx = estopSelection.getSelectedIndex();
-			 OnboardParameters.EstopType estop = 
-				 OnboardParameters.EstopType.estopTypeForValue((byte)idx); 
+			 OnboardParameters.EstopType estop =
+				 OnboardParameters.EstopType.estopTypeForValue((byte)idx);
 			 target.setEstopConfig(estop);
 		 }
 
@@ -197,9 +196,8 @@
 		 if (target.hasToolheadsOffset()) {
 			 target.eepromStoreToolDelta(0, ((Number)xToolheadOffsetField.getValue()).doubleValue());
 			 target.eepromStoreToolDelta(1, ((Number)yToolheadOffsetField.getValue()).doubleValue());
-			 target.eepromStoreToolDelta(2, ((Number)zToolheadOffsetField.getValue()).doubleValue());
 		 }
-    
+
 		 // Set acceleration related parameters
 		 accelUI.setEEPROMFromUI();
 
@@ -211,27 +209,27 @@
 
 			 if (accelUI.isAccelerationEnabled()) {
 				 ///TRCIKY: hack, if enabling acceleration AND print-o-matic old feedrates are slow,
-				 // for speed them up.         	
+				 // for speed them up.
 				 Base.logger.finest("forced skeinforge speedup");
-				 if(feedrate <= 40 ) 
+				 if(feedrate <= 40 )
 					 Base.preferences.put("replicatorg.skeinforge.printOMatic5D.desiredFeedrate", "100");
 				 if( travelRate <= 55)
-					 Base.preferences.put("replicatorg.skeinforge.printOMatic5D.travelFeedrate", "150");          
+					 Base.preferences.put("replicatorg.skeinforge.printOMatic5D.travelFeedrate", "150");
 
 				 extendedMessage = "  <br/><b>Also updating Print-O-Matic speed settings!</b>";
 			 }
 			 else {
 				 ///TRCIKY: hack, if enabling acceleration AND print-o-matic old feedrates are fast,
-				 // for slow them down. 
+				 // for slow them down.
 				 Base.logger.finest("forced skeinforge slowdown");
 				 if(feedrate > 40 )
 					 Base.preferences.put("replicatorg.skeinforge.printOMatic5D.desiredFeedrate", "40");
 				 if( travelRate > 55)
 					 Base.preferences.put("replicatorg.skeinforge.printOMatic5D.travelFeedrate", "55");
 
-				 int xJog = 0; 
-				 int zJog = 0; 
-				 try {  
+				 int xJog = 0;
+				 int zJog = 0;
+				 try {
 					 if( Base.preferences.nodeExists("controlpanel.feedrate.z") )
 						 zJog = Base.preferences.getInt("controlpanel.feedrate.z", 480);
 					 if(Base.preferences.nodeExists("controlpanel.feedrate.y") )
@@ -251,12 +249,12 @@
 		 requestResetFromUser(extendedMessage);
 	 }
 
-	
+
 	/// Causes the EEPROM to be reset to a totally blank state, and during dispose
 	/// tells caller to reset/reconnect the eeprom.
 	private void resetToBlank()
 	{
-		try { 
+		try {
 			target.resetSettingsToBlank();
 			requestResetFromUser("<b>Resetting EEPROM to completely blank</b>");
 			MachineOnboardParameters.this.dispose();
@@ -264,13 +262,13 @@
 		catch (replicatorg.drivers.RetryException e){
 			Base.logger.severe("reset to blank failed due to error" + e.toString());
 			Base.logger.severe("Please restart your machine for safety");
-		}		
+		}
 	}
-	
+
 	/// Causes the EEPROM to be reset to a 'from the factory' state, and during dispose
 	/// tells caller to reset/reconnect the eeprom.
 	private void resetToFactory() {
-		try { 
+		try {
 			target.resetSettingsToFactory();
 			requestResetFromUser("<b>Resetting EEPROM to Factory Default.</b>");
 			MachineOnboardParameters.this.dispose();
@@ -279,21 +277,21 @@
 			Base.logger.severe("reset to blank failed due to error" + e.toString());
 			Base.logger.severe("Please restart your machine for safety");
 		}
-	}	
+	}
 
 	private void loadParameters() {
 		machineNameField.setText( this.target.getMachineName() );
 
 		if(target.hasToolCountOnboard()){
 			int toolCount = target.toolCountOnboard();
-			if (toolCount == 1 || toolCount == 2) 
+			if (toolCount == 1 || toolCount == 2)
 				toolCountField.setSelectedIndex(toolCount); //'1' or '2'
 			else
 				toolCountField.setSelectedIndex(0);//'unknown'
 		}
-		
+
 		EnumSet<AxisId> invertedAxes = this.target.getInvertedAxes();
-		
+
 		xAxisInvertBox.setSelected(invertedAxes.contains(AxisId.X));
 		yAxisInvertBox.setSelected(invertedAxes.contains(AxisId.Y));
 		zAxisInvertBox.setSelected(invertedAxes.contains(AxisId.Z));
@@ -318,13 +316,13 @@
 			OnboardParameters.EstopType estop = this.target.getEstopConfig();
 			estopSelection.setSelectedIndex(estop.ordinal());
 		}
-	   
+
 		xAxisHomeOffsetField.setValue(this.target.getAxisHomeOffset(0));
 		yAxisHomeOffsetField.setValue(this.target.getAxisHomeOffset(1));
 		zAxisHomeOffsetField.setValue(this.target.getAxisHomeOffset(2));
 		aAxisHomeOffsetField.setValue(this.target.getAxisHomeOffset(3));
 		bAxisHomeOffsetField.setValue(this.target.getAxisHomeOffset(4));
-		
+
 		if(target.hasVrefSupport())
 		{
 			vref0.setValue(this.target.getStoredStepperVoltage(0));
@@ -337,9 +335,8 @@
 		if(target.hasToolheadsOffset()) {
 			xToolheadOffsetField.setValue(this.target.getToolheadsOffset(0));
 			yToolheadOffsetField.setValue(this.target.getToolheadsOffset(1));
-			zToolheadOffsetField.setValue(this.target.getToolheadsOffset(2));
-		}   
-                
+		}
+
 		accelUI.setUIFromEEPROM();
 	}
 
@@ -377,14 +374,14 @@
 		subTabs.addTab("Endstops/Axis Inversion", endstopsTab);
 
 		JPanel homeVrefsTab = new JPanel(new MigLayout("fill", "[r][l][r][l]"));
-                
+
                 if(target.hasVrefSupport())
 		{
 			subTabs.addTab("Homing/VREFs", homeVrefsTab);
 		} else {
 			subTabs.addTab("Homing", homeVrefsTab);
 		}
-		
+
 		EnumMap<AxisId, String> axesAltNamesMap = target.getAxisAlises();
 
   		if( target.hasToolCountOnboard() ) {
@@ -398,12 +395,12 @@
 			endstopsTab.add(hbpToggleBox,"span 2, wrap");
 		}
 
-		endstopsTab.add(new JLabel("Invert X axis"));		
+		endstopsTab.add(new JLabel("Invert X axis"));
 		endstopsTab.add(xAxisInvertBox,"span 2, wrap");
-		
+
 		endstopsTab.add(new JLabel("Invert Y axis"));
 		endstopsTab.add(yAxisInvertBox,"span 2, wrap");
-		
+
 		endstopsTab.add(new JLabel("Invert Z axis"));
 		endstopsTab.add(zAxisInvertBox,"span 2, wrap");
 
@@ -412,7 +409,7 @@
 			aName = aName + " (" + axesAltNamesMap.get(AxisId.A) + ") ";
 		endstopsTab.add(new JLabel(aName));
 		endstopsTab.add(aAxisInvertBox,"span 2, wrap");
-		
+
 		String bName = "Invert B axis";
 		if( axesAltNamesMap.containsKey(AxisId.B) )
 			bName = bName + " (" + axesAltNamesMap.get(AxisId.B) + ") ";
@@ -456,13 +453,13 @@
 
 		endstopsTab.add(new JLabel("Invert endstops"));
 		endstopsTab.add(endstopInversionSelection,"span 2, wrap");
-				
+
 		xAxisHomeOffsetField.setColumns(10);
 		yAxisHomeOffsetField.setColumns(10);
 		zAxisHomeOffsetField.setColumns(10);
 		aAxisHomeOffsetField.setColumns(10);
 		bAxisHomeOffsetField.setColumns(10);
-		
+
 		if(target.hasVrefSupport())
 		{
 			vref0.setColumns(4);
@@ -503,23 +500,19 @@
 			homeVrefsTab.add(aAxisHomeOffsetField,"wrap");
 			homeVrefsTab.add(new JLabel("B home offset (mm)"));
 			homeVrefsTab.add(bAxisHomeOffsetField,"wrap");
-                        
+
 		}
 
 		if(target.hasToolheadsOffset()) {
 		    xToolheadOffsetField.setColumns(10);
 		    yToolheadOffsetField.setColumns(10);
-		    zToolheadOffsetField.setColumns(10);
-		    
+
 		    homeVrefsTab.add(new JLabel("X toolhead offset (mm)"));
 		    homeVrefsTab.add(xToolheadOffsetField, "wrap");
-		    
+
 		    homeVrefsTab.add(new JLabel("Y toolhead offset (mm)"));
 		    homeVrefsTab.add(yToolheadOffsetField, "wrap");
-		    
-		    homeVrefsTab.add(new JLabel("Z toolhead offset (mm)"));
-		    homeVrefsTab.add(zToolheadOffsetField, "wrap");
-                   
+
 		}
 
 		if (target.hasAcceleration()) {
@@ -551,7 +544,7 @@
 		resetToFactoryButton.setToolTipText("Reset the onboard settings to the factory defaults");
 		add(resetToFactoryButton, "split 1");
 
-		
+
 		resetToBlankButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				MachineOnboardParameters.this.resetToBlank();
@@ -782,7 +775,7 @@
 							     JTabbedPane subtabs) {
 			 super(target, driver, subtabs);
 		 }
-		 
+
 		 @Override
 		 public boolean isAccelerationEnabled() {
 			 return accelerationBox.isSelected();
@@ -837,7 +830,7 @@
 			 accelerationTab.add(bAxisAcceleration);
 			 accelerationTab.add(new JLabel("B maximum junction jerk (mm/s)"));
 			 accelerationTab.add(bJunctionJerk, "wrap");
-                    
+
 			 accelerationTab.add(new JLabel("Minimum Print Speed (mm/s)"));
 			 accelerationTab.add(minimumSpeed, "wrap");
 		 }
@@ -966,7 +959,7 @@
 		 //   So, we want 0 < val < 0xffff
 
 		 private NumberFormat repNF = NumberFormat.getIntegerInstance();
-		
+
 		 private JCheckBox accelerationBox = new JCheckBox();
 		 {
 			 accelerationBox.setToolTipText(wrap2HTML(width, "Enable or disable printing with acceleration"));
@@ -1075,7 +1068,7 @@
            "or a travel-only move is encountered.  Set to a value of 0 to disable this feature for this extruder.  " +
            "Do not use with Skeinforge's Reversal plugin nor Skeinforge's Dimension plugin's \"Retraction Distance\".");
 
-           
+
 		 // Slowdown is a flag for the Replicator
 		 private JCheckBox slowdownFlagBox = new JCheckBox();
 		 {
@@ -1259,8 +1252,8 @@
 			 int[] deprime = new int[] {
 				 target.getEEPROMParamInt(OnboardParameters.EEPROMParams.ACCEL_EXTRUDER_DEPRIME_A),
 				 target.getEEPROMParamInt(OnboardParameters.EEPROMParams.ACCEL_EXTRUDER_DEPRIME_B) };
-		 
-			 setUIFields(UI_TAB_1 | UI_TAB_2, accelerationEnabled, slowdownEnabled, 
+
+			 setUIFields(UI_TAB_1 | UI_TAB_2, accelerationEnabled, slowdownEnabled,
 				     accelerations, maxAccelerations, maxSpeedChanges,
 				     JKNadvance, deprime);
 		 }
@@ -1305,7 +1298,7 @@
 					       xAxisMaxAcceleration);
 			 addWithSharedToolTips(accelerationTab, "X max speed change (mm/s)",
 					       xAxisMaxSpeedChange, "wrap");
- 
+
 			 addWithSharedToolTips(accelerationTab, "Y max acceleration (mm/s\u00B2)",
 					       yAxisMaxAcceleration);
 			 addWithSharedToolTips(accelerationTab, "Y max speed change (mm/s)",
@@ -1320,7 +1313,7 @@
 					       aAxisMaxAcceleration);
 			 addWithSharedToolTips(accelerationTab, "Right extruder max speed change (mm/s)",
 					       aAxisMaxSpeedChange, "wrap");
- 
+
 			 addWithSharedToolTips(accelerationTab, "Left extruder acceleration (mm/s\u00B2)",
 					       bAxisMaxAcceleration);
 			 addWithSharedToolTips(accelerationTab, "Left extruder max speed change (mm/s)",
@@ -1489,7 +1482,7 @@
             "to remain engaged throughout the entire build regardless of whether or not the gcode requests that they " +
             "be disabled via M103 commands.  When 3mm filament extruder stepper motors are disabled, the filament has " +
             "a tendency to back out a tiny amount owing to the high pressure within the melt chamber of a 3mm extruder."));
-		 } 
+		 }
 
 		 private JCheckBox checkCRCBox = new JCheckBox();
 		 {
@@ -1505,7 +1498,7 @@
             "repairing data transfer errors.  If the same file data fails to transfer correctly after five attempts, then the " +
             "print is gracefully cancelled and an error message displayed.  NOTE THAT Replicator 1's are particularly " +
             "susceptible to data transfer errors owing to their electronics design."));
-		 } 
+		 }
 
 		 private JButton draftButton = new JButton("Quick Draft");
 		 {
@@ -1618,13 +1611,13 @@
                     "When enabled, override the gcode temperature settings using the preheat " +
 		    "temperature settings for the extruders and build platform."));
 		 }
-           
+
 		 private JCheckBox preheatDuringPauseBox = new JCheckBox();
 		 {
 			 preheatDuringPauseBox.setToolTipText(wrap2HTML(width,
                     "When enabled, leave the extruder and platform heaters enabled whilst paused."));
 		 }
-                      
+
 		 // Slowdown is a flag for the Replicator
 		 private JCheckBox slowdownFlagBox = new JCheckBox();
 		 {
@@ -1843,7 +1836,7 @@
 					 colorChoice = 0;
 				 moodLightScript.setSelectedIndex(colorChoice);
 				 moodLightShowHeatingBox.setSelected(showHeating);
-				 moodLightCustomColor.setColor(red & 0xff, green & 0xff, blue & 0xff);				 
+				 moodLightCustomColor.setColor(red & 0xff, green & 0xff, blue & 0xff);
 			 }
 
 			 // Enable/disable the draft & quality buttons based upon the UI field values
@@ -1925,7 +1918,7 @@
 					       xAxisMaxAcceleration);
 			 addWithSharedToolTips(accelerationTab, "X max speed change (mm/s)",
 					       xAxisMaxSpeedChange, "wrap");
- 
+
 			 addWithSharedToolTips(accelerationTab, "Y max acceleration (mm/s\u00B2)",
 					       yAxisMaxAcceleration);
 			 addWithSharedToolTips(accelerationTab, "Y max speed change (mm/s)",
@@ -1940,7 +1933,7 @@
 					       aAxisMaxAcceleration);
 			 addWithSharedToolTips(accelerationTab, "Right extruder max speed change (mm/s)",
 					       aAxisMaxSpeedChange, "wrap");
- 
+
 			 addWithSharedToolTips(accelerationTab, "Left extruder acceleration (mm/s\u00B2)",
 					       bAxisMaxAcceleration);
 			 addWithSharedToolTips(accelerationTab, "Left extruder max speed change (mm/s)",
@@ -2147,12 +2140,12 @@
            "this parameter range from around 0.001 to 0.02.  Set to a value of 0 to disable use of this " +
            "compensation.");
 
-	
+
 		 private JCheckBox clockwiseExtruderChoice = new JCheckBox();
 		 {
 			 clockwiseExtruderChoice.setToolTipText(wrap2HTML(width,
                    "Select the direction you need the extruder to turn in order to extrude filament.  For most " +
-                   "Thing-o-Matic Stepstruders, this box is left unchecked when using 5D and checked when not " + 
+                   "Thing-o-Matic Stepstruders, this box is left unchecked when using 5D and checked when not " +
 		   "using 5D.  You may need to do the opposite if your extruder's stepper motor is wired " +
                    "differently.  The same effect can be had by inverting the A-axis; this option primarily " +
 		   "exists for users with a Gen 4 LCD interface."));
@@ -2209,7 +2202,7 @@
             "slowdown limit.  Acceptable values are 3, 4, 5, 6, 7, and 8.  A value of 0 disables " +
             "this feature.  Any attempt to use a value of 1 or 2 will result in a value of 3 being " +
             "used instead.");
- 
+
 		 // Misc. Jetty params not specific to the Gen 4 LCD interface
 
 		 private final String[] lcdDimensionChoices = { "16 x 4", "20 x 4", "24 x 4" };
@@ -2278,7 +2271,7 @@
                     "When enabled, override the gcode temperature settings using the preheat " +
 		    "temperature settings for the extruders and build platform."));
 		 }
-           
+
 		 private JFormattedTextField tool0Temp = PositiveTextFieldInt(tempNF, 255,
            "Temperature in degrees Celsius to preheat extruder 0 to.  This temperature is " +
            "also used as the override temperature when the \"override gcode temperature\" " +
@@ -2491,7 +2484,7 @@
 
 			 JKNAdvance1.setValue(target.getEEPROMParamFloat(OnboardParameters.EEPROMParams.ACCEL_ADVANCE_K));
 			 JKNAdvance2.setValue(target.getEEPROMParamFloat(OnboardParameters.EEPROMParams.ACCEL_ADVANCE_K2));
- 
+
 			 minPlannerSpeed.setValue(target.getEEPROMParamUInt(OnboardParameters.EEPROMParams.ACCEL_MIN_PLANNER_SPEED));
 			 normalMoveAcceleration.setValue(target.getEEPROMParamUInt(OnboardParameters.EEPROMParams.ACCEL_MAX_EXTRUDER_NORM));
 
@@ -2621,7 +2614,7 @@
 					       revMaxFeedrate);
 			 addWithSharedToolTips(accelerationMiscTab, "Min travel feedrate (mm/s)",
 					       minTravelFeedrate, "wrap");
-			
+
 			 addWithSharedToolTips(accelerationMiscTab, "Min feedrate at junctions (mm/s)",
 					       minPlannerSpeed);
 			 addWithSharedToolTips(accelerationMiscTab, "Clockwise extruder",
@@ -2852,7 +2845,7 @@
             "to remain engaged throughout the entire build regardless of whether or not the gcode requests that they " +
             "be disabled via M103 commands.  When 3mm filament extruder stepper motors are disabled, the filament has " +
             "a tendency to back out a tiny amount owing to the high pressure within the melt chamber of a 3mm extruder."));
-		 } 
+		 }
 
 		 private JCheckBox checkCRCBox = new JCheckBox();
 		 {
@@ -2868,7 +2861,7 @@
             "repairing data transfer errors.  If the same file data fails to transfer correctly after five attempts, then the " +
             "print is gracefully cancelled and an error message displayed.  NOTE THAT Replicator 1's are particularly " +
             "susceptible to data transfer errors owing to their electronics design."));
-		 } 
+		 }
 
 		 private JButton draftButton = new JButton("Quick Draft");
 		 {
@@ -2981,7 +2974,7 @@
                     "When enabled, override the gcode temperature settings using the preheat " +
 		    "temperature settings for the extruders and build platform."));
 		 }
-           
+
 		 private JFormattedTextField tool0Temp = PositiveTextFieldInt(tempNF, 255,
            "Temperature in degrees Celsius to preheat extruder 0 to.  This temperature is " +
            "also used as the override temperature when the \"override gcode temperature\" " +
@@ -3265,7 +3258,7 @@
 			 long[] deprime = new long[] {
 				 target.getEEPROMParamUInt(OnboardParameters.EEPROMParams.ACCEL_EXTRUDER_DEPRIME_A),
 				 target.getEEPROMParamUInt(OnboardParameters.EEPROMParams.ACCEL_EXTRUDER_DEPRIME_B) };
-		 
+
 			 int[] rgb = new int[] {
 				 target.getEEPROMParamInt(OnboardParameters.EEPROMParams.MOOD_LIGHT_CUSTOM_RED),
 				 target.getEEPROMParamInt(OnboardParameters.EEPROMParams.MOOD_LIGHT_CUSTOM_GREEN),
@@ -3326,7 +3319,7 @@
 					       xAxisMaxAcceleration);
 			 addWithSharedToolTips(accelerationTab, "X max speed change (mm/s)",
 					       xAxisMaxSpeedChange, "wrap");
- 
+
 			 addWithSharedToolTips(accelerationTab, "Y max acceleration (mm/s\u00B2)",
 					       yAxisMaxAcceleration);
 			 addWithSharedToolTips(accelerationTab, "Y max speed change (mm/s)",
@@ -3341,7 +3334,7 @@
 					       aAxisMaxAcceleration);
 			 addWithSharedToolTips(accelerationTab, "Right extruder max speed change (mm/s)",
 					       aAxisMaxSpeedChange, "wrap");
- 
+
 			 addWithSharedToolTips(accelerationTab, "Left extruder acceleration (mm/s\u00B2)",
 					       bAxisMaxAcceleration);
 			 addWithSharedToolTips(accelerationTab, "Left extruder max speed change (mm/s)",
@@ -3381,7 +3374,7 @@
 
 			 addWithSharedToolTips(miscTab, "Left extruder (tool 1) preheat & override temperature (C)", tool1Temp);
 			 addWithSharedToolTips(miscTab, "Check SD card reads", checkCRCBox, "wrap");
-			 
+
 			 addWithSharedToolTips(miscTab, "Platform preheat & override temperature (C)", platformTemp);
 			 addWithSharedToolTips(miscTab, "Ditto (duplicate) printing enabled", dittoBox, "wrap");
 
