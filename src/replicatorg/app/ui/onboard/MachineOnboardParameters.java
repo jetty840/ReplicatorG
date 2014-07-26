@@ -1059,15 +1059,16 @@
            "compensation.");
 
 		 private JFormattedTextField extruderDeprimeA = PositiveTextFieldInt(repNF, 10000,
-           "The number of steps to retract the right extruder's filament when the pipeline of buffered moves empties " +
-           "or a travel-only move is encountered.  Set to a value of 0 to disable this feature for this extruder.  " +
-           "Do not use with Skeinforge's Reversal plugin nor Skeinforge's Dimension plugin's \"Retraction Distance\".");
+           "The number of steps to retract the right extruder's filament when the pipeline of buffered moves empties, " +
+           "the bot is paused, or \"deprime on travel\" is enabled and a travel move is detected.  " +
+           "Set to a value of 0 to disable this feature for this extruder.  Do not use with Skeinforge's Reversal " +
+           "plugin nor Skeinforge's Dimension plugin's \"Retraction Distance\".");
 
 		 private JFormattedTextField extruderDeprimeB = PositiveTextFieldInt(repNF, 10000,
-           "The number of steps to retract the left extruder's filament when the pipeline of buffered moves empties " +
-           "or a travel-only move is encountered.  Set to a value of 0 to disable this feature for this extruder.  " +
-           "Do not use with Skeinforge's Reversal plugin nor Skeinforge's Dimension plugin's \"Retraction Distance\".");
-
+           "The number of steps to retract the right extruder's filament when the pipeline of buffered moves empties, " +
+           "the bot is paused, or \"deprime on travel\" is enabled and a travel move is detected.  " +
+           "Set to a value of 0 to disable this feature for this extruder.  Do not use with Skeinforge's Reversal " +
+           "plugin nor Skeinforge's Dimension plugin's \"Retraction Distance\".");
 
 		 // Slowdown is a flag for the Replicator
 		 private JCheckBox slowdownFlagBox = new JCheckBox();
@@ -1596,14 +1597,16 @@
 		 }
 
        		 private JFormattedTextField extruderDeprimeA = PositiveTextFieldInt(repNF, 10000,
-           "The number of steps to retract the right extruder's filament when the pipeline of buffered moves empties " +
-           "or a travel-only move is encountered.  Set to a value of 0 to disable this feature for this extruder.  " +
-           "Do not use with Skeinforge's Reversal plugin nor Skeinforge's Dimension plugin's \"Retraction Distance\".");
+           "The number of steps to retract the right extruder's filament when the pipeline of buffered moves empties, " +
+           "the bot is paused, or \"deprime on travel\" is enabled and a travel move is detected.  " +
+           "Set to a value of 0 to disable this feature for this extruder.  Do not use with Skeinforge's Reversal " +
+           "plugin nor Skeinforge's Dimension plugin's \"Retraction Distance\".");
 
 		 private JFormattedTextField extruderDeprimeB = PositiveTextFieldInt(repNF, 10000,
-           "The number of steps to retract the left extruder's filament when the pipeline of buffered moves empties " +
-           "or a travel-only move is encountered.  Set to a value of 0 to disable this feature for this extruder.  " +
-           "Do not use with Skeinforge's Reversal plugin nor Skeinforge's Dimension plugin's \"Retraction Distance\".");
+           "The number of steps to retract the right extruder's filament when the pipeline of buffered moves empties, " +
+           "the bot is paused, or \"deprime on travel\" is enabled and a travel move is detected.  " +
+           "Set to a value of 0 to disable this feature for this extruder.  Do not use with Skeinforge's Reversal " +
+           "plugin nor Skeinforge's Dimension plugin's \"Retraction Distance\".");
 
 		 private JCheckBox overrideGCodeTempBox = new JCheckBox();
 		 {
@@ -2959,14 +2962,16 @@
 		 }
 
 		 private JFormattedTextField extruderDeprimeA = PositiveTextFieldInt(repNF, 10000,
-           "The number of steps to retract the right extruder's filament when the pipeline of buffered moves empties " +
-           "or a travel-only move is encountered.  Set to a value of 0 to disable this feature for this extruder.  " +
-           "Do not use with Skeinforge's Reversal plugin nor Skeinforge's Dimension plugin's \"Retraction Distance\".");
+           "The number of steps to retract the right extruder's filament when the pipeline of buffered moves empties, " +
+           "the bot is paused, or \"deprime on travel\" is enabled and a travel move is detected.  " +
+           "Set to a value of 0 to disable this feature for this extruder.  Do not use with Skeinforge's Reversal " +
+           "plugin nor Skeinforge's Dimension plugin's \"Retraction Distance\".");
 
 		 private JFormattedTextField extruderDeprimeB = PositiveTextFieldInt(repNF, 10000,
-           "The number of steps to retract the left extruder's filament when the pipeline of buffered moves empties " +
-           "or a travel-only move is encountered.  Set to a value of 0 to disable this feature for this extruder.  " +
-           "Do not use with Skeinforge's Reversal plugin nor Skeinforge's Dimension plugin's \"Retraction Distance\".");
+           "The number of steps to retract the right extruder's filament when the pipeline of buffered moves empties, " +
+           "the bot is paused, or \"deprime on travel\" is enabled and a travel move is detected.  " +
+           "Set to a value of 0 to disable this feature for this extruder.  Do not use with Skeinforge's Reversal " +
+           "plugin nor Skeinforge's Dimension plugin's \"Retraction Distance\".");
 
 		 private JCheckBox overrideGCodeTempBox = new JCheckBox();
 		 {
