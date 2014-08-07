@@ -50,6 +50,8 @@ public interface OnboardParameters {
 		ACCEL_REV_MAX_FEED_RATE,    // Max feedrate for an extruder only move (mm/s)
 		ACCEL_SLOWDOWN_LIMIT,       // Planner slowdown limit (0, 3, 4, 5, 6, 7, 8; Tom & Cupcake)
 		ACCEL_SLOWDOWN_FLAG,        // Enable slowdown limit (0, 1; MightyBoard)
+	        ALEVEL_MAX_ZDELTA,          // Max tolerable height difference between probe points (steps)
+		ALEVEL_MAX_ZPROBE_HITS,     // Max number of probe hits before pausing (0=ignore hits; 1 - 200 valid)
 		AXIS_HOME_POSITIONS,        //
 		AXIS_INVERSION,             //
 		BUZZER_REPEATS,             //

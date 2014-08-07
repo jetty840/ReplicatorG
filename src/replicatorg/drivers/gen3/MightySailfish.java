@@ -2299,6 +2299,7 @@ public class MightySailfish extends Makerbot4GAlternateDriver
 		case ACCEL_MAX_SPEED_CHANGE_Y   : return read16FromEEPROM(MightySailfish6X2EEPROM.MAX_SPEED_CHANGE + 1*2);
 		case ACCEL_MAX_SPEED_CHANGE_Z   : return read16FromEEPROM(MightySailfish6X2EEPROM.MAX_SPEED_CHANGE + 2*2);
 		case ACCEL_SLOWDOWN_FLAG        : return getUInt8EEPROM(MightySailfish6X2EEPROM.SLOWDOWN_FLAG);
+		case ALEVEL_MAX_ZPROBE_HITS     : return getUInt8EEPROM(JettyMBEEPROM.ALEVEL_MAX_ZPROBE_HITS);
 		case PREHEAT_DURING_PAUSE       : return getUInt8EEPROM(JettyMBEEPROM.HEAT_DURING_PAUSE);
 		case OVERRIDE_GCODE_TEMP        : return getUInt8EEPROM(JettyMBEEPROM.OVERRIDE_GCODE_TEMP);
 		case EXTRUDER_HOLD              : return getUInt8EEPROM(JettyMBEEPROM.EXTRUDER_HOLD);
@@ -2335,6 +2336,12 @@ public class MightySailfish extends Makerbot4GAlternateDriver
 		switch (param) {
 		case ACCEL_ADVANCE_K            : return (double)getUInt32EEPROM(MightySailfish6X2EEPROM.JKN_ADVANCE_K) / 100000.0d;
 		case ACCEL_ADVANCE_K2           : return (double)getUInt32EEPROM(MightySailfish6X2EEPROM.JKN_ADVANCE_K2) / 100000.0d;
+		case ALEVEL_MAX_ZDELTA          :
+		    {
+			Point5d stepsPerMM = getMachine().getStepsPerMM();
+			int val = read32FromEEPROM(JettyMBEEPROM.ALEVEL_MAX_ZDELTA);
+			return (double)val / (double)stepsPerMM.z();
+		    }
 		default :
 			Base.logger.log(Level.WARNING, "getEEPROMParamFloat(" + param + ") call failed");
 			return 0d;
@@ -2361,6 +2368,7 @@ public class MightySailfish extends Makerbot4GAlternateDriver
 		case ACCEL_MAX_SPEED_CHANGE_Y   : write16ToEEPROM(MightySailfish6X2EEPROM.MAX_SPEED_CHANGE + 1*2, val); break;
 		case ACCEL_MAX_SPEED_CHANGE_Z   : write16ToEEPROM(MightySailfish6X2EEPROM.MAX_SPEED_CHANGE + 2*2, val); break;
 		case ACCEL_SLOWDOWN_FLAG        : setUInt8EEPROM(MightySailfish6X2EEPROM.SLOWDOWN_FLAG, (val != 0) ? 1 : 0); break;
+		case ALEVEL_MAX_ZPROBE_HITS     : setUInt8EEPROM(JettyMBEEPROM.ALEVEL_MAX_ZPROBE_HITS, val); break;
 		case PREHEAT_DURING_PAUSE       : setUInt8EEPROM(JettyMBEEPROM.HEAT_DURING_PAUSE, (val != 0) ? 1 : 0); break;
 		case OVERRIDE_GCODE_TEMP        : setUInt8EEPROM(JettyMBEEPROM.OVERRIDE_GCODE_TEMP, (val != 0) ? 1 : 0); break;
 		case EXTRUDER_HOLD              : setUInt8EEPROM(JettyMBEEPROM.EXTRUDER_HOLD, (val != 0) ? 1 : 0); break;
@@ -2397,6 +2405,13 @@ public class MightySailfish extends Makerbot4GAlternateDriver
 		switch (param) {
 		case ACCEL_ADVANCE_K            : setUInt32EEPROM(MightySailfish6X2EEPROM.JKN_ADVANCE_K, (long)(val * 100000.0d)); break;
 		case ACCEL_ADVANCE_K2           : setUInt32EEPROM(MightySailfish6X2EEPROM.JKN_ADVANCE_K2, (long)(val * 100000.0d)); break;
+		case ALEVEL_MAX_ZDELTA          :
+		    {
+			Point5d stepsPerMM = getMachine().getStepsPerMM();
+			int ival = (int)(val * (double)stepsPerMM.z());
+			write32ToEEPROM32(JettyMBEEPROM.ALEVEL_MAX_ZDELTA, ival);
+			break;
+		    }
 		default : Base.logger.log(Level.WARNING, "setEEPROMParam(" + param + ", " + val + ") call failed"); break;
 		}
 	}

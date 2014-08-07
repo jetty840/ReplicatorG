@@ -648,6 +648,19 @@
 		 return textField;
 	 }
 
+     private static final JFormattedTextField PositiveTextFieldDoubleMax(NumberFormat nf, double max, String tip)
+	 {
+		 JFormattedTextField textField = new JFormattedTextField(nf);
+		 Object fmtr = textField.getFormatter();
+		 if (fmtr instanceof InternationalFormatter) {
+			 InternationalFormatter ifr = (InternationalFormatter)fmtr;
+			 ifr.setMinimum(new Double(0d));
+			 ifr.setMaximum(new Double(max));
+		 }
+                 if (tip != null) textField.setToolTipText(wrap2HTML(defaultToolTipWidth, tip));
+		 return textField;
+	 }
+
 	 // JFormattedTextField which disallows negative values and no upper limit on positive values
 
 	 private static final JFormattedTextField PositiveTextFieldInt(NumberFormat nf, String tip)
@@ -1038,7 +1051,7 @@
 	    "accelerations.");
 
 		 // Advance K1 & K2: nn.nnnnn
-		 private NumberFormat kNF = NumberFormat.getNumberInstance();
+	         private NumberFormat kNF = NumberFormat.getNumberInstance();
 		 {
 			 kNF.setMaximumFractionDigits(5);
 			 kNF.setMaximumIntegerDigits(2);   // Even 1 may be excessive
@@ -1414,45 +1427,52 @@
 
 		 // Accel Parameters of Tab 2
 		 class AccelParamsTab2 {
-			 boolean slowdownEnabled;
-		         boolean deprimeTravel;
-			 boolean overrideGCodeTempEnabled;
-			 boolean preheatDuringPauseEnabled;
-			 boolean extruderHold;
-		         boolean checkCRC;
-			 int[] deprime;
-			 double[] JKNadvance;
+		     boolean slowdownEnabled;
+		     boolean deprimeTravel;
+		     boolean overrideGCodeTempEnabled;
+		     boolean preheatDuringPauseEnabled;
+		     boolean extruderHold;
+		     boolean checkCRC;
+		     double alevelMaxZDiff;
+		     int alevelMaxZProbeHits;
+		     int[] deprime;
+		     double[] JKNadvance;
+		     
 
-			 AccelParamsTab2(boolean slowdownEnabled,
-					 boolean deprimeTravel,
-					 boolean overrideGCodeTempEnabled,
-					 boolean preheatDuringPauseEnabled,
-					 boolean extruderHold,
-					 boolean checkCRC,
-					 int[] deprime,
-					 double[] JKNadvance)
-			 {
-				 this.slowdownEnabled           = slowdownEnabled;
-				 this.deprimeTravel             = deprimeTravel;
-				 this.overrideGCodeTempEnabled  = overrideGCodeTempEnabled;
-				 this.preheatDuringPauseEnabled = preheatDuringPauseEnabled;
-				 this.extruderHold              = extruderHold;
-				 this.checkCRC                  = checkCRC;
-				 this.deprime                   = deprime;
-				 this.JKNadvance                = JKNadvance;
-			 }
+		     AccelParamsTab2(boolean slowdownEnabled,
+				     boolean deprimeTravel,
+				     boolean overrideGCodeTempEnabled,
+				     boolean preheatDuringPauseEnabled,
+				     boolean extruderHold,
+				     boolean checkCRC,
+				     double alevelMaxZDiff,
+				     int alevelMaxZProbeHits,
+				     int[] deprime,
+				     double[] JKNadvance)
+		     {
+			 this.slowdownEnabled           = slowdownEnabled;
+			 this.deprimeTravel             = deprimeTravel;
+			 this.overrideGCodeTempEnabled  = overrideGCodeTempEnabled;
+			 this.preheatDuringPauseEnabled = preheatDuringPauseEnabled;
+			 this.extruderHold              = extruderHold;
+			 this.checkCRC                  = checkCRC;
+			 this.alevelMaxZDiff            = (alevelMaxZDiff < 0.01) ? 0.01 : ((alevelMaxZDiff > 0.99) ? 0.99 : alevelMaxZDiff);
+			 this.alevelMaxZProbeHits       = (alevelMaxZProbeHits <= 0) ? 0 : ((alevelMaxZProbeHits > 200) ? 200 : alevelMaxZProbeHits);
+			 this.deprime                   = deprime;
+			 this.JKNadvance                = JKNadvance;
+		     }
 		 }
 
 		 private class AccelParams {
-			 public AccelParamsTab1 tab1;
-			 public AccelParamsTab2 tab2;
-			 public LEDParamsTab    tabLED;
-
-			 AccelParams(AccelParamsTab1 params1, AccelParamsTab2 params2, LEDParamsTab paramsLED) {
-				 this.tab1    = params1;
-				 this.tab2    = params2;
-				 this.tabLED  = paramsLED;
-			 }
+		     public AccelParamsTab1 tab1;
+		     public AccelParamsTab2 tab2;
+		     public LEDParamsTab    tabLED;
+		     
+		     AccelParams(AccelParamsTab1 params1, AccelParamsTab2 params2, LEDParamsTab paramsLED) {
+			 this.tab1    = params1;
+			 this.tab2    = params2;
+			 this.tabLED  = paramsLED;
+		     }
 		 }
 
 		 AccelParamsTab1 draftParams = new AccelParamsTab1(true,                                   // acceleration enabled
@@ -1464,12 +1484,12 @@
 								     new int[] {15, 15, 10, 20, 20});      // max speed changes x,y,z,a,b
 
 		 // Column width for formatting tool tip text
-		 final int width = defaultToolTipWidth;
+	         final int width = defaultToolTipWidth;
 
 		 // Many of the values stored in EEPROM for the replicator are uint16_t
 		 //   So, we want 0 < val < 0xffff
 
-		 private NumberFormat repNF = NumberFormat.getIntegerInstance();
+	         private NumberFormat repNF = NumberFormat.getIntegerInstance();
 
 		 private JCheckBox accelerationBox = new JCheckBox();
 		 {
@@ -1485,7 +1505,7 @@
             "a tendency to back out a tiny amount owing to the high pressure within the melt chamber of a 3mm extruder."));
 		 }
 
-		 private JCheckBox checkCRCBox = new JCheckBox();
+	         private JCheckBox checkCRCBox = new JCheckBox();
 		 {
 			 checkCRCBox.setToolTipText(wrap2HTML(width,
             "Your SD cards contain a tiny computer which talks with the computer within your bot.  Electrical noise within " +
@@ -1529,7 +1549,7 @@
 	   "The maximum acceleration and deceleration along the Z axis in units of mm/s\u00B2.  " +
 	   "I.e., the maximum magnitude of the component of the acceleration vector along the Z axis.");
 
-		 private JFormattedTextField aAxisMaxAcceleration = PositiveTextFieldInt(repNF, 10000,
+	         private JFormattedTextField aAxisMaxAcceleration = PositiveTextFieldInt(repNF, 10000,
 	   "The maximum acceleration and deceleration experienced by the right extruder in units of mm/s\u00B2.  " +
 	   "I.e., the maximum magnitude of the component of the acceleration vector along the right extruder's filament axis.");
 
@@ -1595,6 +1615,23 @@
            "resumes.  If you will be using retraction/deprime with your slicer, then leave this box unchecked.  " +
            "To entirely disable firmware deprime, set the deprime values to be zero."));
 		 }
+
+	         private NumberFormat alevelNF = NumberFormat.getNumberInstance();
+	         { 
+		     alevelNF.setMaximumFractionDigits(2);
+		     alevelNF.setMaximumIntegerDigits(1);
+		 }
+
+	         private JFormattedTextField alevelMaxZDiff = PositiveTextFieldDoubleMax(alevelNF, 0.99,
+           "The maximum vertical difference in height between any two probed leveling points may not exceed this value. " +
+	   "Specify the value in units of millimeters.  The default value is 0.50 mm and may range from 0.01 to 0.99 mm. " +
+           "Only applicable on bots with firmware-based auto-leveling.");
+
+	         private JFormattedTextField alevelMaxZProbeHits = PositiveTextFieldInt(repNF, 200,
+           "If the auto-leveling probe registers too many hits during a print, then the bot will pause printing " +
+           "and request manual intervention.  To ignore probe hits while printing, specify a value of 0.  Otherwise " +
+           "specify the maximum number of probe hits to allow before pausing.  The default value is 20.  Enter a value " +
+           " between 1 and 200; 0 to disable.  Only applicable on bots with firmware-based auto-leveling.");
 
        		 private JFormattedTextField extruderDeprimeA = PositiveTextFieldInt(repNF, 10000,
            "The number of steps to retract the right extruder's filament when the pipeline of buffered moves empties, " +
@@ -1702,6 +1739,8 @@
 								    preheatDuringPauseBox.isSelected(),
 								    extruderHoldBox.isSelected(),
 								    checkCRCBox.isSelected(),
+								    ((Number)alevelMaxZDiff.getValue()).doubleValue(),
+								    ((Number)alevelMaxZProbeHits.getValue()).intValue(),
 								    new int[] {((Number)extruderDeprimeA.getValue()).intValue(),
 									       ((Number)extruderDeprimeB.getValue()).intValue()},
 								    new double[] {((Number)JKNAdvance1.getValue()).doubleValue(),
@@ -1750,6 +1789,9 @@
 			 target.setEEPROMParam(OnboardParameters.EEPROMParams.MOOD_LIGHT_CUSTOM_RED,   params.tabLED.red);
 			 target.setEEPROMParam(OnboardParameters.EEPROMParams.MOOD_LIGHT_CUSTOM_GREEN, params.tabLED.green);
 			 target.setEEPROMParam(OnboardParameters.EEPROMParams.MOOD_LIGHT_CUSTOM_BLUE,  params.tabLED.blue);
+
+			 target.setEEPROMParam(OnboardParameters.EEPROMParams.ALEVEL_MAX_ZDELTA,       params.tab2.alevelMaxZDiff);
+			 target.setEEPROMParam(OnboardParameters.EEPROMParams.ALEVEL_MAX_ZPROBE_HITS,  params.tab2.alevelMaxZProbeHits);
 		 }
 
 		 @Override
@@ -1768,6 +1810,8 @@
 				     false,
 				     params.maxAccelerations,
 				     params.maxSpeedChanges,
+				     0.0,
+				     0,
 				     null,
 				     null,
 				     0,
@@ -1787,6 +1831,8 @@
 					  boolean checkCRC,
 					  int[] maxAccelerations,
 					  int[] maxSpeedChanges,
+					  double maxZDiff,
+					  int maxZProbeHits,
 					  double[] JKNadvance,
 					  int[] deprime,
 			                  int colorChoice,
@@ -1822,6 +1868,8 @@
 				 preheatDuringPauseBox.setSelected(preheatDuringPauseEnabled);
 				 extruderHoldBox.setSelected(extruderHoldEnabled);
 				 checkCRCBox.setSelected(checkCRC);
+				 alevelMaxZProbeHits.setValue(maxZProbeHits);
+				 alevelMaxZDiff.setValue(maxZDiff);
 
 				 if (JKNadvance != null) {
 					 JKNAdvance1.setValue(JKNadvance[0]);
@@ -1883,10 +1931,13 @@
 			 int green = target.getEEPROMParamInt(OnboardParameters.EEPROMParams.MOOD_LIGHT_CUSTOM_GREEN);
 			 int blue = target.getEEPROMParamInt(OnboardParameters.EEPROMParams.MOOD_LIGHT_CUSTOM_BLUE);
 
+			 int maxZProbeHits = target.getEEPROMParamInt(OnboardParameters.EEPROMParams.ALEVEL_MAX_ZPROBE_HITS);
+			 double maxZDiff = target.getEEPROMParamFloat(OnboardParameters.EEPROMParams.ALEVEL_MAX_ZPROBE_HITS);
+
 			 setUIFields(UI_TAB_1 | UI_TAB_2 | UI_TAB_LED, accelerationEnabled, slowdownEnabled, deprimeTravel,
 				     overrideGCodeTempEnabled, preheatDuringPauseEnabled, extruderHoldEnabled,
-				     checkCRC, maxAccelerations, maxSpeedChanges, JKNadvance, deprime,
-				     colorChoice, showHeating, red, green, blue);
+				     checkCRC, maxAccelerations, maxSpeedChanges, maxZDiff, maxZProbeHits,
+				     JKNadvance, deprime, colorChoice, showHeating, red, green, blue);
 		 }
 
 		 @Override
@@ -1953,16 +2004,18 @@
 			 extruderDeprimeA.setColumns(8);
 			 extruderDeprimeB.setColumns(8);
 
-			 addWithSharedToolTips(accelerationMiscTab, "Enable SD card error checking", checkCRCBox, "wrap");
 			 addWithSharedToolTips(accelerationMiscTab, "Slow printing when acceleration planing falls behind", slowdownFlagBox, "wrap");
 			 addWithSharedToolTips(accelerationMiscTab, "Override the target temperatures in the gcode", overrideGCodeTempBox, "wrap");
 			 addWithSharedToolTips(accelerationMiscTab, "Preheat during paused operations", preheatDuringPauseBox, "wrap");
-			 addWithSharedToolTips(accelerationMiscTab, "Extruder hold enabled", extruderHoldBox, "wrap");
 			 addWithSharedToolTips(accelerationMiscTab, "JKN Advance K", JKNAdvance1, "wrap");
 			 addWithSharedToolTips(accelerationMiscTab, "JKN Advance K2", JKNAdvance2, "wrap");
 			 addWithSharedToolTips(accelerationMiscTab, "Deprime on travel moves", extruderDeprimeTravel, "wrap");
 			 addWithSharedToolTips(accelerationMiscTab, "Right extruder deprime (steps)", extruderDeprimeA, "wrap");
 			 addWithSharedToolTips(accelerationMiscTab, "Left extruder deprime (steps)", extruderDeprimeB, "wrap");
+			 addWithSharedToolTips(accelerationMiscTab, "Enable SD card error checking", checkCRCBox, "wrap");
+			 addWithSharedToolTips(accelerationMiscTab, "Extruder hold enabled", extruderHoldBox, "wrap");
+			 addWithSharedToolTips(accelerationMiscTab, "Auto-level max Z probe hits", alevelMaxZProbeHits, "wrap");
+			 addWithSharedToolTips(accelerationMiscTab, "Auto-level max Z height difference", alevelMaxZDiff, "wrap");
 
 			 // LED Lighting
 			 addWithSharedToolTips(LEDTab, "Show heating progress by changing the lighting color", moodLightShowHeatingBox, "wrap");
@@ -2671,6 +2724,8 @@
 
 		 // Sailfish Firmware specific acceleration parameters
 
+	         // ?????
+
 		 // Accel Parameters of Tab 1
 		 class AccelParamsTab1 {
 
@@ -2691,50 +2746,56 @@
 		 // Accel Parameters of Tab 2
 		 class AccelParamsTab2 {
 
-			 boolean slowdownEnabled;
-		         boolean deprimeTravel;
-			 long[] deprime;
-			 double[] JKNadvance;
-
-			 AccelParamsTab2(boolean slowdownEnabled,
-					 boolean deprimeTravel,
-					 long[] deprime,
-					 double[] JKNadvance)
-			 {
-				 this.slowdownEnabled           = slowdownEnabled;
-				 this.deprimeTravel             = deprimeTravel;
-				 this.deprime                   = deprime;
-				 this.JKNadvance                = JKNadvance;
-			 }
+		     boolean slowdownEnabled;
+		     boolean deprimeTravel;
+		     long[] deprime;
+		     double[] JKNadvance;
+     
+		     AccelParamsTab2(boolean slowdownEnabled,
+				     boolean deprimeTravel,
+				     long[] deprime,
+				     double[] JKNadvance)
+		     {
+			 this.slowdownEnabled           = slowdownEnabled;
+			 this.deprimeTravel             = deprimeTravel;
+			 this.deprime                   = deprime;
+			 this.JKNadvance                = JKNadvance;
+		     }
 		 }
 
 		 // Accel Parameters of Tab 3
 		 class AccelParamsTab3 {
 
-			 boolean overrideGCodeTempEnabled;
-			 boolean dittoEnabled;
-			 boolean extruderHold;
-		         boolean checkCRC;
-			 int buzzerRepeats;
-			 int lcdType;
-			 int scriptId;
-			 int [] rgb;
-			 int [] overrideTemps;
+		     boolean overrideGCodeTempEnabled;
+		     boolean dittoEnabled;
+		     boolean extruderHold;
+		     boolean checkCRC;
+		     double alevelMaxZDiff;
+		     int alevelMaxZProbeHits;
+		     int buzzerRepeats;
+		     int lcdType;
+		     int scriptId;
+		     int [] rgb;
+		     int [] overrideTemps;
 
-			 AccelParamsTab3(boolean overrideGCodeTempEnabled,
-					 boolean dittoEnabled,
-					 boolean extruderHold,
-					 boolean checkCRC,
-					 int buzzerRepeats,
-					 int lcdType,
-					 int scriptId,
-					 int [] rgb,
-					 int [] overrideTemps)
+		     AccelParamsTab3(boolean overrideGCodeTempEnabled,
+				     boolean dittoEnabled,
+				     boolean extruderHold,
+				     boolean checkCRC,
+				     double alevelMaxZDiff,
+				     int alevelMaxZProbeHits,
+				     int buzzerRepeats,
+				     int lcdType,
+				     int scriptId,
+				     int [] rgb,
+				     int [] overrideTemps)
 			 {
 				 this.overrideGCodeTempEnabled = overrideGCodeTempEnabled;
 				 this.dittoEnabled             = dittoEnabled;
 				 this.extruderHold             = extruderHold;
 				 this.checkCRC                 = checkCRC;
+				 this.alevelMaxZDiff           = (alevelMaxZDiff < 0.01) ? 0.01 : ((alevelMaxZDiff > 0.99) ? 0.99 : alevelMaxZDiff);
+				 this.alevelMaxZProbeHits      = (alevelMaxZProbeHits <= 0) ? 0 : ((alevelMaxZProbeHits > 200) ? 200 : alevelMaxZProbeHits);
 				 this.buzzerRepeats            = buzzerRepeats;
 				 this.lcdType                  = lcdType;
 				 this.scriptId                 = scriptId;
@@ -2948,6 +3009,23 @@
            "this parameter range from around 0.001 to 0.1.  Set to a value of 0 to disable use of this " +
            "compensation.");
 
+	         private NumberFormat alevelNF = NumberFormat.getNumberInstance();
+	         { 
+		     alevelNF.setMaximumFractionDigits(2);
+		     alevelNF.setMaximumIntegerDigits(1);
+		 }
+
+	         private JFormattedTextField alevelMaxZDiff = PositiveTextFieldDoubleMax(alevelNF, 0.99,
+           "The maximum vertical difference in height between any two probed leveling points may not exceed this value. " +
+	   "Specify the value in units of millimeters.  The default value is 0.50 mm and may range from 0.01 to 0.99 mm. " +
+           "Only applicable on bots with firmware-based auto-leveling.");
+
+	         private JFormattedTextField alevelMaxZProbeHits = PositiveTextFieldInt(repNF, 200,
+           "If the auto-leveling probe registers too many hits during a print, then the bot will pause printing " +
+           "and request manual intervention.  To ignore probe hits while printing, specify a value of 0.  Otherwise " +
+           "specify the maximum number of probe hits to allow before pausing.  The default value is 20.  Enter a value " +
+           " between 1 and 200; 0 to disable.  Only applicable on bots with firmware-based auto-leveling.");
+
 		 private JCheckBox extruderDeprimeTravel = new JCheckBox();
 		 {
 			 extruderDeprimeTravel.setToolTipText(wrap2HTML(width,
@@ -3092,6 +3170,8 @@
 								    dittoBox.isSelected(),
 								    extruderHoldBox.isSelected(),
 								    checkCRCBox.isSelected(),
+								    ((Number)alevelMaxZDiff.getValue()).doubleValue(),
+								    ((Number)alevelMaxZProbeHits.getValue()).intValue(),
 								    ((Number)buzzerRepeats.getValue()).intValue(),
 								    lcdType,
 								    scriptId,
@@ -3148,6 +3228,9 @@
 			 target.setEEPROMParam(OnboardParameters.EEPROMParams.MOOD_LIGHT_CUSTOM_RED,   params.tab3.rgb[0]);
 			 target.setEEPROMParam(OnboardParameters.EEPROMParams.MOOD_LIGHT_CUSTOM_GREEN, params.tab3.rgb[1]);
 			 target.setEEPROMParam(OnboardParameters.EEPROMParams.MOOD_LIGHT_CUSTOM_BLUE,  params.tab3.rgb[2]);
+
+			 target.setEEPROMParam(OnboardParameters.EEPROMParams.ALEVEL_MAX_ZDELTA,       params.tab3.alevelMaxZDiff);
+			 target.setEEPROMParam(OnboardParameters.EEPROMParams.ALEVEL_MAX_ZPROBE_HITS,  params.tab3.alevelMaxZProbeHits);
 		 }
 
 		 @Override
@@ -3202,6 +3285,8 @@
 				 dittoBox.setSelected(tab3.dittoEnabled);
 				 extruderHoldBox.setSelected(tab3.extruderHold);
 				 checkCRCBox.setSelected(tab3.checkCRC);
+				 alevelMaxZProbeHits.setValue(tab3.alevelMaxZProbeHits);
+				 alevelMaxZDiff.setValue(tab3.alevelMaxZDiff);
 				 buzzerRepeats.setValue(tab3.buzzerRepeats);
 				 int lcdIndex;
 				 if (tab3.lcdType == 50)
@@ -3241,6 +3326,9 @@
 			 int buzzerRepeats = target.getEEPROMParamInt(OnboardParameters.EEPROMParams.BUZZER_REPEATS);
 			 int scriptId = target.getEEPROMParamInt(OnboardParameters.EEPROMParams.MOOD_LIGHT_SCRIPT);
 			 int lcdType = target.getEEPROMParamInt(OnboardParameters.EEPROMParams.LCD_TYPE);
+
+			 int maxZProbeHits = target.getEEPROMParamInt(OnboardParameters.EEPROMParams.ALEVEL_MAX_ZPROBE_HITS);
+			 double maxZDiff = target.getEEPROMParamFloat(OnboardParameters.EEPROMParams.ALEVEL_MAX_ZPROBE_HITS);
 
 			 long[] maxAccelerations = new long[] {
 				 target.getEEPROMParamUInt(OnboardParameters.EEPROMParams.ACCEL_MAX_ACCELERATION_X),
@@ -3285,6 +3373,8 @@
 							 dittoEnabled,
 							 extruderHold,
 							 checkCRC,
+							 maxZDiff,
+							 maxZProbeHits,
 							 buzzerRepeats,
 							 lcdType,
 							 scriptId,
@@ -3382,6 +3472,9 @@
 
 			 addWithSharedToolTips(miscTab, "Platform preheat & override temperature (C)", platformTemp);
 			 addWithSharedToolTips(miscTab, "Ditto (duplicate) printing enabled", dittoBox, "wrap");
+
+			 addWithSharedToolTips(miscTab, "Auto-level max Z probe hits", alevelMaxZProbeHits, "wrap");
+			 addWithSharedToolTips(miscTab, "Auto-level max Z height difference", alevelMaxZDiff, "wrap");
 
 			 addWithSharedToolTips(miscTab, "Mood light script", moodLightScript, "wrap");
 			 addWithSharedToolTips(miscTab, "Mood light color",

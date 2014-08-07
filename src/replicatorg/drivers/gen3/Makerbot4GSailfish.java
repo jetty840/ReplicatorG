@@ -1038,6 +1038,7 @@ public class Makerbot4GSailfish extends Makerbot4GAlternateDriver
 		case ENDSTOP_Z_MIN              : return getUInt8EEPROM(SailfishEEPROM.ENDSTOP_Z_MIN);
 		case DEPRIME_ON_TRAVEL          : return getUInt8EEPROM(SailfishEEPROM.EXTRUDER_DEPRIME_ON_TRAVEL);
 		case CLEAR_FOR_ESTOP            : return getUInt8EEPROM(SailfishEEPROM.CLEAR_FOR_ESTOP);
+		case ALEVEL_MAX_ZPROBE_HITS     : return getUInt8EEPROM(SailfishEEPROM.ALEVEL_MAX_ZPROBE_HITS);
 		default				: return super.getEEPROMParamInt(param);
                 }
         }
@@ -1046,6 +1047,12 @@ public class Makerbot4GSailfish extends Makerbot4GAlternateDriver
 	public double getEEPROMParamFloat(EEPROMParams param) {
 		switch (param) {
 		case ACCEL_MAX_SPEED_CHANGE_B   : return (double)getUInt32EEPROM(SailfishEEPROM.ACCEL_MAX_SPEED_CHANGE_B) / 10.0d;
+		case ALEVEL_MAX_ZDELTA          :
+		    {
+			Point5d stepsPerMM = getMachine().getStepsPerMM();
+			int val = read32FromEEPROM(SailfishEEPROM.ALEVEL_MAX_ZDELTA);
+			return (double)val / (double)stepsPerMM.z();
+		    }
 		default				: return super.getEEPROMParamFloat(param);
 		}
 	}
@@ -1064,6 +1071,7 @@ public class Makerbot4GSailfish extends Makerbot4GAlternateDriver
 		case ENDSTOP_Z_MIN              : setUInt8EEPROM(SailfishEEPROM.ENDSTOP_Z_MIN, (val != 0) ? 1 : 0); break;
 		case DEPRIME_ON_TRAVEL          : setUInt8EEPROM(SailfishEEPROM.EXTRUDER_DEPRIME_ON_TRAVEL, (val != 0) ? 1 : 0); break;
 		case CLEAR_FOR_ESTOP            : setUInt8EEPROM(SailfishEEPROM.CLEAR_FOR_ESTOP, (val == 1) ? 1 : 0); break;
+		case ALEVEL_MAX_ZPROBE_HITS     : setUInt8EEPROM(SailfishEEPROM.ALEVEL_MAX_ZPROBE_HITS, val); break;
 		default				: super.setEEPROMParam(param, val); break;
 		}
 	}
@@ -1086,6 +1094,13 @@ public class Makerbot4GSailfish extends Makerbot4GAlternateDriver
 			val = 0.0d;
 		switch (param) {
 		case ACCEL_MAX_SPEED_CHANGE_B   : setUInt32EEPROM(SailfishEEPROM.ACCEL_MAX_SPEED_CHANGE_B, (long)(val * 10.0d)); break;
+		case ALEVEL_MAX_ZDELTA          :
+		    {
+			Point5d stepsPerMM = getMachine().getStepsPerMM();
+			int ival = (int)(val * (double)stepsPerMM.z());
+			write32ToEEPROM32(SailfishEEPROM.ALEVEL_MAX_ZDELTA, ival);
+			break;
+		    }
 		default				: super.setEEPROMParam(param, val); break;
 		}
 	}
