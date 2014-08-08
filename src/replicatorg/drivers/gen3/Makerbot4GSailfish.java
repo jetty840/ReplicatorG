@@ -1051,6 +1051,8 @@ public class Makerbot4GSailfish extends Makerbot4GAlternateDriver
 		    {
 			Point5d stepsPerMM = getMachine().getStepsPerMM();
 			int val = read32FromEEPROM(SailfishEEPROM.ALEVEL_MAX_ZDELTA);
+			double v = (double)val / (double)stepsPerMM.z();
+			Base.logger.severe("EEPROM -> val = " + val + "; stepsPerMM.z() = " + stepsPerMM.z() + "; value = " + v);
 			return (double)val / (double)stepsPerMM.z();
 		    }
 		default				: return super.getEEPROMParamFloat(param);
@@ -1098,6 +1100,7 @@ public class Makerbot4GSailfish extends Makerbot4GAlternateDriver
 		    {
 			Point5d stepsPerMM = getMachine().getStepsPerMM();
 			int ival = (int)(val * (double)stepsPerMM.z());
+			Base.logger.severe("EEPROM <- ival = " + ival + "; stepsPerMM.z() = " + stepsPerMM.z() + "; val = " + val);
 			write32ToEEPROM32(SailfishEEPROM.ALEVEL_MAX_ZDELTA, ival);
 			break;
 		    }

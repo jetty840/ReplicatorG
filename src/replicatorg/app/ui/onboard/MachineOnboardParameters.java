@@ -1932,7 +1932,7 @@
 			 int blue = target.getEEPROMParamInt(OnboardParameters.EEPROMParams.MOOD_LIGHT_CUSTOM_BLUE);
 
 			 int maxZProbeHits = target.getEEPROMParamInt(OnboardParameters.EEPROMParams.ALEVEL_MAX_ZPROBE_HITS);
-			 double maxZDiff = target.getEEPROMParamFloat(OnboardParameters.EEPROMParams.ALEVEL_MAX_ZPROBE_HITS);
+			 double maxZDiff = target.getEEPROMParamFloat(OnboardParameters.EEPROMParams.ALEVEL_MAX_ZDELTA);
 
 			 setUIFields(UI_TAB_1 | UI_TAB_2 | UI_TAB_LED, accelerationEnabled, slowdownEnabled, deprimeTravel,
 				     overrideGCodeTempEnabled, preheatDuringPauseEnabled, extruderHoldEnabled,
@@ -2003,6 +2003,9 @@
 
 			 extruderDeprimeA.setColumns(8);
 			 extruderDeprimeB.setColumns(8);
+
+			 alevelMaxZDiff.setColumns(8);
+			 alevelMaxZProbeHits.setColumns(8);
 
 			 addWithSharedToolTips(accelerationMiscTab, "Slow printing when acceleration planing falls behind", slowdownFlagBox, "wrap");
 			 addWithSharedToolTips(accelerationMiscTab, "Override the target temperatures in the gcode", overrideGCodeTempBox, "wrap");
@@ -3328,7 +3331,7 @@
 			 int lcdType = target.getEEPROMParamInt(OnboardParameters.EEPROMParams.LCD_TYPE);
 
 			 int maxZProbeHits = target.getEEPROMParamInt(OnboardParameters.EEPROMParams.ALEVEL_MAX_ZPROBE_HITS);
-			 double maxZDiff = target.getEEPROMParamFloat(OnboardParameters.EEPROMParams.ALEVEL_MAX_ZPROBE_HITS);
+			 double maxZDiff = target.getEEPROMParamFloat(OnboardParameters.EEPROMParams.ALEVEL_MAX_ZDELTA);
 
 			 long[] maxAccelerations = new long[] {
 				 target.getEEPROMParamUInt(OnboardParameters.EEPROMParams.ACCEL_MAX_ACCELERATION_X),
@@ -3436,7 +3439,7 @@
 					       bAxisMaxSpeedChange, "wrap");
 
 			 accelerationTab.add(qualityButton, "span 2, gapleft push");
-			 accelerationTab.add(draftButton, "span 2, gapright push");
+			 accelerationTab.add(draftButton, "span 2, gapright push, gapbottom push");
 
 			 // Acceleration - Misc
 
@@ -3446,12 +3449,15 @@
 			 extruderDeprimeA.setColumns(8);
 			 extruderDeprimeB.setColumns(8);
 
+			 alevelMaxZDiff.setColumns(8);
+			 alevelMaxZProbeHits.setColumns(8);
+
 			 addWithSharedToolTips(accelerationMiscTab, "Slow printing when acceleration planing falls behind", slowdownFlagBox, "wrap");
 			 addWithSharedToolTips(accelerationMiscTab, "JKN Advance K", JKNAdvance1, "wrap");
 			 addWithSharedToolTips(accelerationMiscTab, "JKN Advance K2", JKNAdvance2, "wrap");
 			 addWithSharedToolTips(accelerationMiscTab, "Deprime on travel moves", extruderDeprimeTravel, "wrap");
 			 addWithSharedToolTips(accelerationMiscTab, "Right extruder deprime (steps)", extruderDeprimeA, "wrap");
-			 addWithSharedToolTips(accelerationMiscTab, "Left extruder deprime (steps)", extruderDeprimeB, "wrap");
+			 addWithSharedToolTips(accelerationMiscTab, "Left extruder deprime (steps)", extruderDeprimeB, "wrap, gapbottom push");
 
 			 // Misc tab
 			 tool0Temp.setColumns(8);
@@ -3459,24 +3465,23 @@
 			 platformTemp.setColumns(8);
 			 buzzerRepeats.setColumns(8);
 
-			 addWithSharedToolTips(miscTab, "Extruder hold enabled", extruderHoldBox, "wrap");
-
 			 addWithSharedToolTips(miscTab, "Override gcode temperatures", overrideGCodeTempBox);
 			 addWithSharedToolTips(miscTab, "Gen 4 LCD dimensions", lcdDimensionsChoice, "wrap");
 
-			 addWithSharedToolTips(miscTab, "Right/sole extruder (tool 0) preheat & override temperature (C)", tool0Temp);
+			 addWithSharedToolTips(miscTab, "Right/sole extruder preheat & override temperature (C)", tool0Temp);
 			 addWithSharedToolTips(miscTab, "Buzzer repeats", buzzerRepeats, "wrap");
 
-			 addWithSharedToolTips(miscTab, "Left extruder (tool 1) preheat & override temperature (C)", tool1Temp);
+			 addWithSharedToolTips(miscTab, "Left extruder preheat & override temperature (C)", tool1Temp);
 			 addWithSharedToolTips(miscTab, "Check SD card reads", checkCRCBox, "wrap");
 
 			 addWithSharedToolTips(miscTab, "Platform preheat & override temperature (C)", platformTemp);
 			 addWithSharedToolTips(miscTab, "Ditto (duplicate) printing enabled", dittoBox, "wrap");
 
-			 addWithSharedToolTips(miscTab, "Auto-level max Z probe hits", alevelMaxZProbeHits, "wrap");
-			 addWithSharedToolTips(miscTab, "Auto-level max Z height difference", alevelMaxZDiff, "wrap");
-
+			 addWithSharedToolTips(miscTab, "Auto-level max Z probe hits", alevelMaxZProbeHits);
+			 addWithSharedToolTips(miscTab, "Extruder hold enabled", extruderHoldBox, "wrap");
+			 addWithSharedToolTips(miscTab, "Auto-level max Z height difference", alevelMaxZDiff);
 			 addWithSharedToolTips(miscTab, "Mood light script", moodLightScript, "wrap");
+
 			 addWithSharedToolTips(miscTab, "Mood light color",
 					       moodLightCustomColor, "span 4, wrap, gapbottom push, gapright push");
 		 }
