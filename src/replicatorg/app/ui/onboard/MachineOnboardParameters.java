@@ -70,7 +70,15 @@
 		 "Active low emergency stop (custom solution)"
 	 };
 	 private JComboBox estopSelection = new JComboBox(estopChoices);
-	 private static final int MAX_NAME_LENGTH = 16;
+
+         // MakerBot forgot their own standard in MakerBot Desktop and now
+         // Desktop chokes and dies when it sees a machine name of length 16 bytes.
+         // Spec actually allowed a name to be 16 bytes long with no NUL terminator.
+         // A NUL terminator was only needed if the length was less than 16 bytes.
+         // As of MakerBot Desktop, they changed (broke) things such that if a
+         // 16 byte long string with no NUL is encountered, then Desktop cannot
+         // connect to the bot over USB.
+	 private static final int MAX_NAME_LENGTH = 15;
 
 	 private boolean disconnectNeededOnExit = false; ///
 
