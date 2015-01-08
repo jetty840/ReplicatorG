@@ -13,6 +13,10 @@ import java.net.URLConnection;
 import java.net.UnknownHostException;
 import java.util.logging.Level;
 
+import java.net.*;
+import java.net.CookieHandler;
+import java.net.CookieManager;
+
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
@@ -30,6 +34,7 @@ import replicatorg.app.Base;
 class FirmwareRetriever {
 	File firmwareXml;
 	URL firmwareSourceURL;
+        String cookie = null;
 
 	public FirmwareRetriever(File firmwareXml, URL firmwareSourceURL) {
 		this.firmwareXml = firmwareXml;
@@ -37,10 +42,11 @@ class FirmwareRetriever {
 	}
 
 	public enum UpdateStatus {
-		NETWORK_UNAVAILABLE,
+	    NETWORK_UNAVAILABLE,
 		NO_NEW_UPDATES,
 		NEW_UPDATES,
-		RO_FILESYSTEM // Can't save the downloaded firmware because running in a read-only filesystem.
+		RO_FILESYSTEM, // Can't save the downloaded firmware because running in a read-only filesystem.
+		TRY_AGAIN
 	}
 
 	/// Use a 10-second timeout when checking
@@ -54,6 +60,9 @@ class FirmwareRetriever {
 		UpdateStatus status;
 		synchronized(getClass()) {
 			status = updateURL(firmwareSourceURL,firmwareXml,true);
+			if (status == UpdateStatus.TRY_AGAIN)
+			    // Try again with a cookie
+			    status = updateURL(firmwareSourceURL,firmwareXml,true);
 			if (status == UpdateStatus.NEW_UPDATES) {
 				// Pull down any new firmware that we haven't seen before.
 				retrieveNewFirmware();
@@ -82,7 +91,19 @@ class FirmwareRetriever {
 			}
 		}
 		try {
-			URLConnection urlConnection = url.openConnection();
+		    CookieManager manager = new CookieManager();
+		    manager.setCookiePolicy(CookiePolicy.ACCEPT_ALL);
+		    CookieHandler.setDefault(manager);
+
+		    Base.logger.info("***Checking URL");
+
+		    URLConnection urlConnection = url.openConnection();
+		    urlConnection.setRequestProperty("User-Agent",
+						     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.9; rv:28.0) Gecko/20100101 Firefox/28.0");
+		    if (cookie != null) {
+			// Base.logger.info("Using cookie: " + cookie);
+			urlConnection.setRequestProperty("Cookie", cookie);
+		    }
 
 			// If this is an HTTP url, check if it has been updated (otherwise, we always assume it has been updated)
 			if ((urlConnection instanceof HttpURLConnection)) {
@@ -94,16 +115,29 @@ class FirmwareRetriever {
 					int rc = ((HttpURLConnection)connection).getResponseCode();
 					if ((rc == HttpURLConnection.HTTP_NOT_MODIFIED) ||
 						(connection.getIfModifiedSince() > connection.getLastModified())) {
-						return UpdateStatus.NO_NEW_UPDATES;
+					    return UpdateStatus.NO_NEW_UPDATES;
+					}
+					if (rc == HttpURLConnection.HTTP_FORBIDDEN) {
+					    // Check for a set-cookie request
+					    cookie = urlConnection.getHeaderField("Set-Cookie");
+					    if (cookie != null) {
+						cookie = cookie.substring(0, cookie.indexOf(";"));
+						HttpURLConnection conn = (HttpURLConnection)urlConnection;
+						conn.disconnect();
+						return UpdateStatus.TRY_AGAIN;
+					    }
 					}
 					if (rc != HttpURLConnection.HTTP_OK) {
-						// Do not attempt to pull down the file if the connection failed.
-						return UpdateStatus.NETWORK_UNAVAILABLE;
+					    // Do not attempt to pull down the file if the connection failed.
+					    return UpdateStatus.NETWORK_UNAVAILABLE;
 					}
 				}
 			}
 
+
+
 			// Pull down the file.  The content should be an input stream.
+
 			InputStream content = (InputStream)urlConnection.getContent();
 			FileOutputStream out = new FileOutputStream(file);
 			// Welcome to 1994!  Seriously, there's no standard util for this?  Lame.
