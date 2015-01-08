@@ -95,7 +95,7 @@ class FirmwareRetriever {
 		    manager.setCookiePolicy(CookiePolicy.ACCEPT_ALL);
 		    CookieHandler.setDefault(manager);
 
-		    Base.logger.info("***Checking URL");
+		    // Base.logger.info("***Checking URL");
 
 		    URLConnection urlConnection = url.openConnection();
 		    urlConnection.setRequestProperty("User-Agent",
@@ -124,11 +124,13 @@ class FirmwareRetriever {
 						cookie = cookie.substring(0, cookie.indexOf(";"));
 						HttpURLConnection conn = (HttpURLConnection)urlConnection;
 						conn.disconnect();
+						// Base.logger.info("Got cookie: " + cookie);
 						return UpdateStatus.TRY_AGAIN;
 					    }
 					}
 					if (rc != HttpURLConnection.HTTP_OK) {
 					    // Do not attempt to pull down the file if the connection failed.
+					    // Base.logger.info("Network error " + rc);
 					    return UpdateStatus.NETWORK_UNAVAILABLE;
 					}
 				}
