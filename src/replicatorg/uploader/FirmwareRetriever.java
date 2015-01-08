@@ -35,6 +35,7 @@ class FirmwareRetriever {
 	File firmwareXml;
 	URL firmwareSourceURL;
         String cookie = null;
+        int aggro = 0;
 
 	public FirmwareRetriever(File firmwareXml, URL firmwareSourceURL) {
 		this.firmwareXml = firmwareXml;
@@ -58,6 +59,7 @@ class FirmwareRetriever {
 	UpdateStatus checkForUpdates() {
 		//System.err.println("PATH : "+ firmwareSourceURL.getPath());
 		UpdateStatus status;
+		aggro = 0;
 		synchronized(getClass()) {
 			status = updateURL(firmwareSourceURL,firmwareXml,true);
 			if (status == UpdateStatus.TRY_AGAIN)
@@ -117,7 +119,10 @@ class FirmwareRetriever {
 						(connection.getIfModifiedSince() > connection.getLastModified())) {
 					    return UpdateStatus.NO_NEW_UPDATES;
 					}
-					if (rc == HttpURLConnection.HTTP_FORBIDDEN) {
+					// Use aggravation counter to prevent looping over and over
+					//   here, being told a cookie to set, using it, and still
+					//   getting a forbidden error.
+					if (rc == HttpURLConnection.HTTP_FORBIDDEN && ++aggro <= 5) {
 					    // Check for a set-cookie request
 					    cookie = urlConnection.getHeaderField("Set-Cookie");
 					    if (cookie != null) {
@@ -136,8 +141,6 @@ class FirmwareRetriever {
 				}
 			}
 
-
-
 			// Pull down the file.  The content should be an input stream.
 
 			InputStream content = (InputStream)urlConnection.getContent();
@@ -155,6 +158,7 @@ class FirmwareRetriever {
 			out.close();
 			content.close();
 			Base.logger.info(Integer.toString(bytesWritten) + " bytes written to "+file.getCanonicalPath());
+			aggro = 0;  // reset aggravation counter
 			return UpdateStatus.NEW_UPDATES;
 		} catch (MalformedURLException e) {
 			// TODO Auto-generated catch block
@@ -187,7 +191,8 @@ class FirmwareRetriever {
 			try {
 				url = new URL(firmwareSourceURL,path);
 				File file = Base.getUserFile(path);
-				updateURL(url,file);
+				if (UpdateStatus.TRY_AGAIN == updateURL(url,file))
+				    updateURL(url, file);
 			} catch (MalformedURLException e) {
 				Base.logger.severe("Couldn't generate URL for path "+path);
 			}
