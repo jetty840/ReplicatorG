@@ -5,14 +5,23 @@ import sys
 byteOffset = 0
 
 toolCommandTable = {
-    3: ("<H", "Set target temperature: %i"),
-    4: ("B", "Set motor 1 speed (pwm): %i"),
-    10: ("B", "Toggle motor 1: %d"),
-    12: ("B", "Turn fan on (1) or off (0): %d"),
-    13: ("B", "Toggle valve: %d"),
-    27: ("B", "Toggle ABP: %d"),
-    31: ("<H", "Set build platform target temperature: %i"),
-    129: ("<iiiI","Absolute move: (%i,%i,%i) at DDA %i"),
+    1: ("", "(1) init: Initialize firmware to boot state"),
+    3: ("<H", "(3) Set target temperature %i"),
+    4: ("<B", "(4) Motor 1: set speed (PWM) %i"),
+    5: ("<B", "(5) Motor 2: set speed (PWM) %i"),
+    6: ("<I", "(6) Motor 1: set speed (RPM) %i"),
+    7: ("<I", "(7) Motor 2: set speed (RPM) %i"),
+    8: ("<I", "(8) Motor 1: set direction %i"),
+    9: ("<I", "(9) Motor 2: set direction %i"),
+    10: ("B", "(10) Motor 1: toggle %d"),
+    11: ("B", "(11) Motor 2: toggle %d"),
+    12: ("B", "(12) Toggle cooling fan %d"),
+    13: ("B", "(13) Toggle blower fan %d"),
+    14: ("B", "(14) Servo 1: angle %d"),
+    15: ("B", "(15) Servo 2: angle %d"),
+    27: ("B", "(27) Automated build platform: toggle %d"),
+    31: ("<H", "(31) Set build platform temperature %i"),
+    129: ("<iiiI", "(129) Absolute move: (%i,%i,%i) at DDA %i"),
 }
 
 def parseToolAction():
@@ -30,7 +39,7 @@ def parseToolAction():
     return (index,command,contents)
 
 def printToolAction(tuple):
-    print "Tool %i: " % (tuple[0]),
+    print "(136) Tool %i:" % (tuple[0]),
     # command - tuple[1]
     # data - tuple[2]
     (parse, disp) = toolCommandTable[tuple[1]]
@@ -96,36 +105,36 @@ def parseBuildStartNotificationAction():
 # For a refresher on Python struct syntax, see here:
 # http://docs.python.org/library/struct.html
 commandTable = {    
-    129: ("<iiiI","Absolute move: (%i,%i,%i), DDA %i"),
-    130: ("<iii","Set machine position: (%i,%i,%i)"),
-    131: ("<BIH","Home minimum: on %X, feedrate %i, timeout %i s"),
-    132: ("<BIH","Home maximum: on %X, feedrate %i, timeout %i s"),
-    133: ("<I","Dwell: delay by %i us"),
-    134: ("<B","Switch tool: change to tool %i"),
-    135: ("<BHH","Wait on tool: wait for tool %i, %i ms between polls, %i s timeout"),
+    129: ("<iiiI", "(129) Absolute move to (%i,%i,%i) at DDA %i"),
+    130: ("<iii", "(130) Define machine position as (%i,%i,%i)"),
+    131: ("<BIH", "(131) Home minimum on %X, feedrate %i, timeout %i s"),
+    132: ("<BIH", "(132) Home maximum on %X, feedrate %i, timeout %i s"),
+    133: ("<I", "(133) Dwell for %i microseconds"),
+    134: ("<B", "(134) Change to Tool %i"),
+    135: ("<BHH", "(135) Wait until Tool %i is ready, %i ms between polls, %i s timeout"),
     136: (parseToolAction, printToolAction),
-    137: ("<B", "Enable/disable axes: axes bitmask %X"),
-    138: ("<H", "Wait on user response: option %i"),
-    139: ("<iiiiiI","Absolute move: (%i,%i,%i,%i,%i), DDA %i"),
-    140: ("<iiiii","Set machine position extended: (%i,%i,%i,%i,%i)"),
-    141: ("<BHH","Wait on platform: tool %i, %i ms between polls, %i s timeout"),
-    142: ("<iiiiiIB","Move: (%i,%i,%i,%i,%i) in %i us (relative: %X)"),
-    143: ("<b","Store home position: axes bitmask %d"),
-    144: ("<b","Recall home position: axes bitmask %d"),
-    145: ("<BB","Set digipots: axis bitmask %i, digipot setting %i"),
-    146: ("<BBBBB","Set RGB LED: red %i, green %i, blue %i, blink rate %i, effect %i"),
-    147: ("<HHB","Set buzzer: frequency %i, length %i, effect %i"),
-    148: ("<BHB","Pause for button: button 0x%X, timeout %i s, timeout_bevavior %i"),
-    149: (parseDisplayMessageAction, "Display message: options 0x%X at %i,%i timeout %i s, message \"%s\""),
-    150: ("<BB","Set build percentage: %i%%, ignore %i"),
-    151: ("<B","Queue song: song number %i"),
-    152: ("<B","Reset to factory defaults: options 0x%X"),
-    153: (parseBuildStartNotificationAction, "Start build: steps %i, name \"%s\""),
-    154: ("<B","End build: flags 0x%X"),
-    155: ("<iiiiiIBfh","Move to: (%i,%i,%i,%i,%i), dda_rate %i, relative mask %X, distance %f, feedrateX64 %i"),
-    156: ("<B","Set acceleration state: %i"),
-    157: ("<BBBIHHIIB","Stream version: %i.%i, %i, %i, %i, %i, %i, %i, %i"),
-    158: ("<f","Pause@ZPos: Z=%f"),
+    137: ("<B", "(137) Enable/disable stepper motors, axes bitmask %X"),
+    138: ("<H", "(138) Wait on user response, option %i"),
+    139: ("<iiiiiI", "(139) Absolute move to (%i,%i,%i,%i,%i) at DDA %i"),
+    140: ("<iiiii", "(140) Define position as (%i,%i,%i,%i,%i)"),
+    141: ("<BHH", "(141) Wait until platform %i is ready, %i ms between polls, %i s timeout"),
+    142: ("<iiiiiIB", "(142) Move to (%i,%i,%i,%i,%i) in %i us, relative mask %X)"),
+    143: ("<b", "(143) Store home position, axes bitmask %d"),
+    144: ("<b", "(144) Recall home position, axes bitmask %d"),
+    145: ("<BB", "(145) Set digipots for axes bitmask %i to %i"),
+    146: ("<BBBBB", "(146) Set RGB LED red %i, green %i, blue %i, blink rate %i, effect %i"),
+    147: ("<HHB", "(147) Set buzzer, frequency %i, length %i, effect %i"),
+    148: ("<BHB", "(148) Pause for button 0x%X, timeout %i s, timeout_bevavior %i"),
+    149: (parseDisplayMessageAction, "(149) Display message, options 0x%X at %i,%i timeout %i s, message \"%s\""),
+    150: ("<BB", "(150) Set build percentage %i%%, ignore %i"),
+    151: ("<B", "(151) Queue song %i"),
+    152: ("<B", "(152) Reset to factory defaults, options 0x%X"),
+    153: (parseBuildStartNotificationAction, "[153] Start build notification, steps %i, name \"%s\""),
+    154: ("<B", "(154) End build notification, flags 0x%X"),
+    155: ("<iiiiiIBfh", "(155) Move to (%i,%i,%i,%i,%i), dda_rate %i, relative mask %X, distance %f, feedrateX64 %i"),
+    156: ("<B", "(156) Set acceleration state to %i"),
+    157: ("<BBBIHHIIB", "(157) Stream version: %i.%i, %i, %i, %i, %i, %i, %i, %i"),
+    158: ("<f", "(158) Pause @ Z position %f"),
 }
 
 def parseNextCommand():
@@ -159,6 +168,6 @@ def parseNextCommand():
 
 s3gFile = open(sys.argv[1],'rb')
 lineNumber = 1
-sys.stdout.write('Command number [byte offset]: Command name: options\n')
+sys.stdout.write('Command count [File byte offset]: (Command ID) Command description\n')
 while parseNextCommand():
     lineNumber  = lineNumber + 1
