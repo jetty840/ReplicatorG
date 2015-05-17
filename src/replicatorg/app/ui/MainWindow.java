@@ -1567,14 +1567,14 @@ ToolpathGenerator.GeneratorListener
 		}
 		
 
-		String[] mBots = {"Cupcake", "Thingomatic", "Replicator"};
-		for(String bot : mBots)
-		{
-			moveTypeToHead(names, bot);
-		}
+		// String[] mBots = {"Cupcake", "Thingomatic", "Replicator"};
+		// for(String bot : mBots)
+		// {
+		//	moveTypeToHead(names, bot);
+		// }
 		
 		ButtonGroup botButtons = new ButtonGroup();
-		JMenu otherBotMenu = new JMenu("Other Bots");
+		// JMenu otherBotMenu = new JMenu("Other Bots");
 		for (String name : names ) {
 
 			JRadioButtonMenuItem item = new JRadioButtonMenuItem(name);
@@ -1583,12 +1583,12 @@ ToolpathGenerator.GeneratorListener
 
 			botButtons.add(item);
 			
-			if(isMBot(mBots, name)) machineMenu.add(item);
-			
-			else otherBotMenu.add(item);
+			// if(isMBot(mBots, name)) machineMenu.add(item);
+			// else otherBotMenu.add(item);
+			machineMenu.add(item);
 		}
-		machineMenu.add(new JSeparator());
-		machineMenu.add(otherBotMenu);
+		//machineMenu.add(new JSeparator());
+		//machineMenu.add(otherBotMenu);
 	}
 	
 	private boolean isMBot(String[] mBots, String name)
@@ -1605,24 +1605,24 @@ ToolpathGenerator.GeneratorListener
 	 * @param v; a vector of bot names
 	 * @param type; a type of bot to be sorted
 	 */
-	private void moveTypeToHead(Vector<String> v, String type)
-	{
-		Vector<String> temp = (Vector<String>) v.clone();
-		for(String name : temp)
-		{
-			if(name.contains(type))
-			{
-				moveElementToHead(v, name);
-			}
-		}
-	}
+    //	private void moveTypeToHead(Vector<String> v, String type)
+    //	{
+    //		Vector<String> temp = (Vector<String>) v.clone();
+    //		for(String name : temp)
+    //		{
+    //			if(name.contains(type))
+    //			{
+    //				moveElementToHead(v, name);
+    //			}
+    //		}
+    //	}
 	
-	private void moveElementToHead(Vector<String> v, String s)
-	{
-		if(!v.contains(s)) return;
-		v.remove(s);
-		v.add(0, s);
-	}
+    // private void moveElementToHead(Vector<String> v, String s)
+    // {
+    //   if(!v.contains(s)) return;
+    //   v.remove(s);
+    //   v.add(0, s);
+    // }
 
 	/**
 	 * Constructs and returns the menu under 'Edit' 
