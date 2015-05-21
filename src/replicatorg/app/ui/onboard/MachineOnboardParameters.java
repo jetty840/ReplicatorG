@@ -477,23 +477,23 @@
 			vref4.setColumns(4);
 			homeVrefsTab.add(new JLabel("X home offset (mm)"));
 			homeVrefsTab.add(xAxisHomeOffsetField);
-			homeVrefsTab.add(new JLabel("VREF Pot. 0"), "split");
+			homeVrefsTab.add(new JLabel("VREF Pot. X"), "split");
 			homeVrefsTab.add(vref0, "wrap");
 			homeVrefsTab.add(new JLabel("Y home offset (mm)"));
 			homeVrefsTab.add(yAxisHomeOffsetField);
-			homeVrefsTab.add(new JLabel("VREF Pot. 1"), "split");
+			homeVrefsTab.add(new JLabel("VREF Pot. Y"), "split");
 			homeVrefsTab.add(vref1, "wrap");
 			homeVrefsTab.add(new JLabel("Z home offset (mm)"));
 			homeVrefsTab.add(zAxisHomeOffsetField);
-			homeVrefsTab.add(new JLabel("VREF Pot. 2"), "split");
+			homeVrefsTab.add(new JLabel("VREF Pot. Z"), "split");
 			homeVrefsTab.add(vref2, "wrap");
 			homeVrefsTab.add(new JLabel("A home offset (mm)"));
 			homeVrefsTab.add(aAxisHomeOffsetField);
-			homeVrefsTab.add(new JLabel("VREF Pot. 3"), "split");
+			homeVrefsTab.add(new JLabel("VREF Pot. A"), "split");
 			homeVrefsTab.add(vref3, "wrap");
 			homeVrefsTab.add(new JLabel("B home offset (mm)"));
 			homeVrefsTab.add(bAxisHomeOffsetField);
-			homeVrefsTab.add(new JLabel("VREF Pot. 4"), "split");
+			homeVrefsTab.add(new JLabel("VREF Pot. B"), "split");
 			homeVrefsTab.add(vref4, "wrap");
 		}
 		else

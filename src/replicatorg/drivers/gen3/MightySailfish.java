@@ -248,10 +248,10 @@ public class MightySailfish extends Makerbot4GAlternateDriver
 	/// afterwords updated when stepper values are set (currently
 	/// there is no way to get stepper values from the machine)
 	/// hash is <int(StepperId), int(StepperLastSetValue>
-	private Hashtable stepperValues; //only 0 - 127 are valid
+	private Hashtable stepperValues; //only 0 - 255 are valid
 
 	
-	/// 0 -127, current reference value. Store on desktop for this machine
+	/// 0 - 255, current reference value. Store on desktop for this machine
 	private int voltageReference; 
 
 	private boolean eepromChecked = false;
@@ -549,7 +549,7 @@ public class MightySailfish extends Makerbot4GAlternateDriver
 	 *  Sets the reference voltage for the specified stepper. This will change the reference voltage
 	 *  and therefore the power used by the stepper. Voltage range is 0v (0) to 1.7v (127) for Replicator machine
 	 * @param stepperId target stepper index
-	 * @param referenceValue the reference voltage value, from 0-127
+	 * @param referenceValue the reference voltage value, from 0-255
 	 * @throws RetryException
 	 */
 	@Override
@@ -561,11 +561,11 @@ public class MightySailfish extends Makerbot4GAlternateDriver
 			Base.logger.severe("set invalid stepper Id" + Integer.toString(stepperId) );
 			return; 
 		}
-		if (referenceValue > 127) 	 referenceValue= 127; 
+		if (referenceValue > 255) 	 referenceValue= 255; 
 		else if (referenceValue < 0) referenceValue= 0;
 		
 		pb.add8(stepperId);
-		pb.add8(referenceValue); //range should be only is 0-127
+		pb.add8(referenceValue); //range should be only is 0-255
 		PacketResponse pr = runCommand(pb.getPacket());
 
 		if( pr.isOK() )
@@ -754,7 +754,7 @@ public class MightySailfish extends Makerbot4GAlternateDriver
 			return 0;
 		}
 
-		if(voltages[0] > 127)		voltages[0] = 127;
+		if(voltages[0] > 255)		voltages[0] = 255;
 		else if(voltages[0] < 0)	voltages[0] = 0;
 
 		return (int)voltages[0];
@@ -908,7 +908,7 @@ public class MightySailfish extends Makerbot4GAlternateDriver
 			Base.logger.severe("store invalid stepper Id" + Integer.toString(stepperId) );
 			return; 
 		}
-		if (referenceValue > 127)		referenceValue= 127; 
+		if (referenceValue > 255)		referenceValue= 255; 
 		else if (referenceValue < 0)	referenceValue= 0; 
 
 		int vRefForPotLocation = MightySailfish5XEEPROM.DIGI_POT_SETTINGS + stepperId;
