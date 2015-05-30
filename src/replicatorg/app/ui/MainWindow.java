@@ -1578,7 +1578,7 @@ ToolpathGenerator.GeneratorListener
 		for (String name : names ) {
 
 			JRadioButtonMenuItem item = new JRadioButtonMenuItem(name);
-			item.setSelected(name.equals(Base.preferences.get("machine.name","The Replicator Dual")));
+			item.setSelected(name.equals(Base.preferences.get("machine.name", "The Replicator Dual (Sailfish)")));
 			item.addActionListener(machineMenuListener);			
 
 			botButtons.add(item);
@@ -1914,7 +1914,7 @@ ToolpathGenerator.GeneratorListener
 			return;
 		}
 
-		String name = Base.preferences.get("machine.name", "The Replicator Dual");
+		String name = Base.preferences.get("machine.name", "The Replicator Dual (Sailfish)");
 		if ( name != null ) {
 			loadMachine(name, true);
 		}
@@ -3432,7 +3432,7 @@ ToolpathGenerator.GeneratorListener
 	 * @param doConnect  perform the connect
 	 */
 	public void loadMachine(String name, boolean doConnect) {
-		
+
 		MachineInterface mi = machineLoader.getMachineInterface(name);
 		
 		if(mi == null ) {

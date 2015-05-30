@@ -196,7 +196,7 @@ public class PreferencesWindow extends JFrame implements GuiConstants {
 		
 		addCheckboxForPref(content,"Monitor temperature during builds","build.monitor_temp", checkTempDuringBuild);
 		addCheckboxForPref(content,"Display Accelerated Speed Warnings", "build.speed_warning", displaySpeedWarning);
-		addCheckboxForPref(content,"Automatically connect to machine at startup","replicatorg.autoconnect",true);
+		addCheckboxForPref(content,"Automatically connect to machine at startup","replicatorg.autoconnect",false);
 		addCheckboxForPref(content,"Show experimental machine profiles","machine.showExperimental",false);
 		addCheckboxForPref(content,"Review GCode for potential toolhead problems before building","build.safetyChecks",true);
 		addCheckboxForPref(content,"Break Z motion into separate moves (normally false)","replicatorg.parser.breakzmoves",false);

@@ -650,7 +650,7 @@ public class Base {
 				// default load The Replicator
 				String machine = Base.preferences.get("machine.name", null);
 				if(machine == null)
-					Base.preferences.put("machine.name", "The Replicator Dual");
+					Base.preferences.put("machine.name", "The Replicator Dual (Sailfish)");
 				
 				// build the editor object
 				editor = new MainWindow();
@@ -668,7 +668,7 @@ public class Base {
 					}
 				});
 				
-				boolean autoconnect = Base.preferences.getBoolean("replicatorg.autoconnect",true);
+				boolean autoconnect = Base.preferences.getBoolean("replicatorg.autoconnect",false);
 				String machineName = preferences.get("machine.name", "");
 				
 				editor.loadMachine(machineName, autoconnect);
