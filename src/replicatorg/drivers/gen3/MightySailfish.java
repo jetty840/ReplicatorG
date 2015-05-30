@@ -754,10 +754,7 @@ public class MightySailfish extends Makerbot4GAlternateDriver
 			return 0;
 		}
 
-		if(voltages[0] > 255)		voltages[0] = 255;
-		else if(voltages[0] < 0)	voltages[0] = 0;
-
-		return (int)voltages[0];
+		return (int)(0xff & voltages[0]);
 		
 	}
 
