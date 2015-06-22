@@ -71,7 +71,7 @@ M18 (Turn off steppers after a build.)
 			<axis id="a" length="100000" maxfeedrate="1600" stepspermm="96.275201870333662468889989185642" endstops="none"/> <!-- stepspermm is incoming filament length, see comment at bottom for explanation -->
 		</geometry>
 		<tools>
-			<tool name="Mk8" model="Mk8" diameter="0.4" stepper_axis="a" index="1" type="extruder" motor="true" fan="true"  heatedplatform="false" motor_steps="3200" default_rpm="3" heater="true"/>
+			<tool name="Mk8" model="Mk8" diameter="0.4" stepper_axis="a" index="0" type="extruder" motor="true" fan="true"  heatedplatform="false" motor_steps="3200" default_rpm="3" heater="true"/>
 		</tools>
 		<wipes>
 			<wipe index="0" X1="-150.0" Y1="90.0" X2="-150.0" Y2="80.0" wait="1000.0" purge_duration="1000" reverse_duration="15" purge_rpm="5.0" reverse_rpm="35.0"/>
@@ -86,7 +86,7 @@ M18 (Turn off steppers after a build.)
 		<cooldown>
 M18 (Turn off steppers after a build.)
 		</cooldown>
-		<bookend start="machines/replicator/Sing_Head_start.gcode" end="machines/replicator/Single_Head_end.gcode"/>
+		<bookend start="machines/replicator/Single_Head_start.gcode" end="machines/replicator/Single_Head_end.gcode"/>
 	</machine>
 	<machine experimental="0">
 		<name>Clone R1 Dual (Sailfish)</name>
