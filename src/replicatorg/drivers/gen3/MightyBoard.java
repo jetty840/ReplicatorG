@@ -1486,28 +1486,12 @@ public class MightyBoard extends Makerbot4GAlternateDriver
 
 	@Override
 	protected void writeToToolEEPROM(int offset, byte[] data, int toolIndex) {
-		final int MAX_PAYLOAD = 11;
-		while (data.length > MAX_PAYLOAD) {
-			byte[] head = new byte[MAX_PAYLOAD];
-			byte[] tail = new byte[data.length-MAX_PAYLOAD];
-			System.arraycopy(data,0,head,0,MAX_PAYLOAD);
-			System.arraycopy(data,MAX_PAYLOAD,tail,0,data.length-MAX_PAYLOAD);
-			writeToToolEEPROM(offset, head, toolIndex);
-			offset += MAX_PAYLOAD;
-			data = tail;
-		}
-		PacketBuilder slavepb = new PacketBuilder(MotherboardCommandCode.TOOL_QUERY.getCode());
-		slavepb.add8((byte) toolIndex);
-		slavepb.add8(ToolCommandCode.WRITE_TO_EEPROM.getCode());
-		slavepb.add16(offset);
-		slavepb.add8(data.length);
-		for (byte b : data) {
-			slavepb.add8(b);
-		}
-		PacketResponse slavepr = runQuery(slavepb.getPacket());
-		slavepr.printDebug();
-		// If the tool index is 127/255, we should not expect a response (it's a broadcast packet).
-		assert (toolIndex == 255) || (toolIndex == 127) || (slavepr.get8() == data.length); 
+	    int toolInfoOffset = 0;
+	    if (toolIndex == 0)	toolInfoOffset = MightyBoard5XEEPROM.T0_DATA_BASE;
+	    else if (toolIndex == 1)toolInfoOffset = MightyBoard5XEEPROM.T1_DATA_BASE;
+	    offset = toolInfoOffset + offset;
+	    Base.logger.finest("writeToToolEEPROM: tool " + toolIndex + "; offset " + offset);
+	    writeToEEPROM(offset, data);
 	}
 
 	
@@ -1605,9 +1589,24 @@ public class MightyBoard extends Makerbot4GAlternateDriver
 	 *******************************/
 	@Override
 	public boolean getCoolingFanEnabled(int toolIndex) {
-		Base.logger.severe("getCoolingFanEnable: " + Integer.toString(toolIndex));
-		byte[]  a = readFromToolEEPROM(ToolheadEEPROM.COOLING_FAN_SETTINGS, 1, toolIndex);
-		return (a[0] == 1);
+	    byte[]  a = readFromToolEEPROM(ToolheadEEPROM.COOLING_FAN_SETTINGS, 1, toolIndex);
+	    return ((a[0] == 1) || (a[0] == 255));
+	}
+
+        @Override /// ?????
+	public int getCoolingFanSetpoint(int toolIndex) {
+	    /// toolIndex -1 indicate auto-detect.Fast hack to get software out..
+	    if(toolIndex == -1 ) toolIndex = machine.currentTool().getIndex();
+	    byte[] a = readFromToolEEPROM(ToolheadEEPROM.COOLING_FAN_SETTINGS + 1, 1, toolIndex);
+	    return (int)a[0];
+	}
+
+        @Override /// ?????
+	public void setCoolingFanParameters(boolean enabled, int setpoint, int toolIndex) {
+	    byte [] a = new byte[] { (enabled) ? (byte)0x01 : (byte)0x00, (byte)(setpoint & 0xff) };
+	    /// toolIndex -1 indicate auto-detect.Fast hack to get software out..
+	    if(toolIndex == -1 ) toolIndex = machine.currentTool().getIndex();
+	    writeToToolEEPROM(ToolheadEEPROM.COOLING_FAN_SETTINGS, a, toolIndex);
 	}
 
 	/**
