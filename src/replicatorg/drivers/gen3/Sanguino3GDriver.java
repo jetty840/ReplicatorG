@@ -2556,7 +2556,7 @@ public class Sanguino3GDriver extends SerialDriver implements
 	}
         
         protected float byte16LEToFloat(byte[] r, int offset) {
-		return (float)(byteToInt(r[offset+1]) | byteToInt(r[offset])<<8)/255.0f;
+			return (float)(((float)byteToInt(r[offset+1]))/256.0 + (float)byteToInt(r[offset]));
 	}
 	protected float byte16LEToFloat(byte[] r) {
 		return byte16LEToFloat(r, 0);
